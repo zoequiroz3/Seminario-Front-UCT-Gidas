@@ -10,6 +10,10 @@ import Home from "@/pages/Home";
 import UctForm from "@/pages/UctForm";
 import NotFound from "@/pages/NotFound";
 
+// 👇 nuevas páginas
+import PersonalLanding from "@/pages/PersonalHome"; // título + botón Agregar + Volver
+import Personal from "@/pages/PersonalForm";               // formulario de personal
+
 // Definición de rutas
 const router = createBrowserRouter([
   {
@@ -17,8 +21,15 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <Home /> },
+
+      // UCT
       { path: "uct/nueva", element: <UctForm /> },
-      { path: "*", element: <NotFound /> }
+
+      // 👇 Personal
+      { path: "personal", element: <PersonalLanding /> },   // landing
+      { path: "personal/nuevo", element: <Personal /> },    // formulario
+
+      { path: "*", element: <NotFound /> },
     ],
   },
 ]);
@@ -34,4 +45,3 @@ createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </StrictMode>
 );
-
