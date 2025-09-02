@@ -1,8 +1,9 @@
 import { NavLink } from "react-router-dom";
-import { Search, Users, BookOpen, DollarSign } from "lucide-react";
+import { Home, Search, Users, BookOpen, DollarSign } from "lucide-react";
 
 const items = [
-  { to: "/", label: "Búsqueda", icon: Search },
+  { to: "/", label: "Home", icon: Home },
+  { to: "/busqueda", label: "Búsqueda", icon: Search },
   { to: "/personal", label: "Personal", icon: Users },
   { to: "/actividades", label: "Actividades I+D+i", icon: BookOpen },
   { to: "/objetos", label: "Objetos y financiamiento", icon: DollarSign },
