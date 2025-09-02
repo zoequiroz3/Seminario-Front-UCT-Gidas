@@ -10,36 +10,46 @@ export type Uct = {
 };
 
 const BASE = import.meta.env.VITE_API_URL ?? "";
+const MOCK_KEY = "gidas_uct_singleton_mock";
 
-// Helper: simula respuesta de red con un delay
-function mockGet<U>(value: U, ms = 400) {
-  return new Promise<U>((resolve) => setTimeout(() => resolve(value), ms));
+// delay artificial para simular red
+function delay(ms = 300) {
+  return new Promise((r) => setTimeout(r, ms));
 }
 
-// Obtener UCT (si no hay backend, simula que no existe)
+// ------- MODO MOCK (sin backend) usando localStorage -------
+async function mockGet(): Promise<Uct | null> {
+  await delay();
+  const raw = localStorage.getItem(MOCK_KEY);
+  return raw ? (JSON.parse(raw) as Uct) : null;
+}
+
+async function mockPut(payload: Uct): Promise<Uct> {
+  await delay();
+  localStorage.setItem(MOCK_KEY, JSON.stringify(payload));
+  return payload;
+}
+
+async function mockDelete(): Promise<void> {
+  await delay();
+  localStorage.removeItem(MOCK_KEY);
+}
+
+// ------- API real (cuando VITE_API_URL esté definido) -------
 export async function getUct() {
-  if (!BASE) {
-    return mockGet<Uct | null>(null, 400); // devuelve null después de 400ms
-  }
+  if (!BASE) return mockGet();
   return http<Uct | null>("/api/uct");
 }
 
-// Crear o actualizar UCT
 export async function upsertUct(payload: Uct) {
-  if (!BASE) {
-    return mockGet<Uct>(payload, 400);
-  }
+  if (!BASE) return mockPut(payload);
   return http<Uct>("/api/uct", {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
-// Eliminar UCT
 export async function deleteUct() {
-  if (!BASE) {
-    return mockGet<void>(undefined, 400);
-  }
+  if (!BASE) return mockDelete();
   return http<void>("/api/uct", { method: "DELETE" });
 }
-
