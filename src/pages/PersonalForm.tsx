@@ -51,12 +51,12 @@ type PersonalDraft = Partial<Personal> & { fechaInicio?: string; fechaFin?: stri
 export default function PersonalPage() {
   const navigate = useNavigate();
 
-  // Draft como Partial para aceptar campos específicos por tipo
+  // Draft como Partial. Importante: NO seteamos tipo por defecto.
   const [data, setData] = useState<PersonalDraft>({
     id: "",
     nombreApellido: "",
     horasSemanales: 0,
-    tipo: "INVESTIGADOR",
+    // tipo: undefined,
   });
 
   // ===== Helpers timezone-safe (DENTRO del componente) =====
@@ -80,10 +80,10 @@ export default function PersonalPage() {
   const setDateField = (k: "fechaInicio" | "fechaFin", dt: Date | null) =>
     setData((d) => ({ ...d, [k]: toYMD(dt) }));
 
-  // Campos visibles según el tipo seleccionado (por si lo usás)
+  // Campos visibles según el tipo seleccionado (si no hay tipo, solo los comunes)
   const visibleFields: string[] = useMemo(() => {
-    const t = (data.tipo ?? "INVESTIGADOR") as PersonalType;
-    return ["nombreApellido", "horasSemanales", "tipo", ...fieldsByType[t]];
+    const t = data.tipo as PersonalType | undefined;
+    return t ? ["nombreApellido", "horasSemanales", "tipo", ...fieldsByType[t]] : ["nombreApellido", "horasSemanales", "tipo"];
   }, [data.tipo]);
 
   // Change genérico: acepta cualquier clave string del draft
@@ -110,11 +110,14 @@ export default function PersonalPage() {
 
   // Construye el payload final (lo que se envía como JSON)
   function buildPayload(): Personal {
+    if (!data.tipo) {
+      throw new Error("Debe seleccionar el tipo de personal.");
+    }
     return {
       id: data.id || "",
       nombreApellido: data.nombreApellido!,
       horasSemanales: Number(data.horasSemanales),
-      tipo: (data.tipo ?? "INVESTIGADOR") as PersonalType,
+      tipo: data.tipo as PersonalType,
       ...(data as any), // incluye campos específicos por tipo si están presentes (fechaInicio/fechaFin como YYYY-MM-DD)
     };
   }
@@ -130,6 +133,10 @@ export default function PersonalPage() {
     }
     if (data.horasSemanales == null || Number(data.horasSemanales) < 0) {
       alert("Las horas semanales deben ser un número válido.");
+      return;
+    }
+    if (!data.tipo) {
+      alert("Seleccione el tipo de personal.");
       return;
     }
 
@@ -174,9 +181,10 @@ export default function PersonalPage() {
         <Field label="Seleccione el tipo de personal">
           <select
             className="input"
-            value={data.tipo ?? "INVESTIGADOR"}
+            value={data.tipo ?? ""}             // 👈 sin default
             onChange={(e) => onTipoChange(e.target.value as PersonalType)}
           >
+            <option value="" disabled>Seleccione una opción</option>  {/* placeholder */}
             {options.tipoPersonal.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
