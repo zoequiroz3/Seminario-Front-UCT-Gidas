@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
+import DatePicker from "@/components/Calendar";
 import {
   upsertPersonal,
   type Personal,
@@ -18,7 +19,7 @@ import {
 const fieldsByType: Record<PersonalType, string[]> = {
   INVESTIGADOR: ["categoriaUtn", "programaIncentivos", "dedicacion", "proyectoCoordinaId"],
   PROFESIONAL: [],
-  PTAA: ["tipoPersonal"],
+  PTAA: ["tipoPersonal", "fechaInicio", "fechaFin"],
   BECARIO: ["fuenteFinanciamiento", "tipoFormacion"],
 };
 
@@ -44,18 +45,42 @@ const options = {
   tipoFormacion: ["Becario", "Personal en Formación"] as TipoFormacion[],
 };
 
+// Draft con fechas para que TS no se queje
+type PersonalDraft = Partial<Personal> & { fechaInicio?: string; fechaFin?: string };
+
 export default function PersonalPage() {
   const navigate = useNavigate();
 
-  // Draft como Partial<Personal> para aceptar campos específicos por tipo
-  const [data, setData] = useState<Partial<Personal>>({
+  // Draft como Partial para aceptar campos específicos por tipo
+  const [data, setData] = useState<PersonalDraft>({
     id: "",
     nombreApellido: "",
     horasSemanales: 0,
     tipo: "INVESTIGADOR",
   });
 
-  // Campos visibles según el tipo seleccionado
+  // ===== Helpers timezone-safe (DENTRO del componente) =====
+  // parsea "YYYY-MM-DD" sin convertir a UTC
+  const parseYMD = (s?: string | null): Date | null => {
+    if (!s) return null;
+    const [y, m, d] = s.split("-").map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d); // local date, sin desfase
+  };
+
+  // arma "YYYY-MM-DD" sin toISOString()
+  const toYMD = (date: Date | null): string => {
+    if (!date) return "";
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  const setDateField = (k: "fechaInicio" | "fechaFin", dt: Date | null) =>
+    setData((d) => ({ ...d, [k]: toYMD(dt) }));
+
+  // Campos visibles según el tipo seleccionado (por si lo usás)
   const visibleFields: string[] = useMemo(() => {
     const t = (data.tipo ?? "INVESTIGADOR") as PersonalType;
     return ["nombreApellido", "horasSemanales", "tipo", ...fieldsByType[t]];
@@ -90,7 +115,7 @@ export default function PersonalPage() {
       nombreApellido: data.nombreApellido!,
       horasSemanales: Number(data.horasSemanales),
       tipo: (data.tipo ?? "INVESTIGADOR") as PersonalType,
-      ...(data as any), // incluye campos específicos por tipo si están presentes
+      ...(data as any), // incluye campos específicos por tipo si están presentes (fechaInicio/fechaFin como YYYY-MM-DD)
     };
   }
 
@@ -110,28 +135,6 @@ export default function PersonalPage() {
 
     await mutateAsync(buildPayload());
     navigate("/");
-  };
-
-  // Guardar y limpiar para agregar otro
-  const saveAndAddAnother = async () => {
-    if (!data.nombreApellido?.trim()) {
-      alert("El campo 'Nombre y Apellido' es requerido.");
-      return;
-    }
-    if (data.horasSemanales == null || Number(data.horasSemanales) < 0) {
-      alert("Las horas semanales deben ser un número válido.");
-      return;
-    }
-
-    await mutateAsync(buildPayload());
-
-    // limpiar formulario para el siguiente registro
-    setData({
-      id: "",
-      nombreApellido: "",
-      horasSemanales: 0,
-      tipo: "INVESTIGADOR",
-    });
   };
 
   useEffect(() => {
@@ -249,22 +252,39 @@ export default function PersonalPage() {
 
         {/* PTAA */}
         {data.tipo === "PTAA" && (
-          <Field label="Tipo de personal">
-            <select
-              className="input"
-              value={(data as any).tipoPersonal ?? ""}
-              onChange={change("tipoPersonal")}
-            >
-              <option value="" disabled>
-                Seleccione un tipo
-              </option>
-              {options.ptaa.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <>
+            <Field label="Tipo de personal">
+              <select
+                className="input"
+                value={(data as any).tipoPersonal ?? ""}
+                onChange={change("tipoPersonal")}
+              >
+                <option value="" disabled>Seleccione un tipo</option>
+                {options.ptaa.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </Field>
+
+            {/* Fechas: inicio y fin, lado a lado */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <DatePicker
+                label="Fecha de inicio"
+                value={parseYMD((data as any).fechaInicio)}
+                onChange={(dt) => setDateField("fechaInicio", dt)}
+                helperText="DD/MM/YYYY"
+                className="input"
+              />
+              <DatePicker
+                label="Fecha de finalización"
+                value={parseYMD((data as any).fechaFin)}
+                onChange={(dt) => setDateField("fechaFin", dt)}
+                minDate={parseYMD((data as any).fechaInicio) || undefined}
+                helperText="DD/MM/YYYY"
+                className="input"
+              />
+            </div>
+          </>
         )}
 
         {/* Becario / Personal en formación */}
@@ -297,14 +317,11 @@ export default function PersonalPage() {
           </>
         )}
 
-        {/* Footer: volver (izq), agregar (centro), cargar (der) */}
+        {/* Footer: volver (izq) y cargar (der) */}
         <div className="mt-8 flex items-center justify-between">
-          {/* Izquierda */}
           <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
             Volver
           </Button>
-
-          {/* Derecha: submit normal (envía JSON y vuelve al inicio) */}
           <Button type="submit" disabled={isPending}>
             {isPending ? "Guardando…" : "Cargar"}
           </Button>
