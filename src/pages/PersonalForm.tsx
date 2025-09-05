@@ -55,7 +55,7 @@ export default function PersonalPage() {
   const [data, setData] = useState<PersonalDraft>({
     id: "",
     nombreApellido: "",
-    horasSemanales: 0,
+    horasSemanales: undefined,
     // tipo: undefined,
   });
 
@@ -170,13 +170,21 @@ export default function PersonalPage() {
         <Field label="Horas semanales">
           <input
             type="number"
+            inputMode="numeric"
+            step={1}
+            min={0}
             className="input"
-            value={data.horasSemanales ?? 0}
-            onChange={change("horasSemanales")}
+            value={data.horasSemanales ?? ""}          // ← muestra vacío si no hay valor
+            onChange={(e) => {
+              const v = e.currentTarget.value;
+              setData((d) => ({
+                ...d,
+                horasSemanales: v === "" ? undefined : Math.trunc(Number(v)), // ← entero
+              }));
+            }}
             placeholder="Dedicadas al grupo"
           />
         </Field>
-
         {/* Tipo de personal */}
         <Field label="Seleccione el tipo de personal">
           <select
@@ -280,7 +288,7 @@ export default function PersonalPage() {
                 label="Fecha de inicio"
                 value={parseYMD((data as any).fechaInicio)}
                 onChange={(dt) => setDateField("fechaInicio", dt)}
-                helperText="DD/MM/YYYY"
+                helperText="DD/MM/AAAA"
                 className="input"
               />
               <DatePicker
@@ -288,7 +296,7 @@ export default function PersonalPage() {
                 value={parseYMD((data as any).fechaFin)}
                 onChange={(dt) => setDateField("fechaFin", dt)}
                 minDate={parseYMD((data as any).fechaInicio) || undefined}
-                helperText="DD/MM/YYYY"
+                helperText="DD/MM/AAAA"
                 className="input"
               />
             </div>

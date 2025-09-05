@@ -12,9 +12,10 @@ type DatePickerProps = {
 };
 
 const MONTHS_ES = [
-  "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-  "Jul", "Ago", "Sep", "Oct", "Nov", "Dic",
+  "Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic",
 ];
+// Si preferís “X” para miércoles, usá ["L","M","X","J","V","S","D"]
+const DAYS_ES = ["L","M","M","J","V","S","D"];
 
 function fmt(date: Date | null) {
   if (!date) return "";
@@ -43,9 +44,9 @@ export default function DatePicker({
   onChange,
   minDate,
   maxDate,
-  placeholder = "DD/MM/YYYY",
+  placeholder = "DD/MM/AAAA",
   className = "input",
-  helperText = "DD/MM/YYYY",
+  helperText = "DD/MM/AAAA",
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<Date>(() => value ?? new Date());
@@ -71,13 +72,17 @@ export default function DatePicker({
     const y = view.getFullYear();
     const m = view.getMonth();
     const first = new Date(y, m, 1);
-    const pad = first.getDay(); // 0=Dom
+
+    // Semana que empieza en Lunes
+    // getDay(): 0=Dom,1=Lun,...6=Sáb  => convertimos a índice Lunes=0
+    const pad = (first.getDay() + 6) % 7;
+
     const total = daysInMonth(y, m);
     const cells: (Date | null)[] = [];
 
     for (let i = 0; i < pad; i++) cells.push(null);
     for (let d = 1; d <= total; d++) cells.push(new Date(y, m, d));
-    // 6 filas de 7 celdas máximo
+    // completar última fila
     while (cells.length % 7 !== 0) cells.push(null);
     return cells;
   }, [view]);
@@ -140,10 +145,10 @@ export default function DatePicker({
             </button>
           </div>
 
-          {/* week header */}
+          {/* week header en español (lunes primero) */}
           <div className="grid grid-cols-7 text-center text-xs text-slate-500 mb-1">
-            {["S","M","T","W","T","F","S"].map((d) => (
-              <div key={d} className="py-1">{d}</div>
+            {DAYS_ES.map((d, idx) => (
+              <div key={idx} className="py-1">{d}</div>
             ))}
           </div>
 
