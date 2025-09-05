@@ -60,6 +60,8 @@ export default function PersonalLanding() {
                   item={p}
                   title={(x) => x.nombreApellido}
                   subtitle={roleLine}
+                  titleClassName="text-xl md:text-2xl"
+                  subtitleClassName="text-base md:text-lg"
                   onClick={() => navigate(`/personal/${p.id}`)}
                 />
               ))}
