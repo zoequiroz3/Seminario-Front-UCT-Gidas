@@ -25,38 +25,51 @@ export default function PersonalLanding() {
   });
 
   return (
-    <section className="flex flex-col gap-8">
-      {/* Header: Título + Agregar */}
+    /**
+     * Sin contenedor “estrecho”: px muy chicos para pegar a los bordes del
+     * área de contenido (la sidebar queda afuera). Podés ajustar a px-1/px-3 si querés más/menos borde.
+     */
+    <section className="w-full min-h-[calc(100vh-96px)] px-10 md:px-5 lg:px-1 py-2 flex flex-col">
+      {/* Header: título a la IZQ, botón a la DER (bien hacia los bordes del contenido) */}
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-semibold">Personal</h2>
+        <h2 className="text-[38px] md:text-[50px] font-semibold leading-none">Personal</h2>
         <Button variant="primary" onClick={() => navigate("/personal/nuevo")}>
           Agregar Personal
         </Button>
       </div>
 
       {/* Contenido */}
-      {isLoading && <p className="text-slate-500">Cargando…</p>}
-      {isError && <p className="text-red-600">No se pudo cargar el personal.</p>}
-      {!isLoading && !isError && (
-        list.length === 0 ? (
-          <p className="text-slate-500">Aún no hay personas cargadas.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {list.map((p) => (
-              <TarjetaPersonal<Personal>
-                key={p.id}
-                item={p}
-                title={(x) => x.nombreApellido}
-                subtitle={roleLine}
-                onClick={() => navigate(`/personal/${p.id}`)}
-              />
-            ))}
-          </div>
-        )
-      )}
+      <div className="mt-8 flex-1">
+        {isLoading && <p className="text-slate-500">Cargando…</p>}
+        {isError && <p className="text-red-600">No se pudo cargar el personal.</p>}
+        {!isLoading && !isError && (
+          list.length === 0 ? (
+            <p className="text-slate-500">Aún no hay personas cargadas.</p>
+          ) : (
+            <div
+              className="
+                grid gap-8
+                grid-cols-1
+                sm:grid-cols-2
+                lg:grid-cols-3
+              "
+            >
+              {list.map((p) => (
+                <TarjetaPersonal<Personal>
+                  key={p.id}
+                  item={p}
+                  title={(x) => x.nombreApellido}
+                  subtitle={roleLine}
+                  onClick={() => navigate(`/personal/${p.id}`)}
+                />
+              ))}
+            </div>
+          )
+        )}
+      </div>
 
-      {/* Footer: Volver */}
-      <div className="pt-6">
+      {/* Footer: Volver bien abajo-izquierda del área de contenido */}
+      <div className="pt-10">
         <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
           Volver
         </Button>

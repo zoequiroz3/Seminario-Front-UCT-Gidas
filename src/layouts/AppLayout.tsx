@@ -10,7 +10,7 @@ export default function AppLayout() {
       {/* Contenido */}
       <main className="flex-1">
         {/* Wrapper centrado y con ancho máximo global */}
-        <div className="max-w-5xl mx-auto px-6 py-10">
+        <div className="w-full px-6 lg:px-10 py-8">
           <Outlet />
         </div>
       </main>
