@@ -1,6 +1,6 @@
 // src/pages/Personal.tsx
 import { useEffect, useMemo, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query"; // 👈 qc para invalidar
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
@@ -50,6 +50,7 @@ type PersonalDraft = Partial<Personal> & { fechaInicio?: string; fechaFin?: stri
 
 export default function PersonalPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient(); // 👈
 
   // Draft como Partial. Importante: NO seteamos tipo por defecto.
   const [data, setData] = useState<PersonalDraft>({
@@ -59,16 +60,14 @@ export default function PersonalPage() {
     // tipo: undefined,
   });
 
-  // ===== Helpers timezone-safe (DENTRO del componente) =====
-  // parsea "YYYY-MM-DD" sin convertir a UTC
+  // ===== Helpers timezone-safe =====
   const parseYMD = (s?: string | null): Date | null => {
     if (!s) return null;
     const [y, m, d] = s.split("-").map(Number);
     if (!y || !m || !d) return null;
-    return new Date(y, m - 1, d); // local date, sin desfase
+    return new Date(y, m - 1, d);
   };
 
-  // arma "YYYY-MM-DD" sin toISOString()
   const toYMD = (date: Date | null): string => {
     if (!date) return "";
     const y = date.getFullYear();
@@ -80,13 +79,14 @@ export default function PersonalPage() {
   const setDateField = (k: "fechaInicio" | "fechaFin", dt: Date | null) =>
     setData((d) => ({ ...d, [k]: toYMD(dt) }));
 
-  // Campos visibles según el tipo seleccionado (si no hay tipo, solo los comunes)
+  // (visibleFields hoy no se usa, lo dejamos por si luego lo necesitás)
   const visibleFields: string[] = useMemo(() => {
     const t = data.tipo as PersonalType | undefined;
-    return t ? ["nombreApellido", "horasSemanales", "tipo", ...fieldsByType[t]] : ["nombreApellido", "horasSemanales", "tipo"];
+    return t
+      ? ["nombreApellido", "horasSemanales", "tipo", ...fieldsByType[t]]
+      : ["nombreApellido", "horasSemanales", "tipo"];
   }, [data.tipo]);
 
-  // Change genérico: acepta cualquier clave string del draft
   const change =
     (k: string) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -94,7 +94,6 @@ export default function PersonalPage() {
       setData((d) => ({ ...d, [k]: val }));
     };
 
-  // Listener del tipo de personal: limpia los campos de otros tipos
   const onTipoChange = (next: PersonalType) => {
     setData((prev) => {
       const clean: Record<string, undefined> = {};
@@ -103,36 +102,33 @@ export default function PersonalPage() {
     });
   };
 
-  // Mutación para guardar
+  // Mutación para guardar — invalida la lista y luego navega a /personal
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (payload: Personal) => upsertPersonal(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["personal"] }), // 👈 refresca la landing
   });
 
-  // Construye el payload final (lo que se envía como JSON)
   function buildPayload(): Personal {
-    if (!data.tipo) {
-      throw new Error("Debe seleccionar el tipo de personal.");
-    }
+    if (!data.tipo) throw new Error("Debe seleccionar el tipo de personal.");
     return {
       id: data.id || "",
       nombreApellido: data.nombreApellido!,
       horasSemanales: Number(data.horasSemanales),
       tipo: data.tipo as PersonalType,
-      ...(data as any), // incluye campos específicos por tipo si están presentes (fechaInicio/fechaFin como YYYY-MM-DD)
+      ...(data as any),
     };
   }
 
-  // Guardar normal (envía JSON y navega)
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validaciones mínimas
     if (!data.nombreApellido?.trim()) {
       alert("El campo 'Nombre y Apellido' es requerido.");
       return;
     }
-    if (data.horasSemanales == null || Number(data.horasSemanales) < 0) {
-      alert("Las horas semanales deben ser un número válido.");
+    const horas = Number(data.horasSemanales);
+    if (!Number.isInteger(horas) || horas < 0) {
+      alert("Las horas semanales deben ser un entero válido (≥ 0).");
       return;
     }
     if (!data.tipo) {
@@ -141,7 +137,7 @@ export default function PersonalPage() {
     }
 
     await mutateAsync(buildPayload());
-    navigate("/");
+    navigate("/personal", { replace: true }); // 👈 permanecer en la landing de Personal
   };
 
   useEffect(() => {
@@ -174,25 +170,26 @@ export default function PersonalPage() {
             step={1}
             min={0}
             className="input"
-            value={data.horasSemanales ?? ""}          // ← muestra vacío si no hay valor
+            value={data.horasSemanales ?? ""} // vacío por defecto
             onChange={(e) => {
               const v = e.currentTarget.value;
               setData((d) => ({
                 ...d,
-                horasSemanales: v === "" ? undefined : Math.trunc(Number(v)), // ← entero
+                horasSemanales: v === "" ? undefined : Math.trunc(Number(v)), // entero
               }));
             }}
             placeholder="Dedicadas al grupo"
           />
         </Field>
+
         {/* Tipo de personal */}
         <Field label="Seleccione el tipo de personal">
           <select
             className="input"
-            value={data.tipo ?? ""}             // 👈 sin default
+            value={data.tipo ?? ""} // sin default
             onChange={(e) => onTipoChange(e.target.value as PersonalType)}
           >
-            <option value="" disabled>Seleccione una opción</option>  {/* placeholder */}
+            <option value="" disabled>Seleccione una opción</option>
             {options.tipoPersonal.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -210,13 +207,9 @@ export default function PersonalPage() {
                 value={(data as any).categoriaUtn ?? ""}
                 onChange={change("categoriaUtn")}
               >
-                <option value="" disabled>
-                  Seleccione una categoría
-                </option>
+                <option value="" disabled>Seleccione una categoría</option>
                 {options.categoria.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
             </Field>
@@ -227,13 +220,9 @@ export default function PersonalPage() {
                 value={(data as any).programaIncentivos ?? ""}
                 onChange={change("programaIncentivos")}
               >
-                <option value="" disabled>
-                  Seleccione un programa
-                </option>
+                <option value="" disabled>Seleccione un programa</option>
                 {options.incentivos.map((i) => (
-                  <option key={i} value={i}>
-                    {i}
-                  </option>
+                  <option key={i} value={i}>{i}</option>
                 ))}
               </select>
             </Field>
@@ -244,13 +233,9 @@ export default function PersonalPage() {
                 value={(data as any).dedicacion ?? ""}
                 onChange={change("dedicacion")}
               >
-                <option value="" disabled>
-                  Seleccione un tipo de dedicación
-                </option>
+                <option value="" disabled>Seleccione un tipo de dedicación</option>
                 {options.dedicacion.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
+                  <option key={d} value={d}>{d}</option>
                 ))}
               </select>
             </Field>
@@ -282,7 +267,6 @@ export default function PersonalPage() {
               </select>
             </Field>
 
-            {/* Fechas: inicio y fin, lado a lado */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <DatePicker
                 label="Fecha de inicio"
@@ -320,13 +304,9 @@ export default function PersonalPage() {
                 value={(data as any).tipoFormacion ?? ""}
                 onChange={change("tipoFormacion")}
               >
-                <option value="" disabled>
-                  Seleccione una opción
-                </option>
+                <option value="" disabled>Seleccione una opción</option>
                 {options.tipoFormacion.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+                  <option key={t} value={t}>{t}</option>
                 ))}
               </select>
             </Field>
