@@ -50,7 +50,7 @@ type PersonalDraft = Partial<Personal> & { fechaInicio?: string; fechaFin?: stri
 
 export default function PersonalPage() {
   const navigate = useNavigate();
-  const qc = useQueryClient(); // 👈
+  const qc = useQueryClient(); // 
 
   // Draft como Partial. Importante: NO seteamos tipo por defecto.
   const [data, setData] = useState<PersonalDraft>({
@@ -105,7 +105,7 @@ export default function PersonalPage() {
   // Mutación para guardar — invalida la lista y luego navega a /personal
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (payload: Personal) => upsertPersonal(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["personal"] }), // 👈 refresca la landing
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["personal"] }), // refresca la landing
   });
 
   function buildPayload(): Personal {
@@ -137,7 +137,7 @@ export default function PersonalPage() {
     }
 
     await mutateAsync(buildPayload());
-    navigate("/personal", { replace: true }); // 👈 permanecer en la landing de Personal
+    navigate("/personal", { replace: true }); // permanecer en la landing de Personal
   };
 
   useEffect(() => {
@@ -146,11 +146,11 @@ export default function PersonalPage() {
 
   return (
     <section>
-      <h2 className="text-3xl font-semibold mb-6">Carga de datos de Personal</h2>
+      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">Carga de datos de Personal</h2>
 
       <form
         onSubmit={onSubmit}
-        className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
+        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm space-y-8"
       >
         {/* Nombre y Apellido */}
         <Field label="Nombre y Apellido">
@@ -330,7 +330,7 @@ export default function PersonalPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium mb-2">{label}</label>
+      <label className="md:text-[17px] block text-sm font-medium mb-4">{label}</label>
       {children}
     </div>
   );

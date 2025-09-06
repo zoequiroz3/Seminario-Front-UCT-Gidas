@@ -32,7 +32,7 @@ export default function PersonalLanding() {
     <section className="w-full min-h-[calc(100vh-96px)] px-10 md:px-5 lg:px-1 py-2 flex flex-col">
       {/* Header: título a la IZQ, botón a la DER (bien hacia los bordes del contenido) */}
       <div className="flex items-center justify-between">
-        <h2 className="text-[38px] md:text-[50px] font-semibold leading-none">Personal</h2>
+        <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">Personal</h2>
         <Button variant="primary" onClick={() => navigate("/personal/nuevo")}>
           Agregar Personal
         </Button>
@@ -44,7 +44,7 @@ export default function PersonalLanding() {
         {isError && <p className="text-red-600">No se pudo cargar el personal.</p>}
         {!isLoading && !isError && (
           list.length === 0 ? (
-            <p className="text-slate-500">Aún no hay personas cargadas.</p>
+            <p className="text-slate-500">Aún no hay personal cargado.</p>
           ) : (
             <div
               className="

@@ -159,7 +159,7 @@ export default function PersonalDetalle() {
   if (!persona || !data) {
     return (
       <section>
-        <h2 className="text-3xl font-semibold mb-6">Personal</h2>
+        <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">Personal</h2>
         <div className="rounded-xl border border-slate-200 bg-white/80 p-6 shadow-sm">
           No se encontró la persona.
           <div className="mt-6">
@@ -172,12 +172,12 @@ export default function PersonalDetalle() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h2 className="text-3xl font-semibold">Personal</h2>
+      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">Personal</h2>
 
       {!editing ? (
         // --------- VISTA (detalle) ---------
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold mb-2">{persona.nombreApellido}</h3>
+          <h3 className="md:text-[25px] text-lg font-semibold mb-2">{persona.nombreApellido}</h3>
 
           <dl className="text-sm space-y-2">
             <Field label="Horas semanales" value={String(persona.horasSemanales ?? "—")} />
@@ -384,8 +384,8 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="font-medium">
+      <dt className="md:text-[20px] text-slate-500 mt-7">{label}</dt>
+      <dd className="md:text-[18px] font-medium mt-2">
         {children ?? value ?? "—"}
       </dd>
     </div>
