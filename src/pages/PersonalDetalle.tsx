@@ -208,7 +208,7 @@ export default function PersonalDetalle() {
             )}
           </dl>
 
-          <div className="mt-8 flex items-center justify-between">
+          <div className="mt-8 flex items-center justify-between font-medium">
             <Button variant="secondary" onClick={() => navigate(-1)}>Volver</Button>
             <Button onClick={() => setEditing(true)}>Editar</Button>
           </div>
@@ -384,8 +384,8 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <dt className="md:text-[20px] text-slate-500 mt-7">{label}</dt>
-      <dd className="md:text-[18px] font-medium mt-2">
+      <dt className="md:text-[20px] font-medium mt-7">{label}</dt>
+      <dd className="md:text-[18px] text-slate-500 mt-2">
         {children ?? value ?? "—"}
       </dd>
     </div>
