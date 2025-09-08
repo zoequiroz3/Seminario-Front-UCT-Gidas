@@ -5,6 +5,7 @@ const items = [
   { to: "/", label: "Home", icon: Home },
   { to: "/busqueda", label: "Búsqueda", icon: Search },
   { to: "/personal", label: "Personal", icon: Users },
+  { to: "/proyectos", label: "Proyectos de Investigación", icon: BookOpen },
   { to: "/actividades", label: "Actividades I+D+i", icon: BookOpen },
   { to: "/financiamiento", label: "Objetos y financiamiento", icon: DollarSign },
 ];
