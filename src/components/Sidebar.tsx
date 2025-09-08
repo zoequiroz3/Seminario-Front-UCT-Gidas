@@ -6,7 +6,7 @@ const items = [
   { to: "/busqueda", label: "Búsqueda", icon: Search },
   { to: "/personal", label: "Personal", icon: Users },
   { to: "/actividades", label: "Actividades I+D+i", icon: BookOpen },
-  { to: "/objetos", label: "Objetos y financiamiento", icon: DollarSign },
+  { to: "/financiamiento", label: "Objetos y financiamiento", icon: DollarSign },
 ];
 
 export default function Sidebar() {

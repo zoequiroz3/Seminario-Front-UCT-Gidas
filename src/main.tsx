@@ -14,6 +14,9 @@ import NotFound from "@/pages/NotFound";
 import PersonalLanding from "@/pages/PersonalHome"; // título + botón Agregar + Volver
 import Personal from "@/pages/PersonalForm";               // formulario de personal
 import PersonalDetalle from "./pages/PersonalDetalle";
+import FinanciamientoForm from "@/pages/FinanciamientoForm";
+import FinanciamientoLanding from "@/pages/FinanciamientoHome";
+import FinanciamientoDetalle from "./pages/FinanciamientoDetalle";
 
 
 // Definición de rutas
@@ -31,6 +34,9 @@ const router = createBrowserRouter([
       { path: "personal", element: <PersonalLanding /> },   // landing
       { path: "personal/nuevo", element: <Personal /> },    // formulario
       { path: "personal/:id", element: <PersonalDetalle/>}, // detalle de personal
+      { path: "financiamiento/nuevo", element: <FinanciamientoForm/>}, 
+      { path: "financiamiento", element: <FinanciamientoLanding/>},
+      { path: "financiamiento/:id", element: <FinanciamientoDetalle/>},
 
       { path: "*", element: <NotFound /> },
     ],
