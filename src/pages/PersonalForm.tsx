@@ -43,6 +43,7 @@ const options = {
   dedicacion: ["Simple", "Exclusiva", "Semiexclusiva"] as Dedicacion[],
   ptaa: ["Técnico", "Administrativo", "Apoyo"] as TipoPersonal[],
   tipoFormacion: ["Becario", "Personal en Formación"] as TipoFormacion[],
+  rolDirectivo: ["Director/a", "Vicedirector/a"],
 };
 
 // Draft con fechas para que TS no se queje
@@ -310,7 +311,21 @@ export default function PersonalPage() {
                 ))}
               </select>
             </Field>
-          </>
+          </>)}
+
+
+          {( <Field label="Rol Directivo">
+              <select
+                className="input"
+                value={(data as any).rolDirectivo ?? ""}
+                onChange={change("rolDirectivo")}
+              >
+                <option value="" disabled>Seleccione una opción (si corresponde)</option>
+                {options.rolDirectivo.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </Field>
         )}
 
         {/* Footer: volver (izq) y cargar (der) */}
