@@ -17,6 +17,8 @@ import PersonalDetalle from "./pages/PersonalDetalle";
 import FinanciamientoForm from "@/pages/FinanciamientoForm";
 import FinanciamientoLanding from "@/pages/FinanciamientoHome";
 import FinanciamientoDetalle from "./pages/FinanciamientoDetalle";
+import ProyectosLanding from "./pages/ProyectosHome";
+import ProyectosForm from "./pages/ProyectosForm";
 
 
 // Definición de rutas
@@ -37,6 +39,8 @@ const router = createBrowserRouter([
       { path: "financiamiento/nuevo", element: <FinanciamientoForm/>}, 
       { path: "financiamiento", element: <FinanciamientoLanding/>},
       { path: "financiamiento/:id", element: <FinanciamientoDetalle/>},
+      { path: "proyectos", element: <ProyectosLanding/>},
+      { path: "proyectos/nuevo", element: <ProyectosForm/>},
 
       { path: "*", element: <NotFound /> },
     ],
