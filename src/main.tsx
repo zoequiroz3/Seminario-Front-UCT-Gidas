@@ -19,6 +19,8 @@ import FinanciamientoLanding from "@/pages/FinanciamientoHome";
 import FinanciamientoDetalle from "./pages/FinanciamientoDetalle";
 import ProyectosLanding from "./pages/ProyectosHome";
 import ProyectosForm from "./pages/ProyectosForm";
+import DocenciaLanding from "./pages/DocenciaHome";
+import DocenciaForm from "./pages/DocenciaForm";
 
 
 // Definición de rutas
@@ -36,12 +38,14 @@ const router = createBrowserRouter([
       { path: "personal", element: <PersonalLanding /> },   // landing
       { path: "personal/nuevo", element: <Personal /> },    // formulario
       { path: "personal/:id", element: <PersonalDetalle/>}, // detalle de personal
+      { path: "investigadores", element: <PersonalLanding presetTipo="INVESTIGADOR" /> },
       { path: "financiamiento/nuevo", element: <FinanciamientoForm/>}, 
       { path: "financiamiento", element: <FinanciamientoLanding/>},
       { path: "financiamiento/:id", element: <FinanciamientoDetalle/>},
       { path: "proyectos", element: <ProyectosLanding/>},
       { path: "proyectos/nuevo", element: <ProyectosForm/>},
-
+      { path: "docenciaInvestigador", element: <DocenciaLanding />},
+      { path: "docenciaInvestigador/nuevo", element: <DocenciaForm />},
       { path: "*", element: <NotFound /> },
     ],
   },
