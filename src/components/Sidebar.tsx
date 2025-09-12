@@ -1,4 +1,3 @@
-// Sidebar.tsx — overlay FULL con submenús anidados (recursivo, type-safe)
 import { Fragment, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, type To } from "react-router-dom";
@@ -6,8 +5,8 @@ import { Menu, X, ChevronDown } from "lucide-react";
 
 type Item = {
   label: string;
-  to?: To;          // puede ser string o { pathname, search, hash }
-  children?: Item[]; // subitems (anidado)
+  to?: To;
+  children?: Item[];
 };
 
 const items: Item[] = [
@@ -49,26 +48,38 @@ const items: Item[] = [
 ];
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(false);
-
-  // qué nodos están expandidos (clave -> boolean)
+  const [isOpen, setIsOpen] = useState(false);     // visible a nivel de clase
+  const [isVisible, setIsVisible] = useState(false); // visible en el DOM
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  // bloquear scroll y cerrar con ESC
+  // ESC para cerrar
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
     document.addEventListener("keydown", onKey);
-    document.body.style.overflow = open ? "hidden" : "";
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Evitar scroll cuando está abierto
+  useEffect(() => {
+    document.body.style.overflow = isVisible ? "hidden" : "";
     return () => {
-      document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [isVisible]);
+
+  const open = () => {
+    setIsVisible(true);
+    setTimeout(() => setIsOpen(true), 10); // darle tiempo a montar antes de animar
+  };
+
+  const close = () => {
+    setIsOpen(false); // activa translate-x
+    setTimeout(() => setIsVisible(false), 300); // luego desmonta
+  };
 
   const toggleNode = (key: string) =>
     setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  // genera una key de string SIEMPRE segura (no usa To directamente)
   const keyFrom = (label: string, to: To | undefined, idx: number, parentKey: string) => {
     const base = `${parentKey}/${idx}-${label}`;
     if (typeof to === "string") return `${base}::${to}`;
@@ -77,7 +88,6 @@ export default function Sidebar() {
     return `${base}::nolink`;
   };
 
-  // RENDER RECURSIVO
   const MenuList = ({
     nodes,
     parentKey = "root",
@@ -86,124 +96,120 @@ export default function Sidebar() {
     nodes: Item[];
     parentKey?: string;
     level?: number;
-  }) => {
-    return (
-      <ul className={level === 0 ? "select-none" : "pl-5 border-l border-black/10"}>
-        {nodes.map((node, idx) => {
-          const hasChildren = !!node.children?.length;
-          const key = keyFrom(node.label, node.to, idx, parentKey);
-          const isOpen = !!expanded[key];
+  }) => (
+    <ul className={level === 0 ? "select-none" : "pl-5 border-l border-black/10"}>
+      {nodes.map((node, idx) => {
+        const hasChildren = !!node.children?.length;
+        const key = keyFrom(node.label, node.to, idx, parentKey);
+        const isNodeOpen = !!expanded[key];
 
-          return (
-            <li key={key} className="mb-1">
-              <div className="flex items-stretch border-b border-black/10">
-                {/* Link (si hay 'to'), sino texto */}
-                {typeof node.to !== "undefined" ? (
-                  <NavLink
-                    to={node.to}
-                    onClick={() => setOpen(false)}
-                    className={({ isActive }) =>
-                      `flex-1 px-3 py-3 hover:bg-black/5 ${
-                        level === 0 ? "text-slate-900" : "text-slate-700"
-                      } ${isActive ? "font-semibold" : ""}`
-                    }
-                    end
-                  >
-                    {node.label}
-                  </NavLink>
-                ) : (
-                  <span
-                    className={`flex-1 px-3 py-3 ${
+        return (
+          <li key={key} className="mb-1">
+            <div className="flex items-stretch border-b border-black/10">
+              {node.to ? (
+                <NavLink
+                  to={node.to}
+                  onClick={close}
+                  className={({ isActive }) =>
+                    `flex-1 px-3 py-3 hover:bg-black/5 ${
                       level === 0 ? "text-slate-900" : "text-slate-700"
-                    }`}
-                  >
-                    {node.label}
-                  </span>
-                )}
-
-                {/* Flecha para desplegar si tiene hijos */}
-                {hasChildren && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleNode(key);
-                    }}
-                    aria-expanded={isOpen}
-                    aria-label={`Desplegar ${node.label}`}
-                    className="px-3 py-3 hover:bg-black/5 text-slate-900"
-                  >
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                )}
-              </div>
-
-              {/* Subárbol */}
-              {hasChildren && isOpen && (
-                <div className="py-2">
-                  <MenuList nodes={node.children!} parentKey={key} level={level + 1} />
-                </div>
+                    } ${isActive ? "font-semibold" : ""}`
+                  }
+                  end
+                >
+                  {node.label}
+                </NavLink>
+              ) : (
+                <span
+                  className={`flex-1 px-3 py-3 ${
+                    level === 0 ? "text-slate-900" : "text-slate-700"
+                  }`}
+                >
+                  {node.label}
+                </span>
               )}
-            </li>
-          );
-        })}
-      </ul>
-    );
-  };
+
+              {hasChildren && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleNode(key);
+                  }}
+                  aria-expanded={isNodeOpen}
+                  aria-label={`Desplegar ${node.label}`}
+                  className="px-3 py-3 hover:bg-black/5 text-slate-900"
+                >
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform duration-300 ${
+                      isNodeOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+              )}
+            </div>
+
+            <div
+              className={`transition-all duration-300 overflow-hidden ${
+                isNodeOpen ? "max-h-[500px] opacity-100 py-2" : "max-h-0 opacity-0"
+              }`}
+            >
+              {hasChildren && (
+                <MenuList nodes={node.children!} parentKey={key} level={level + 1} />
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   const Overlay = (
-    <div
-      className="fixed inset-0 w-screen h-screen z-[9999]"
-      aria-modal="true"
-      role="dialog"
-    >
+    <div className="fixed inset-0 z-[9999]">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/45" onClick={() => setOpen(false)} />
+      <div
+        className="absolute inset-0 bg-black/45 transition-opacity duration-300"
+        onClick={close}
+      />
 
-      {/* Layout del overlay */}
+      {/* Menú deslizante */}
       <div className="absolute inset-0 flex">
-        {/* Panel lateral */}
-        <aside className="h-full w-[320px] sm:w-[360px] md:w-[420px] bg-[#e9eaec] shadow-2xl border-r border-black/10 overflow-y-auto">
-          {/* Header del panel */}
+        <aside
+          className={`h-full w-[320px] sm:w-[360px] md:w-[420px] bg-[#e9eaec] shadow-2xl border-r border-black/10 overflow-y-auto
+            transform transition-transform duration-300
+            ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        >
           <div className="flex items-center justify-between px-5 py-4 border-b border-black/10">
             <span className="font-semibold tracking-wide">MENÚ</span>
             <button
               aria-label="Cerrar menú"
-              onClick={() => setOpen(false)}
+              onClick={close}
               className="p-2 rounded-md hover:bg-black/5"
             >
               <X size={22} />
             </button>
           </div>
-
-          {/* Lista recursiva */}
           <nav className="px-4 py-2">
             <MenuList nodes={items} />
           </nav>
         </aside>
 
-        {/* Zona derecha que cierra al click */}
-        <div className="flex-1 h-full" onClick={() => setOpen(false)} />
+        <div className="flex-1 h-full" onClick={close} />
       </div>
     </div>
   );
 
   return (
     <Fragment>
-      {/* Botón hamburguesa (colocá este componente en tu header) */}
       <button
         aria-label="Abrir menú"
-        onClick={() => setOpen(true)}
+        onClick={open}
         className="p-2 rounded-md hover:bg-slate-100 text-slate-700"
       >
         <Menu size={26} />
       </button>
 
-      {open && createPortal(Overlay, document.body)}
+      {isVisible && createPortal(Overlay, document.body)}
     </Fragment>
   );
 }

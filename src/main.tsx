@@ -22,6 +22,8 @@ import ProyectosForm from "./pages/ProyectosForm";
 import DocenciaLanding from "./pages/DocenciaHome";
 import DocenciaForm from "./pages/DocenciaForm";
 import DocenciaDetalle from "./pages/DocenciaDetalle";
+import TrabajosReunionHome from "./pages/TrabajosReunionHome";
+import TrabajosReunionForm from "./pages/TrabajosReunionForm";
 
 
 // Definición de rutas
@@ -48,6 +50,8 @@ const router = createBrowserRouter([
       { path: "docenciaInvestigador", element: <DocenciaLanding />},
       { path: "docenciaInvestigador/nuevo", element: <DocenciaForm />},
       { path: "docenciaInvestigador/:id", element: <DocenciaDetalle/>},
+      { path: "trabajosCientInv", element: <TrabajosReunionHome/>},
+      { path: "trabajosCientInv/nuevo", element: <TrabajosReunionForm/>},
       { path: "*", element: <NotFound /> },
     ],
   },

@@ -4,6 +4,8 @@ const MOCK_KEY = "gidas_trabajos_reunion_mock";
 
 export type TipoParticipacion = "Poster" | "Oral" | "Otro";
 
+export type TipoNacionalidad = "Nacional" | "Internacional";
+
 export type TrabajoReunion = {
   id: string;
   investigadorId: string;
@@ -12,6 +14,7 @@ export type TrabajoReunion = {
   fecha: string;        // ISO
   lugar?: string;
   tipo: TipoParticipacion;
+  tipoNacionalidad: TipoNacionalidad;
 };
 
 function delay(ms=250){ return new Promise(r=>setTimeout(r,ms)); }
