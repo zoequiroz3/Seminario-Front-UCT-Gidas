@@ -1,13 +1,12 @@
-// src/pages/FinanciamientoForm.tsx
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
 import {
-  upsertFinanciamiento,
-  type Financiamiento,
-} from "@/services/financiamientoServices";
+  upsertEquipamiento,
+  type Equipamiento,
+} from "@/services/equipamientoServices";
 
 // helpers fecha (local, sin timezone shift)
 const parseYMD = (s?: string | null): Date | null => {
@@ -24,11 +23,11 @@ const toYMD = (date: Date | null): string => {
   return `${y}-${m}-${d}`;
 };
 
-export default function FinanciamientoForm() {
+export default function EquipamientoForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  const [data, setData] = useState<Partial<Financiamiento>>({
+  const [data, setData] = useState<Partial<Equipamiento>>({
     id: "",
     denominacion: "",
     cantidadAdquirida: undefined,
@@ -40,20 +39,20 @@ export default function FinanciamientoForm() {
   });
 
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: (payload: Financiamiento) => upsertFinanciamiento(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["financiamientos"] }),
+    mutationFn: (payload: Equipamiento) => upsertEquipamiento(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipamientos"] }),
   });
 
   // Handlers seguros: leen el valor ANTES de setState
   const changeText =
-    (k: keyof Financiamiento) =>
+    (k: keyof Equipamiento) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const v = e.currentTarget.value;
       setData((d) => ({ ...d, [k]: v }));
     };
 
   const changeEntero =
-    (k: keyof Financiamiento) =>
+    (k: keyof Equipamiento) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const v = e.currentTarget.value;
       setData((d) => ({
@@ -63,7 +62,7 @@ export default function FinanciamientoForm() {
     };
 
   const changeDecimal =
-    (k: keyof Financiamiento) =>
+    (k: keyof Equipamiento) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const v = e.currentTarget.value;
       setData((d) => ({
@@ -75,7 +74,7 @@ export default function FinanciamientoForm() {
   const setFecha = (dt: Date | null) =>
     setData((d) => ({ ...d, fechaIncorporacion: toYMD(dt) }));
 
-  function buildPayload(): Financiamiento {
+  function buildPayload(): Equipamiento {
     const cant = Number(data.cantidadAdquirida);
     const monto = Number(data.montoInvertido);
 
@@ -108,7 +107,7 @@ export default function FinanciamientoForm() {
     e.preventDefault();
     try {
       await mutateAsync(buildPayload());
-      navigate("/financiamiento", { replace: true });
+      navigate("/equipamiento", { replace: true });
     } catch (err: any) {
       alert(err?.message ?? "No se pudo guardar.");
     }
@@ -117,7 +116,7 @@ export default function FinanciamientoForm() {
   return (
     <section>
       <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
-        Carga de datos de Objetos y Financiamiento
+        Carga de datos de Equipamiento
       </h2>
 
       <form
@@ -178,12 +177,12 @@ export default function FinanciamientoForm() {
           />
         </Field>
 
-        <Field label="Fuente de financiamiento">
+        <Field label="Fuente de equipamiento">
           <input
             className="input"
             value={data.fuenteFinanciamiento ?? ""}
             onChange={changeText("fuenteFinanciamiento")}
-            placeholder="Del bien o servicio"
+            placeholder="Organismo/Programa"
           />
         </Field>
 

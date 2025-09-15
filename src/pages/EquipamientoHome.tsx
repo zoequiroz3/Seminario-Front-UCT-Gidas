@@ -1,29 +1,28 @@
-// src/pages/FinanciamientoLanding.tsx
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Tarjeta from "@/components/Tarjeta";
 import {
-  getFinanciamientos,
-  type Financiamiento,
-} from "@/services/financiamientoServices";
+  getEquipamiento,
+  type Equipamiento,
+} from "@/services/equipamientoServices";
 
-function subtitleLine(f: Financiamiento): string {
+function subtitleLine(e: Equipamiento): string {
   const fmt = (s?: string) => {
     if (!s) return "—";
     const [y, m, d] = s.split("-");
     return `${d}/${m}/${y}`;
   };
-  const fecha = fmt(f.fechaIncorporacion);
+  const fecha = fmt(e.fechaIncorporacion);
   return `Fecha: ${fecha}`;
 }
 
-export default function FinanciamientoLanding() {
+export default function EquipamientoLanding() {
   const navigate = useNavigate();
 
   const { data: list = [], isLoading, isError } = useQuery({
-    queryKey: ["financiamientos"],
-    queryFn: getFinanciamientos,
+    queryKey: ["equipamiento"],
+    queryFn: getEquipamiento,
     staleTime: 60_000,
   });
 
@@ -32,9 +31,9 @@ export default function FinanciamientoLanding() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
-          Objetos y Financiamiento
+          Equipamiento
         </h2>
-        <Button variant="primary" onClick={() => navigate("/financiamiento/nuevo")}>
+        <Button variant="primary" onClick={() => navigate("/equipamiento/nuevo")}>
           Agregar nuevo
         </Button>
       </div>
@@ -48,15 +47,15 @@ export default function FinanciamientoLanding() {
             <p className="text-slate-500">Aún no hay registros.</p>
           ) : (
             <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {list.map((f) => (
-                <Tarjeta<Financiamiento>
-                  key={f.id}
-                  item={f}
+              {list.map((e) => (
+                <Tarjeta<Equipamiento>
+                  key={e.id}
+                  item={e}
                   title={(x) => x.denominacion}
                   subtitle={subtitleLine}
                   titleClassName="text-xl md:text-2xl"
                   subtitleClassName="text-base md:text-lg"
-                  onClick={() => navigate(`/financiamiento/${f.id}`)}
+                  onClick={() => navigate(`/equipamiento/${e.id}`)}
                 />
               ))}
             </div>

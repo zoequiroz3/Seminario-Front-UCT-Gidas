@@ -14,9 +14,6 @@ import NotFound from "@/pages/NotFound";
 import PersonalLanding from "@/pages/PersonalHome"; // título + botón Agregar + Volver
 import Personal from "@/pages/PersonalForm";               // formulario de personal
 import PersonalDetalle from "./pages/PersonalDetalle";
-import FinanciamientoForm from "@/pages/FinanciamientoForm";
-import FinanciamientoLanding from "@/pages/FinanciamientoHome";
-import FinanciamientoDetalle from "./pages/FinanciamientoDetalle";
 import ProyectosLanding from "./pages/ProyectosHome";
 import ProyectosForm from "./pages/ProyectosForm";
 import DocenciaLanding from "./pages/DocenciaHome";
@@ -25,6 +22,12 @@ import DocenciaDetalle from "./pages/DocenciaDetalle";
 import TrabajosReunionHome from "./pages/TrabajosReunionHome";
 import TrabajosReunionForm from "./pages/TrabajosReunionForm";
 import ErogacionesLanding from "./pages/ErogacionesHome";
+import ErogacionesForm from "./pages/ErogacionesForm";
+import ErogacionesDetalle from "./pages/ErogacionesDetalle";
+import EquipamientoLanding from "./pages/EquipamientoHome";
+import EquipamientoForm from "./pages/EquipamientoForm";
+import EquipamientoDetalle from "./pages/EquipamientoDetalle";
+import ObjetosLanding from "./pages/ObjetosFinHome";
 
 
 // Definición de rutas
@@ -43,9 +46,6 @@ const router = createBrowserRouter([
       { path: "personal/nuevo", element: <Personal /> },    // formulario
       { path: "personal/:id", element: <PersonalDetalle/>}, // detalle de personal
       { path: "investigadores", element: <PersonalLanding presetTipo="INVESTIGADOR" /> },
-      { path: "financiamiento/nuevo", element: <FinanciamientoForm/>}, 
-      { path: "financiamiento", element: <FinanciamientoLanding/>},
-      { path: "financiamiento/:id", element: <FinanciamientoDetalle/>},
       { path: "proyectos", element: <ProyectosLanding/>},
       { path: "proyectos/nuevo", element: <ProyectosForm/>},
       { path: "docenciaInvestigador", element: <DocenciaLanding />},
@@ -54,6 +54,12 @@ const router = createBrowserRouter([
       { path: "trabajosCientInv", element: <TrabajosReunionHome/>},
       { path: "trabajosCientInv/nuevo", element: <TrabajosReunionForm/>},
       { path: "erogaciones", element: <ErogacionesLanding/>},
+      { path: "erogaciones/nuevo", element: <ErogacionesForm/>},
+      { path: "erogaciones/:id", element: <ErogacionesDetalle/>},
+      { path: "equipamiento", element: <EquipamientoLanding/>},
+      { path: "equipamiento/nuevo", element: <EquipamientoForm/>},
+      { path: "equipamiento/:id", element: <EquipamientoDetalle/>},
+      { path: "objetosfinanciamiento", element: <ObjetosLanding/>},
       { path: "*", element: <NotFound /> },
     ],
   },

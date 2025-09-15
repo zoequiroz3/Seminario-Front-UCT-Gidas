@@ -1,14 +1,13 @@
-// src/pages/FinanciamientoDetalle.tsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
 import {
-  getFinanciamientos,
-  upsertFinanciamiento,
-  type Financiamiento,
-} from "@/services/financiamientoServices";
+  getEquipamiento,
+  upsertEquipamiento,
+  type Equipamiento,
+} from "@/services/equipamientoServices";
 
 // ---- helpers de fecha (local, sin desfases) ----
 const parseYMD = (s?: string | null): Date | null => {
@@ -30,27 +29,32 @@ const fmtES = (ymd?: string) => {
   return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
 };
 const fmtMoney = (n?: number) =>
-  typeof n === "number" ? new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 }).format(n) : "—";
+  typeof n === "number"
+    ? new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: "ARS",
+        maximumFractionDigits: 2,
+      }).format(n)
+    : "—";
 
-// Draft local (todos opcionales)
-type FDraft = Partial<Financiamiento>;
+// Draft local
+type EDraft = Partial<Equipamiento>;
 
-export default function FinanciamientoDetalle() {
+export default function EquipamientoDetalle() {
   const { id } = useParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
-  // Traemos lista (mock o API real)
   const { data: list = [], isLoading, isError } = useQuery({
-    queryKey: ["financiamientos"],
-    queryFn: getFinanciamientos,
+    queryKey: ["equipamiento"],
+    queryFn: getEquipamiento,
     staleTime: 60_000,
   });
 
   const item = list.find((x) => x.id === id);
 
   const [editing, setEditing] = useState(false);
-  const [data, setData] = useState<FDraft | null>(null);
+  const [data, setData] = useState<EDraft | null>(null);
 
   useEffect(() => {
     if (item) {
@@ -58,42 +62,42 @@ export default function FinanciamientoDetalle() {
     }
   }, [item]);
 
-  // Mutación de guardado
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: (payload: Financiamiento) => upsertFinanciamiento(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["financiamientos"] }),
+    mutationFn: (payload: Equipamiento) => upsertEquipamiento(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipamiento"] }),
   });
 
-  // Handlers seguros (leer value ANTES de setState)
   const changeText =
-    (k: keyof Financiamiento) =>
+    (k: keyof Equipamiento) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const v = e.currentTarget.value;
       setData((d) => (d ? { ...d, [k]: v } : d));
     };
 
   const changeEntero =
-    (k: keyof Financiamiento) =>
+    (k: keyof Equipamiento) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const v = e.currentTarget.value;
-      setData((d) => (d ? { ...d, [k]: v === "" ? undefined : Math.trunc(Number(v)) } : d));
+      setData((d) =>
+        d ? { ...d, [k]: v === "" ? undefined : Math.trunc(Number(v)) } : d
+      );
     };
 
   const changeDecimal =
-    (k: keyof Financiamiento) =>
+    (k: keyof Equipamiento) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const v = e.currentTarget.value;
-      setData((d) => (d ? { ...d, [k]: v === "" ? undefined : Number(v) } : d));
+      setData((d) =>
+        d ? { ...d, [k]: v === "" ? undefined : Number(v) } : d
+      );
     };
 
   const setFechaIncorporacion = (dt: Date | null) =>
     setData((d) => (d ? { ...d, fechaIncorporacion: toYMD(dt) } : d));
 
-  // Guardar cambios
   const save = async () => {
     if (!data || !item) return;
 
-    // Validaciones mínimas
     const cant = Number(data.cantidadAdquirida);
     const monto = Number(data.montoInvertido);
 
@@ -114,9 +118,9 @@ export default function FinanciamientoDetalle() {
       return;
     }
 
-    const payload: Financiamiento = {
+    const payload: Equipamiento = {
       id: item.id,
-      denominacion: item.denominacion, // bloqueada en edición
+      denominacion: item.denominacion,
       cantidadAdquirida: cant,
       montoInvertido: monto,
       fechaIncorporacion: data.fechaIncorporacion!,
@@ -129,17 +133,26 @@ export default function FinanciamientoDetalle() {
     setEditing(false);
   };
 
-  // --------- UI ---------
-  if (isLoading) return <div className="grid place-items-center min-h-[50vh]">Cargando…</div>;
-  if (isError)   return <div className="grid place-items-center min-h-[50vh]">Error al cargar.</div>;
+  if (isLoading)
+    return <div className="grid place-items-center min-h-[50vh]">Cargando…</div>;
+  if (isError)
+    return (
+      <div className="grid place-items-center min-h-[50vh]">
+        Error al cargar.
+      </div>
+    );
   if (!item || !data) {
     return (
       <section>
-        <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">Objetos y Financiamiento</h2>
+        <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
+          Equipamiento
+        </h2>
         <div className="rounded-xl border border-slate-200 bg-white/80 p-6 shadow-sm">
           No se encontró el registro.
           <div className="mt-6">
-            <Button variant="secondary" onClick={() => navigate(-1)}>Volver</Button>
+            <Button variant="secondary" onClick={() => navigate(-1)}>
+              Volver
+            </Button>
           </div>
         </div>
       </section>
@@ -148,12 +161,15 @@ export default function FinanciamientoDetalle() {
 
   return (
     <section className="flex flex-col gap-6">
-      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">Objetos y Financiamiento</h2>
+      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
+        Equipamiento
+      </h2>
 
       {!editing ? (
-        // --------- VISTA (detalle) ---------
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <h3 className="md:text-[25px] text-lg font-semibold mb-2">{item.denominacion}</h3>
+          <h3 className="md:text-[25px] text-lg font-semibold mb-2">
+            {item.denominacion}
+          </h3>
 
           <dl className="text-sm space-y-2">
             <Field label="Cantidad adquirida" value={String(item.cantidadAdquirida ?? "—")} />
@@ -170,9 +186,11 @@ export default function FinanciamientoDetalle() {
           </div>
         </article>
       ) : (
-        // --------- EDICIÓN (form inline) ---------
         <form
-          onSubmit={(e) => { e.preventDefault(); void save(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void save();
+          }}
           className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
         >
           <Field label="Denominación">
@@ -242,12 +260,17 @@ export default function FinanciamientoDetalle() {
           </Field>
 
           <div className="mt-8 flex items-center justify-between">
-            <Button type="button" variant="secondary" onClick={() => navigate(-1)}>Volver</Button>
+            <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+              Volver
+            </Button>
             <div className="flex gap-2">
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => { setEditing(false); setData({ ...item }); }}
+                onClick={() => {
+                  setEditing(false);
+                  setData({ ...item });
+                }}
               >
                 Cancelar
               </Button>

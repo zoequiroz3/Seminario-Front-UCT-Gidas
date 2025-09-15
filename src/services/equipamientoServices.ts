@@ -1,4 +1,3 @@
-// src/services/financiamientoServices.ts
 import { http } from "@/lib/http";
 
 // ----------------- Tipos -----------------
@@ -6,7 +5,7 @@ import { http } from "@/lib/http";
  * Formato recomendado para la fecha: "YYYY-MM-DD"
  * (coincide con lo que envía el formulario).
  */
-export type Financiamiento = {
+export type Equipamiento = {
   id: string;                  // generado en el mock si no existe
   denominacion: string;        // nombre del bien o servicio
   cantidadAdquirida: number;   // entero
@@ -19,20 +18,20 @@ export type Financiamiento = {
 
 // ----------------- Config API / Mock -----------------
 const BASE = import.meta.env.VITE_API_URL ?? "";
-const MOCK_KEY = "gidas_financiamiento_lista_mock";
+const MOCK_KEY = "gidas_equipamiento_lista_mock";
 
 function delay(ms = 300) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
 // ----------------- MOCK (sin backend) -----------------
-async function mockList(): Promise<Financiamiento[]> {
+async function mockList(): Promise<Equipamiento[]> {
   await delay();
   const raw = localStorage.getItem(MOCK_KEY);
-  return raw ? (JSON.parse(raw) as Financiamiento[]) : [];
+  return raw ? (JSON.parse(raw) as Equipamiento[]) : [];
 }
 
-async function mockUpsert(payload: Financiamiento): Promise<Financiamiento> {
+async function mockUpsert(payload: Equipamiento): Promise<Equipamiento> {
   await delay();
   const lista = await mockList();
 
@@ -58,20 +57,20 @@ async function mockDelete(id: string): Promise<void> {
 }
 
 // ----------------- API real -----------------
-export async function getFinanciamientos() {
+export async function getEquipamiento() {
   if (!BASE) return mockList();
-  return http<Financiamiento[]>("/api/financiamientos"); // ajustá la ruta si tu API usa otra
+  return http<Equipamiento[]>("/api/equipamiento");
 }
 
-export async function upsertFinanciamiento(payload: Financiamiento) {
+export async function upsertEquipamiento(payload: Equipamiento) {
   if (!BASE) return mockUpsert(payload);
-  return http<Financiamiento>(payload.id ? `/api/financiamientos/${payload.id}` : "/api/financiamientos", {
+  return http<Equipamiento>(payload.id ? `/api/equipamiento/${payload.id}` : "/api/equipamiento", {
     method: payload.id ? "PUT" : "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function deleteFinanciamiento(id: string) {
+export async function deleteEquipamiento(id: string) {
   if (!BASE) return mockDelete(id);
-  return http<void>(`/api/financiamientos/${id}`, { method: "DELETE" });
+  return http<void>(`/api/equipamiento/${id}`, { method: "DELETE" });
 }

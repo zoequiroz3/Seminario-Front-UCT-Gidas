@@ -38,9 +38,9 @@ const items: Item[] = [
     children: [{ label: "Ver todas las Actividades", to: "/actividades" }],
   },
   {
-    label: "Financiamiento",
+    label: "Objetos y Financiamiento",
     children: [
-      { label: "Ver todos los objetos y financiamiento", to: "/financiamiento" },
+      { label: "Ver todos los objetos y financiamiento", to: "/objetosfinanciamiento" },
       { label: "Equipamiento", to: "/equipamiento" },
       { label: "Erogaciones", to: "/erogaciones" },
     ],

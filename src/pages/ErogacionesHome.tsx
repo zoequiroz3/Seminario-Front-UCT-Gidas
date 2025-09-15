@@ -41,8 +41,8 @@ export default function ErogacionesLanding() {
                 <Tarjeta<Erogaciones>
                   key={e.id}
                   item={e}
-                  title={(x) => `Erogación N° ${x.numeroErogacion}`}
-                  subtitle={(x) => x.fuenteErogaciones || "—"}
+                  title={(x) => `Erogación N° ${String(x.numeroErogacion).padStart(6, "0")}`}
+                  subtitle={(x) => x.tipoErogacion || "—"}
                   titleClassName="text-xl md:text-2xl"
                   subtitleClassName="text-base md:text-lg"
                   onClick={() => navigate(`/erogaciones/${e.id}`)}
