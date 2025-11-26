@@ -28,6 +28,7 @@ import EquipamientoLanding from "./pages/EquipamientoHome";
 import EquipamientoForm from "./pages/EquipamientoForm";
 import EquipamientoDetalle from "./pages/EquipamientoDetalle";
 import ObjetosLanding from "./pages/ObjetosFinHome";
+import SearchPage from "./pages/SearchPage";
 
 
 // Definición de rutas
@@ -37,6 +38,8 @@ const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <Home /> },
+
+      { path: "busqueda", element: <SearchPage /> },
 
       // UCT
       { path: "uct/nueva", element: <UctForm /> },
@@ -60,6 +63,7 @@ const router = createBrowserRouter([
       { path: "equipamiento/nuevo", element: <EquipamientoForm/>},
       { path: "equipamiento/:id", element: <EquipamientoDetalle/>},
       { path: "objetosfinanciamiento", element: <ObjetosLanding/>},
+      { path: "busqueda", element: <SearchPage /> },
       { path: "*", element: <NotFound /> },
     ],
   },

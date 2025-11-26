@@ -45,6 +45,7 @@ const items: Item[] = [
       { label: "Erogaciones", to: "/erogaciones" },
     ],
   },
+  { label: "Búsqueda", to: "/busqueda"},
 ];
 
 export default function Sidebar() {
