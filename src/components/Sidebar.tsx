@@ -45,6 +45,12 @@ const items: Item[] = [
       { label: "Erogaciones", to: "/erogaciones" },
     ],
   },
+  {
+    label: "Documentación y Biblioteca",
+    children: [
+      { label: "Ver todo en documentación y biblioteca", to: "/documentacion" }
+    ],
+  },
   { label: "Búsqueda", to: "/busqueda"},
 ];
 

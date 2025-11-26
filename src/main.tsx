@@ -29,6 +29,9 @@ import EquipamientoForm from "./pages/EquipamientoForm";
 import EquipamientoDetalle from "./pages/EquipamientoDetalle";
 import ObjetosLanding from "./pages/ObjetosFinHome";
 import SearchPage from "./pages/SearchPage";
+import DocumentacionDetalle from "./pages/DocumentacionDetalle";
+import DocumentacionForm from "./pages/DocumentacionForm";
+import DocumentacionLanding from "./pages/DocumentacionHome";
 
 
 // Definición de rutas
@@ -64,6 +67,9 @@ const router = createBrowserRouter([
       { path: "equipamiento/:id", element: <EquipamientoDetalle/>},
       { path: "objetosfinanciamiento", element: <ObjetosLanding/>},
       { path: "busqueda", element: <SearchPage /> },
+      { path: "documentacion", element: <DocumentacionLanding/>},
+      { path: "documentacion/nuevo", element: <DocumentacionForm/>},
+      { path: "documentacion/:id", element: <DocumentacionDetalle/>},
       { path: "*", element: <NotFound /> },
     ],
   },
