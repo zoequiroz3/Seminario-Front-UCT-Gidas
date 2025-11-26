@@ -10,7 +10,13 @@ import Home from "@/pages/Home";
 import UctForm from "@/pages/UctForm";
 import NotFound from "@/pages/NotFound";
 
-//nuevas páginas
+// auth
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import { AuthProvider } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+// nuevas páginas
 import PersonalLanding from "@/pages/PersonalHome"; // título + botón Agregar + Volver
 import Personal from "@/pages/PersonalForm";               // formulario de personal
 import PersonalDetalle from "./pages/PersonalDetalle";
@@ -33,12 +39,20 @@ import DocumentacionDetalle from "./pages/DocumentacionDetalle";
 import DocumentacionForm from "./pages/DocumentacionForm";
 import DocumentacionLanding from "./pages/DocumentacionHome";
 
-
 // Definición de rutas
 const router = createBrowserRouter([
+  // rutas públicas (sin login)
+  { path: "/login", element: <Login /> },
+  { path: "/registro", element: <Register /> },
+
+  // rutas protegidas (requieren estar logueado)
   {
     path: "/",
-    element: <AppLayout />,
+    element: (
+      <ProtectedRoute>
+        <AppLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Home /> },
 
@@ -50,26 +64,40 @@ const router = createBrowserRouter([
       // Personal
       { path: "personal", element: <PersonalLanding /> },   // landing
       { path: "personal/nuevo", element: <Personal /> },    // formulario
-      { path: "personal/:id", element: <PersonalDetalle/>}, // detalle de personal
+      { path: "personal/:id", element: <PersonalDetalle /> }, // detalle de personal
       { path: "investigadores", element: <PersonalLanding presetTipo="INVESTIGADOR" /> },
-      { path: "proyectos", element: <ProyectosLanding/>},
-      { path: "proyectos/nuevo", element: <ProyectosForm/>},
-      { path: "docenciaInvestigador", element: <DocenciaLanding />},
-      { path: "docenciaInvestigador/nuevo", element: <DocenciaForm />},
-      { path: "docenciaInvestigador/:id", element: <DocenciaDetalle/>},
-      { path: "trabajosCientInv", element: <TrabajosReunionHome/>},
-      { path: "trabajosCientInv/nuevo", element: <TrabajosReunionForm/>},
-      { path: "erogaciones", element: <ErogacionesLanding/>},
-      { path: "erogaciones/nuevo", element: <ErogacionesForm/>},
-      { path: "erogaciones/:id", element: <ErogacionesDetalle/>},
-      { path: "equipamiento", element: <EquipamientoLanding/>},
-      { path: "equipamiento/nuevo", element: <EquipamientoForm/>},
-      { path: "equipamiento/:id", element: <EquipamientoDetalle/>},
-      { path: "objetosfinanciamiento", element: <ObjetosLanding/>},
-      { path: "busqueda", element: <SearchPage /> },
-      { path: "documentacion", element: <DocumentacionLanding/>},
-      { path: "documentacion/nuevo", element: <DocumentacionForm/>},
-      { path: "documentacion/:id", element: <DocumentacionDetalle/>},
+
+      // Proyectos
+      { path: "proyectos", element: <ProyectosLanding /> },
+      { path: "proyectos/nuevo", element: <ProyectosForm /> },
+
+      // Docencia
+      { path: "docenciaInvestigador", element: <DocenciaLanding /> },
+      { path: "docenciaInvestigador/nuevo", element: <DocenciaForm /> },
+      { path: "docenciaInvestigador/:id", element: <DocenciaDetalle /> },
+
+      // Trabajos en reuniones científicas
+      { path: "trabajosCientInv", element: <TrabajosReunionHome /> },
+      { path: "trabajosCientInv/nuevo", element: <TrabajosReunionForm /> },
+
+      // Erogaciones / Compras
+      { path: "erogaciones", element: <ErogacionesLanding /> },
+      { path: "erogaciones/nuevo", element: <ErogacionesForm /> },
+      { path: "erogaciones/:id", element: <ErogacionesDetalle /> },
+
+      // Equipamiento
+      { path: "equipamiento", element: <EquipamientoLanding /> },
+      { path: "equipamiento/nuevo", element: <EquipamientoForm /> },
+      { path: "equipamiento/:id", element: <EquipamientoDetalle /> },
+
+      // Objetos y financiamiento
+      { path: "objetosfinanciamiento", element: <ObjetosLanding /> },
+
+      // Documentación
+      { path: "documentacion", element: <DocumentacionLanding /> },
+      { path: "documentacion/nuevo", element: <DocumentacionForm /> },
+      { path: "documentacion/:id", element: <DocumentacionDetalle /> },
+
       { path: "*", element: <NotFound /> },
     ],
   },
@@ -82,7 +110,9 @@ const queryClient = new QueryClient();
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>
 );
