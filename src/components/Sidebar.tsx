@@ -182,21 +182,22 @@ export default function Sidebar() {
       {/* Menú deslizante */}
       <div className="absolute inset-0 flex">
         <aside
-          className={`h-full w-[320px] sm:w-[360px] md:w-[420px] bg-[#e9eaec] shadow-2xl border-r border-black/10 overflow-y-auto
+          className={`h-full w-[240px] sm:w-[240px] md:w-[260px] bg-[#e9eaec] shadow-2xl border-r border-black/10 overflow-y-auto
             transform transition-transform duration-300
             ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
+
           <div className="flex items-center justify-between px-5 py-4 border-b border-black/10">
-            <span className="font-semibold tracking-wide">MENÚ</span>
+            <span className="font-semibold tracking-wide text-sm">MENÚ</span>
             <button
               aria-label="Cerrar menú"
               onClick={close}
               className="p-2 rounded-md hover:bg-black/5"
             >
-              <X size={22} />
+              <X size={18} />
             </button>
           </div>
-          <nav className="px-4 py-2">
+          <nav className="px-4 py-2 text-xs">
             <MenuList nodes={items} />
           </nav>
         </aside>
@@ -213,7 +214,7 @@ export default function Sidebar() {
         onClick={open}
         className="p-2 rounded-md hover:bg-slate-100 text-slate-700"
       >
-        <Menu size={26} />
+        <Menu size={18} />
       </button>
 
       {isVisible && createPortal(Overlay, document.body)}

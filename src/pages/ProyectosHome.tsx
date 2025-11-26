@@ -29,48 +29,64 @@ export default function ProyectosLanding() {
   });
 
   return (
-    <section className="w-full min-h-[calc(100vh-96px)] px-10 md:px-5 lg:px-1 py-2 flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
-          Proyectos
-        </h2>
-        <Button variant="primary" onClick={() => navigate("/proyectos/nuevo")}>
-          Agregar nuevo
-        </Button>
-      </div>
+    <section className="w-full min-h-[calc(100vh-80px)] px-4 md:px-3 lg:px-2 py-2 flex flex-col text-sm">
+  {/* Header */}
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+      Proyectos
+    </h2>
 
-      {/* Contenido */}
-      <div className="mt-8 flex-1">
-        {isLoading && <p className="text-slate-500">Cargando…</p>}
-        {isError && <p className="text-red-600">No se pudo cargar la lista.</p>}
-        {!isLoading && !isError && (
-          list.length === 0 ? (
-            <p className="text-slate-500">Aún no hay registros.</p>
-          ) : (
-            <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {list.map((p) => (
-                <Tarjeta<Proyecto>
-                  key={p.id}
-                  item={p}
-                  title={(x) => x.nombreProyecto}
-                  subtitle={subtitleLine}
-                  titleClassName="text-xl md:text-2xl"
-                  subtitleClassName="text-base md:text-lg"
-                  onClick={() => navigate(`/proyectos/${p.id}`)}
-                />
-              ))}
-            </div>
-          )
-        )}
-      </div>
+    <Button
+      variant="primary"
+      size="sm"
+      className="px-3 py-1.5 text-xs"
+      onClick={() => navigate("/proyectos/nuevo")}
+    >
+      Agregar nuevo
+    </Button>
 
-      {/* Footer */}
-      <div className="pt-10">
-        <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-          Volver
-        </Button>
-      </div>
-    </section>
+  </div>
+
+  {/* Contenido */}
+  <div className="mt-2 flex-1">
+    {isLoading && <p className="text-slate-500 text-sm">Cargando…</p>}
+    {isError && <p className="text-red-600 text-sm">No se pudo cargar la lista.</p>}
+
+    {!isLoading && !isError && (
+      list.length === 0 ? (
+        <p className="text-slate-500 text-sm">Aún no hay registros.</p>
+      ) : (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {list.map((p) => (
+            <Tarjeta<Proyecto>
+              key={p.id}
+              item={p}
+              title={(x) => x.nombreProyecto}
+              subtitle={subtitleLine}
+              titleClassName="text-lg"
+              subtitleClassName="text-xs text-slate-600"
+              onClick={() => navigate(`/proyectos/${p.id}`)}
+            />
+          ))}
+        </div>
+      )
+    )}
+  </div>
+
+  {/* Footer */}
+  <div className="pt-6">
+    <Button
+  type="button"
+  variant="secondary"
+  size="sm"
+  className="px-3 py-1.5 text-xs"
+  onClick={() => navigate(-1)}
+>
+  Volver
+</Button>
+
+  </div>
+</section>
+
   );
 }

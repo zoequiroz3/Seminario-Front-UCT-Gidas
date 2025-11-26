@@ -118,89 +118,101 @@ export default function ProyectosForm() {
   };
 
   return (
-    <section>
-      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
-        Carga de Proyectos
-      </h2>
+    <section className="px-4 py-3 w-full text-sm">
+  <h2 className="text-2xl md:text-3xl font-semibold leading-none mb-6">
+    Carga de Proyectos
+  </h2>
 
-      <form
-        onSubmit={onSubmit}
-        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm space-y-8"
+  <form
+    onSubmit={onSubmit}
+    className="rounded-xl border border-slate-200 bg-white/70 p-5 shadow-sm space-y-5"
+  >
+    <Field label="Nombre del proyecto">
+      <input
+        className="input h-9 text-sm"
+        value={data.nombreProyecto ?? ""}
+        onChange={changeText("nombreProyecto")}
+        placeholder="Ej. Plataforma BI para GIDAS"
+      />
+    </Field>
+
+    <Field label="Tipo de proyecto">
+      <input
+        className="input h-9 text-sm"
+        value={data.tipoProyecto ?? ""}
+        onChange={changeText("tipoProyecto")}
+        placeholder="Ej. Investigación, Desarrollo, Extensión…"
+      />
+    </Field>
+
+    <Field label="Código del proyecto">
+      <input
+        className="input h-9 text-sm"
+        value={data.codigoProyecto ?? ""}
+        onChange={changeText("codigoProyecto")}
+        placeholder="Ej. GIDAS-PRJ-001"
+      />
+    </Field>
+
+    <Field label="Fecha de inicio">
+      <DatePicker
+        value={parseYMD(data.fechaInicio)}
+        onChange={setFechaInicio}
+        helperText="DD/MM/AAAA"
+        className="input h-9 text-sm"
+      />
+    </Field>
+
+    <Field label="Fecha de finalización">
+      <DatePicker
+        value={parseYMD(data.fechaFinalizacion)}
+        onChange={setFechaFinalizacion}
+        helperText="DD/MM/AAAA"
+        className="input h-9 text-sm"
+      />
+    </Field>
+
+    <Field label="Fuente de financiamiento">
+      <input
+        className="input h-9 text-sm"
+        value={data.fuenteFinanciamiento ?? ""}
+        onChange={changeText("fuenteFinanciamiento")}
+        placeholder="Ej. CONICET, UNLP, BID…"
+      />
+    </Field>
+
+    <div className="pt-2 flex items-center justify-between">
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() => navigate(-1)}
+        size="sm"
+        className="px-3 py-1.5 text-sm"
       >
-        <Field label="Nombre del proyecto">
-          <input
-            className="input"
-            value={data.nombreProyecto ?? ""}
-            onChange={changeText("nombreProyecto")}
-            placeholder="Ej. Plataforma BI para GIDAS"
-          />
-        </Field>
+        Volver
+      </Button>
 
-        <Field label="Tipo de proyecto">
-          <input
-            className="input"
-            value={data.tipoProyecto ?? ""}
-            onChange={changeText("tipoProyecto")}
-            placeholder="Ej. Investigación, Desarrollo, Extensión…"
-          />
-        </Field>
+      <Button
+        type="submit"
+        disabled={isPending}
+        size="sm"
+        className="px-3 py-1.5 text-sm"
+      >
+        {isPending ? "Guardando…" : "Cargar"}
+      </Button>
+    </div>
+  </form>
+</section>
 
-        <Field label="Código del proyecto">
-          <input
-            className="input"
-            value={data.codigoProyecto ?? ""}
-            onChange={changeText("codigoProyecto")}
-            placeholder="Ej. GIDAS-PRJ-001"
-          />
-        </Field>
-
-        <Field label="Fecha de inicio">
-          <DatePicker
-            value={parseYMD(data.fechaInicio)}
-            onChange={setFechaInicio}
-            label=""
-            helperText="DD/MM/AAAA"
-            className="input"
-          />
-        </Field>
-
-        <Field label="Fecha de finalización">
-          <DatePicker
-            value={parseYMD(data.fechaFinalizacion)}
-            onChange={setFechaFinalizacion}
-            label=""
-            helperText="DD/MM/AAAA"
-            className="input"
-          />
-        </Field>
-
-        <Field label="Fuente de financiamiento">
-          <input
-            className="input"
-            value={data.fuenteFinanciamiento ?? ""}
-            onChange={changeText("fuenteFinanciamiento")}
-            placeholder="Ej. CONICET, UNLP, BID…"
-          />
-        </Field>
-
-        <div className="mt-8 flex items-center justify-between">
-          <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-            Volver
-          </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Guardando…" : "Cargar"}
-          </Button>
-        </div>
-      </form>
-    </section>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <label className="md:text-[17px] block text-sm font-medium mb-4">{label}</label>
+    <div className="space-y-1">
+      <label className="text-xs font-medium">{label}</label>
       {children}
     </div>
   );
 }
+
