@@ -34,7 +34,7 @@ const toYMD = (date: Date | null): string => {
 
 type TrabajoDraft = Partial<TrabajoReunion>;
 
-export default function TrabajoReunionForm() {
+export default function TrabajosReunionForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [sp] = useSearchParams();
