@@ -1,32 +1,32 @@
 import { http } from "@/lib/http";
 
+// TIPOS DE DATOS
 export type User = {
-  id: string;
-  nombre: string;
-  email: string;
+  id: number;
+  nombre_usuario: string;
+  mail: string;
 };
 
 export type AuthResponse = {
   user: User;
   token: string;
+  refresh_token?: string; 
 };
 
-const BASE = import.meta.env.VITE_API_URL ?? "";
+// Respuesta esperada del Backend al hacer login
+type BackendLoginResponse = {
+  access_token: string;
+  refresh_token: string;
+  user: {
+    id: number;
+    nombre_usuario: string;
+    mail: string;
+  };
+};
 
-// claves para modo mock
-const USERS_KEY = "gidas_auth_users_mock";
-const AUTH_KEY = "gidas_auth_current_mock";
+const AUTH_KEY = "gidas_auth_current_session";
 
-/* ---------- helpers mock ---------- */
-
-function loadUsers(): User[] & { password?: string }[] {
-  const raw = localStorage.getItem(USERS_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-
-function saveUsers(users: any[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
+// Helpers de Persistencia (LocalStorage)
 
 function storeAuth(auth: AuthResponse) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
@@ -41,66 +41,53 @@ export function clearStoredAuth() {
   localStorage.removeItem(AUTH_KEY);
 }
 
-/* ---------- login / register ---------- */
+//funciones de servicio
 
-export async function login(email: string, password: string): Promise<AuthResponse> {
-  if (!BASE) {
-    // MODO MOCK
-    const users = loadUsers();
-    const user = users.find((u: any) => u.email === email && u.password === password);
-    if (!user) {
-      throw new Error("Credenciales inválidas");
-    }
-    const auth: AuthResponse = {
-      user: { id: user.id, nombre: user.nombre, email: user.email },
-      token: "mock-token-" + user.id,
-    };
-    storeAuth(auth);
-    return auth;
-  }
+export async function login(usuarioInput: string, passwordInput: string): Promise<AuthResponse> {
+  // Adaptar variables para comunicación con backend
+  const body = { 
+    nombre_usuario: usuarioInput, 
+    contrasena: passwordInput 
+  };
 
-  // MODO BACKEND REAL
-  return http<AuthResponse>("/api/auth/login", {
+  // Petición POST a /login
+  const responseBack = await http<BackendLoginResponse>("/login", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(body),
   });
+
+  // Adaptar variables recibidas del backend
+  const auth: AuthResponse = {
+    user: {
+      id: responseBack.user.id,
+      nombre_usuario: responseBack.user.nombre_usuario,
+      mail: responseBack.user.mail,
+    },
+    token: responseBack.access_token,
+    refresh_token: responseBack.refresh_token
+  };
+
+  // Guardamos sesión en localstorage
+  storeAuth(auth);
+  return auth;
 }
 
-export async function register(nombre: string, email: string, password: string): Promise<AuthResponse> {
-  if (!BASE) {
-    // MODO MOCK: guardamos en localStorage
-    const users = loadUsers();
-    if (users.some((u: any) => u.email === email)) {
-      throw new Error("Ya existe un usuario con ese email");
-    }
-    const newUser: any = {
-      id: crypto.randomUUID(),
-      nombre,
-      email,
-      password, // solo para mock
-    };
-    users.push(newUser);
-    saveUsers(users);
+export async function register(usuario: string, email: string, password: string): Promise<void> {
+  // El registro espera: nombre_usuario, mail, contrasena
+  const body = {
+    nombre_usuario: usuario,
+    mail: email,
+    contrasena: password
+  };
 
-    const auth: AuthResponse = {
-      user: { id: newUser.id, nombre: newUser.nombre, email: newUser.email },
-      token: "mock-token-" + newUser.id,
-    };
-    storeAuth(auth);
-    return auth;
-  }
-
-  // MODO BACKEND REAL
-  return http<AuthResponse>("/api/auth/register", {
+  // Petición POST a /usuario (Crear usuario)
+  await http("/usuario", {
     method: "POST",
-    body: JSON.stringify({ nombre, email, password }),
+    body: JSON.stringify(body),
   });
 }
 
 export function logout() {
-  if (!BASE) {
-    clearStoredAuth();
-    return;
-  }
-  clearStoredAuth(); 
+  clearStoredAuth();
+  window.location.href = "/login"; // Redirección forzada al salir
 }
