@@ -1,6 +1,5 @@
 import { http } from "@/lib/http";
 
-// TIPOS DE DATOS
 export type User = {
   id: number;
   nombre_usuario: string;
@@ -10,84 +9,62 @@ export type User = {
 export type AuthResponse = {
   user: User;
   token: string;
-  refresh_token?: string; 
+  refresh_token?: string;
 };
 
-// Respuesta esperada del Backend al hacer login
 type BackendLoginResponse = {
   access_token: string;
   refresh_token: string;
-  user: {
-    id: number;
-    nombre_usuario: string;
-    mail: string;
-  };
+  user: User;
 };
 
 const AUTH_KEY = "gidas_auth_current_session";
 
-// Helpers de Persistencia (LocalStorage)
-
+// Guardar sesión
 function storeAuth(auth: AuthResponse) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
 }
 
+// Leer sesión (usada por el Contexto)
 export function getStoredAuth(): AuthResponse | null {
   const raw = localStorage.getItem(AUTH_KEY);
   return raw ? (JSON.parse(raw) as AuthResponse) : null;
 }
 
-export function clearStoredAuth() {
-  localStorage.removeItem(AUTH_KEY);
-}
-
-//funciones de servicio
-
-export async function login(usuarioInput: string, passwordInput: string): Promise<AuthResponse> {
-  // Adaptar variables para comunicación con backend
-  const body = { 
-    nombre_usuario: usuarioInput, 
-    contrasena: passwordInput 
-  };
-
-  // Petición POST a /login
-  const responseBack = await http<BackendLoginResponse>("/login", {
+// LOGIN: Envía nombre_usuario y password
+export async function login(usuario: string, password: string): Promise<AuthResponse> {
+  const responseBack = await http<BackendLoginResponse>("/auth/login", {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify({ 
+      nombre_usuario: usuario, 
+      password: password 
+    }),
   });
 
-  // Adaptar variables recibidas del backend
   const auth: AuthResponse = {
-    user: {
-      id: responseBack.user.id,
-      nombre_usuario: responseBack.user.nombre_usuario,
-      mail: responseBack.user.mail,
-    },
+    user: responseBack.user,
     token: responseBack.access_token,
-    refresh_token: responseBack.refresh_token
+    refresh_token: responseBack.refresh_token,
   };
 
-  // Guardamos sesión en localstorage
   storeAuth(auth);
   return auth;
 }
 
+// REGISTRO: Envía nombre_usuario, mail y password
 export async function register(usuario: string, email: string, password: string): Promise<void> {
-  // El registro espera: nombre_usuario, mail, contrasena
-  const body = {
-    nombre_usuario: usuario,
-    mail: email,
-    contrasena: password
-  };
-
-  // Petición POST a /usuario (Crear usuario)
-  await http("/usuario", {
+  await http("/auth/register", {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify({ 
+      nombre_usuario: usuario, 
+      mail: email, 
+      password: password 
+    }),
   });
 }
 
+// LOGOUT: Esta es la función que faltaba
 export function logout() {
-  clearStoredAuth();
-  window.location.href = "/login"; // Redirección forzada al salir
+  localStorage.removeItem(AUTH_KEY);
+  window.location.href = "/login";
 }

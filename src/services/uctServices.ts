@@ -9,47 +9,41 @@ export type Uct = {
   objetivos: string;
 };
 
-const BASE = import.meta.env.VITE_API_URL ?? "";
-const MOCK_KEY = "gidas_uct_singleton_mock";
+const BASE = import.meta.env.VITE_API_URL;
 
-// delay artificial para simular red
-function delay(ms = 300) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-// ------- MODO MOCK (sin backend) usando localStorage -------
-async function mockGet(): Promise<Uct | null> {
-  await delay();
-  const raw = localStorage.getItem(MOCK_KEY);
-  return raw ? (JSON.parse(raw) as Uct) : null;
-}
-
-async function mockPut(payload: Uct): Promise<Uct> {
-  await delay();
-  localStorage.setItem(MOCK_KEY, JSON.stringify(payload));
-  return payload;
-}
-
-async function mockDelete(): Promise<void> {
-  await delay();
-  localStorage.removeItem(MOCK_KEY);
-}
-
-// ------- API real (cuando VITE_API_URL esté definido) -------
 export async function getUct() {
-  if (!BASE) return mockGet();
-  return http<Uct | null>("/api/uct");
+  if (!BASE) return null;
+  try {
+      const data = await http<any>("/grupo-utn/");
+      // Mapeo Back -> Front
+      return {
+        facultadRegional: data.nombre_unidad_academica,
+        nombreSigla: data.nombre_sigla_grupo,
+        correo: data.mail,
+        objetivos: data.objetivo_desarrollo,
+        director: "", // El back no envía director en este endpoint actualmente
+        vicedirector: ""
+      } as Uct;
+  } catch {
+      return null;
+  }
 }
 
 export async function upsertUct(payload: Uct) {
-  if (!BASE) return mockPut(payload);
-  return http<Uct>("/api/uct", {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
+  if (!BASE) return;
+  
+  const body = {
+    nombre_unidad_academica: payload.facultadRegional,
+    nombre_sigla_grupo: payload.nombreSigla,
+    mail: payload.correo,
+    objetivo_desarrollo: payload.objetivos
+  };
+  
+  // El backend usa PUT sobre la raiz para actualizar el grupo único
+  return http("/grupo-utn/", { method: "PUT", body: JSON.stringify(body) });
 }
 
 export async function deleteUct() {
-  if (!BASE) return mockDelete();
-  return http<void>("/api/uct", { method: "DELETE" });
+    // No implementado borrar el grupo principal
+    return;
 }
