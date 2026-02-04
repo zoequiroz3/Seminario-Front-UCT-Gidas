@@ -11,7 +11,7 @@ export function useUct() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (data: Uct) => upsertUct(data),
+    mutationFn: (data: Uct) => upsertUct(data, !!uctQuery.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["uct"] }),
   });
 
