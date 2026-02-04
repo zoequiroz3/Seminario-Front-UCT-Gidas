@@ -29,3 +29,11 @@ export function getTiposFormacion(): Promise<Option[]> {
 export function getFuentesFinanciamiento(): Promise<Option[]> {
     return http("/fuente-financiamiento/");
 }
+
+export function createTipoProyecto(nombre: string): Promise<Option> {
+    return http("/tipos-proyecto/", {
+        method: "POST",
+        body: JSON.stringify({ nombre }),
+    });
+}
+
