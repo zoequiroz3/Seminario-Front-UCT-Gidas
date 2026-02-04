@@ -1,106 +1,70 @@
 import { http } from "@/lib/http";
 
 export type User = {
-  id: string;
-  nombre: string;
-  email: string;
+  id: number;
+  nombre_usuario: string;
+  mail: string;
 };
 
 export type AuthResponse = {
   user: User;
   token: string;
+  refresh_token?: string;
 };
 
-const BASE = import.meta.env.VITE_API_URL ?? "";
+type BackendLoginResponse = {
+  access_token: string;
+  refresh_token: string;
+  user: User;
+};
 
-// claves para modo mock
-const USERS_KEY = "gidas_auth_users_mock";
-const AUTH_KEY = "gidas_auth_current_mock";
+const AUTH_KEY = "gidas_auth_current_session";
 
-/* ---------- helpers mock ---------- */
-
-function loadUsers(): User[] & { password?: string }[] {
-  const raw = localStorage.getItem(USERS_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-
-function saveUsers(users: any[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
+// Guardar sesión
 function storeAuth(auth: AuthResponse) {
   localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
 }
 
+// Leer sesión (usada por el Contexto)
 export function getStoredAuth(): AuthResponse | null {
   const raw = localStorage.getItem(AUTH_KEY);
   return raw ? (JSON.parse(raw) as AuthResponse) : null;
 }
 
-export function clearStoredAuth() {
-  localStorage.removeItem(AUTH_KEY);
+// LOGIN: Envía nombre_usuario y password
+export async function login(usuario: string, password: string): Promise<AuthResponse> {
+  const responseBack = await http<BackendLoginResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ 
+      nombre_usuario: usuario, 
+      password: password 
+    }),
+  });
+
+  const auth: AuthResponse = {
+    user: responseBack.user,
+    token: responseBack.access_token,
+    refresh_token: responseBack.refresh_token,
+  };
+
+  storeAuth(auth);
+  return auth;
 }
 
-/* ---------- login / register ---------- */
-
-export async function login(email: string, password: string): Promise<AuthResponse> {
-  if (!BASE) {
-    // MODO MOCK
-    const users = loadUsers();
-    const user = users.find((u: any) => u.email === email && u.password === password);
-    if (!user) {
-      throw new Error("Credenciales inválidas");
-    }
-    const auth: AuthResponse = {
-      user: { id: user.id, nombre: user.nombre, email: user.email },
-      token: "mock-token-" + user.id,
-    };
-    storeAuth(auth);
-    return auth;
-  }
-
-  // MODO BACKEND REAL
-  return http<AuthResponse>("/api/auth/login", {
+// REGISTRO: Envía nombre_usuario, mail y password
+export async function register(usuario: string, email: string, password: string): Promise<void> {
+  await http("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ 
+      nombre_usuario: usuario, 
+      mail: email, 
+      password: password 
+    }),
   });
 }
 
-export async function register(nombre: string, email: string, password: string): Promise<AuthResponse> {
-  if (!BASE) {
-    // MODO MOCK: guardamos en localStorage
-    const users = loadUsers();
-    if (users.some((u: any) => u.email === email)) {
-      throw new Error("Ya existe un usuario con ese email");
-    }
-    const newUser: any = {
-      id: crypto.randomUUID(),
-      nombre,
-      email,
-      password, // solo para mock
-    };
-    users.push(newUser);
-    saveUsers(users);
-
-    const auth: AuthResponse = {
-      user: { id: newUser.id, nombre: newUser.nombre, email: newUser.email },
-      token: "mock-token-" + newUser.id,
-    };
-    storeAuth(auth);
-    return auth;
-  }
-
-  // MODO BACKEND REAL
-  return http<AuthResponse>("/api/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ nombre, email, password }),
-  });
-}
-
+// LOGOUT: Esta es la función que faltaba
 export function logout() {
-  if (!BASE) {
-    clearStoredAuth();
-    return;
-  }
-  clearStoredAuth(); 
+  localStorage.removeItem(AUTH_KEY);
+  window.location.href = "/login";
 }

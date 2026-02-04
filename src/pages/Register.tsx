@@ -32,13 +32,13 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-semibold mb-4">Registro</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Nombre</label>
+            <label className="block text-sm font-medium mb-1">Nombre de usuario</label>
             <input
               className="input"
               required
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Tu nombre"
+              placeholder="Ingresa tu nombre de usuario"
             />
           </div>
           <div>
@@ -49,7 +49,7 @@ export default function RegisterPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@correo.com"
+              placeholder="ingresa tu email"
             />
           </div>
           <div>
@@ -60,6 +60,7 @@ export default function RegisterPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Ingresa tu contraseña"
             />
           </div>
           {error && <p className="text-sm text-rose-600">{error}</p>}

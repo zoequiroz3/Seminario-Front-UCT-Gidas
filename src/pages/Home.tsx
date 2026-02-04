@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { useUct } from "@/hooks/useUct";
+import { useAuth } from "@/context/AuthContext";
+import Button from "@/components/Button";
 
 export default function Home() {
   const { uct, isLoading, isError } = useUct();
+  const { logout } = useAuth();
 
   if (isLoading) return <div className="grid place-items-center min-h-[50vh]">Cargando…</div>;
 
@@ -43,6 +46,12 @@ export default function Home() {
           <Link to="/uct/nueva" className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300">Editar</Link>
         </div>
       </article>
+
+      <div className="pt-4 border-t border-slate-200">
+        <Button variant="secondary" onClick={logout}>
+          Cerrar Sesión
+        </Button>
+      </div>
     </section>
   );
 }

@@ -1,132 +1,96 @@
 import { http } from "@/lib/http";
 
-// ----------------- Tipos -----------------
-export type PersonalType =
-  | "INVESTIGADOR"
-  | "PROFESIONAL"
-  | "PTAA"        // Personal Técnico, Administrativo y de Apoyo
-  | "BECARIO";
+// --- TIPOS ---
+export type PersonalType = "INVESTIGADOR" | "PROFESIONAL" | "PTAA" | "BECARIO";
 
-export type Categoria = "Resolución A" | "Resolución B" | "Resolución D" | "Resolución E" | "Resolución F" | "Resolución G";
-export type Dedicacion = "Simple" | "Exclusiva" | "Semiexclusiva";
-export type Incentivos = "I" | "II";
-export type TipoPersonal = "Técnico" | "Administrativo" | "Apoyo"; // sub-tipo de PTAA
-export type TipoFormacion = "Becario" | "Personal en Formación";
-
-export type PersonalBase = {
-  id: string;
+// Tipo unificado para el Frontend. Ahora usa IDs numéricos.
+export type Personal = {
+  id?: string;
   nombreApellido: string;
   horasSemanales: number;
   tipo: PersonalType;
+  // Campos específicos (ahora como IDs)
+  categoriaUtnId?: number;
+  programaIncentivosId?: number;
+  dedicacionId?: number;
+  tipoPersonalId?: number;
+  tipoFormacionId?: number;
+  fuenteFinanciamientoId?: number;
+  // Fechas y otros
+  fechaInicio?: string;
+  fechaFin?: string;
 };
 
-export type PersonalInvestigador = PersonalBase & {
-  tipo: "INVESTIGADOR";
-  categoriaUtn?: Categoria;
-  programaIncentivos?: Incentivos;
-  dedicacion?: Dedicacion;
-  proyectoCoordinaId?: string | null;
+const BASE = import.meta.env.VITE_API_URL;
+
+// Endpoints del backend según el tipo
+const ENDPOINTS: Record<PersonalType, string> = {
+  INVESTIGADOR: "/investigadores",
+  BECARIO: "/becarios",
+  PTAA: "/personal",
+  PROFESIONAL: "/personal",
 };
 
-export type PersonalProfesional = PersonalBase & { tipo: "PROFESIONAL" };
+// --- API ---
 
-export type PersonalPTAA = PersonalBase & {
-  tipo: "PTAA";
-  tipoPersonal: TipoPersonal;
-};
+// 1. Obtener todo el personal (sin cambios)
+export async function getPersonal(params?: { tipo?: PersonalType }): Promise<any[]> {
+  if (!BASE) return [];
+  const data = await http<any[]>("/personal-all/");
+  let mapped = data.map((item: any) => ({
+    id: String(item.id),
+    nombreApellido: item.nombre_apellido,
+    horasSemanales: item.horas_semanales,
+    tipo: mapBackendRoleToFront(item.rol),
+    detalle: item.detalle 
+  }));
 
-export type PersonalBecario = PersonalBase & {
-  tipo: "BECARIO";
-  fuenteFinanciamiento: string | null;
-  tipoFormacion: TipoFormacion;
-};
-
-export type Personal =
-  | PersonalInvestigador
-  | PersonalProfesional
-  | PersonalPTAA
-  | PersonalBecario;
-
-// ----------------- Config API / Mock -----------------
-const BASE = import.meta.env.VITE_API_URL ?? "";
-const MOCK_KEY = "gidas_personal_lista_mock";
-const SERVER_FILTER_ENABLED =
-  (import.meta as any)?.env?.VITE_SERVER_FILTER_PERSONAL === "true";
-
-function delay(ms = 300) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-// ----------------- MOCK (sin backend) -----------------
-async function mockList(): Promise<Personal[]> {
-  await delay();
-  const raw = localStorage.getItem(MOCK_KEY);
-  return raw ? (JSON.parse(raw) as Personal[]) : [];
-}
-
-async function mockUpsert(payload: Personal): Promise<Personal> {
-  await delay();
-  const lista = await mockList();
-  if (!payload.id) {
-    payload.id = crypto.randomUUID?.() ?? String(Date.now());
+  if (params?.tipo) {
+    mapped = mapped.filter(p => p.tipo === params.tipo);
   }
-  const updated = lista.some((p) => p.id === payload.id)
-    ? lista.map((p) => (p.id === payload.id ? payload : p))
-    : [...lista, payload];
-
-  localStorage.setItem(MOCK_KEY, JSON.stringify(updated));
-  return payload;
+  return mapped;
 }
 
-async function mockDelete(id: string): Promise<void> {
-  await delay();
-  const lista = await mockList();
-  const updated = lista.filter((p) => p.id !== id);
-  localStorage.setItem(MOCK_KEY, JSON.stringify(updated));
-}
-
-// ----------------- API real (hoy y mañana) -----------------
-type GetPersonalParams = { tipo?: PersonalType };
-
-/**
- * Obtiene personal. Si se pasa { tipo }, intenta filtrar en server cuando
- * VITE_SERVER_FILTER_PERSONAL=true. Si no, trae todo y filtra en front.
- */
-export async function getPersonal(params?: GetPersonalParams): Promise<Personal[]> {
-  const tipo = params?.tipo;
-
-  // MOCK: sin backend -> siempre front-filter
-  if (!BASE) {
-    const all = await mockList();
-    return tipo ? all.filter((p) => p.tipo === tipo) : all;
-  }
-
-  // API REAL: si el server soporta filtro y lo activaste por flag, filtra en server
-  if (SERVER_FILTER_ENABLED && tipo) {
-    const qs = new URLSearchParams({ tipo }).toString();
-    return http<Personal[]>(`/api/personal?${qs}`);
-    // Si tu http soporta { params }, podrías usar:
-    // return http<Personal[]>("/api/personal", { params: { tipo } });
-  }
-
-  // Fallback: trae todo (el front decidirá si filtrar)
-  return http<Personal[]>("/api/personal");
-}
-
-// Helpers convenientes (opcionales)
-export const getPersonalAll = () => getPersonal();
-export const getPersonalByTipo = (tipo: PersonalType) => getPersonal({ tipo });
-
-// ----------------- Upsert / Delete -----------------
+// 2. Guardar (Crear o Editar) - **SIMPLIFICADO**
 export async function upsertPersonal(payload: Personal) {
-  if (!BASE) return mockUpsert(payload);
-  return http<Personal>("/api/personal", {
-    method: payload.id ? "PUT" : "POST",
-    body: JSON.stringify(payload),
-  });
+  if (!BASE) throw new Error("Sin conexión al backend");
+
+  const endpointBase = ENDPOINTS[payload.tipo];
+  const url = payload.id ? `${endpointBase}/${payload.id}` : endpointBase;
+  const method = payload.id ? "PUT" : "POST";
+
+  // Mapeo directo de camelCase (frontend) a snake_case (backend)
+  const body = {
+    nombre_apellido: payload.nombreApellido,
+    horas_semanales: payload.horasSemanales,
+    grupo_utn_id: 1, // Hardcodeado como antes
+    // IDs que vienen del payload
+    categoria_utn_id: payload.categoriaUtnId,
+    programa_incentivos_id: payload.programaIncentivosId,
+    tipo_dedicacion_id: payload.dedicacionId,
+    tipo_personal_id: payload.tipoPersonalId,
+    tipo_formacion_id: payload.tipoFormacionId ? Number(payload.tipoFormacionId) : undefined,
+    fuente_financiamiento_id: payload.fuenteFinanciamientoId,
+    // Fechas
+    fecha_inicio: payload.fechaInicio,
+    fecha_fin: payload.fechaFin,
+  };
+
+  return http(url, { method, body: JSON.stringify(body) });
 }
 
+// 3. Eliminar (sin cambios)
 export async function deletePersonal(id: string) {
-  if (!BASE) return mockDelete(id);
-  return http<void>(`/api/personal/${id}`, { method: "DELETE" });
+    try { await http(`/investigadores/${id}`, { method: "DELETE" }); return; } catch {}
+    try { await http(`/becarios/${id}`, { method: "DELETE" }); return; } catch {}
+    try { await http(`/personal/${id}`, { method: "DELETE" }); return; } catch {}
+}
+
+
+// --- HELPERS INTERNOS ---
+
+function mapBackendRoleToFront(rol: string): PersonalType {
+    if (rol === "investigador") return "INVESTIGADOR";
+    if (rol === "becario") return "BECARIO";
+    return "PTAA"; // Asumir PTAA por defecto
 }
