@@ -1,94 +1,108 @@
-// hooks/useDocumentacionForm.ts
 import { useState, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  upsertDocumentacion,
+  createDocumentacion,
+  updateDocumentacion,
+  addAutorToDocumento,
+  removeAutorFromDocumento,
   type Documentacion,
   type DocumentacionPayload,
 } from "@/services/documentacionServices";
+import {
+  createAutor,
+  type Autor,
+} from "@/services/autoresService";
 
 const YEARS = Array.from({ length: 2030 - 1900 + 1 }, (_, i) => 1900 + i);
 
 export function useDocumentacionForm(initial?: Documentacion) {
   const qc = useQueryClient();
 
-  // ------- state -------
+  // --------------------
+  // State
+  // --------------------
   const [data, setData] = useState<{
     titulo: string;
-    autores: string[];
     editorial: string;
-    anio: number | undefined | "";
+    anio: number | undefined;
   }>({
     titulo: initial?.titulo ?? "",
-    autores: initial?.autores ?? [""],
     editorial: initial?.editorial ?? "",
-    anio: initial?.anio ?? undefined,   // ✔ FIX
+    anio: initial?.anio ?? undefined,
   });
 
-  // ------- setters -------
-  const change =
-    (key: keyof typeof data) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      let val: any = e.target.value;
-
-      if (key === "anio") {
-        val = val === "" ? "" : Number(val);
-      }
-
-      setData((d) => ({ ...d, [key]: val }));
-    };
-
-  const changeAutor = (index: number, value: string) => {
-    setData((d) => {
-      const c = [...d.autores];
-      c[index] = value;
-      return { ...d, autores: c };
-    });
-  };
-
-  const addAutor = () => {
-    setData((d) => ({ ...d, autores: [...d.autores, ""] }));
-  };
-
-  const removeAutor = (index: number) => {
-    setData((d) => {
-      if (d.autores.length === 1) return { ...d, autores: [""] };
-      return { ...d, autores: d.autores.filter((_, i) => i !== index) };
-    });
-  };
-
-  const setAutores = (arr: string[]) => {
-    setData((d) => ({ ...d, autores: arr }));
-  };
-
-  // ------- validación -------
-  const autoresLimpios = useMemo(
-    () => data.autores.map((a) => a.trim()).filter((a) => a !== ""),
-    [data.autores]
+  const [autores, setAutores] = useState<Autor[]>(
+    initial?.autores ?? [{ id: -1, nombre_apellido: "" }]
   );
 
-  const isValid =
-    data.titulo.trim() !== "" &&
-    data.editorial.trim() !== "" &&
-    autoresLimpios.length > 0 &&
-    data.anio !== "" &&
-    data.anio !== undefined;
+  // --------------------
+  // Validación (CORREGIDA)
+  // --------------------
+  const isValid = useMemo(
+    () =>
+      data.titulo.trim() !== "" &&
+      data.editorial.trim() !== "" &&
+      data.anio !== undefined &&
+      autores.length > 0 &&
+      autores.every(
+        (a) =>
+          typeof a.nombre_apellido === "string" &&
+          a.nombre_apellido.trim() !== ""
+      ),
+    [data, autores]
+  );
 
-  // ------- mutation -------
+  // --------------------
+  // Mutation principal
+  // --------------------
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async () => {
       const payload: DocumentacionPayload = {
         titulo: data.titulo.trim(),
-        autores: autoresLimpios,
         editorial: data.editorial.trim(),
         anio: Number(data.anio),
       };
 
-      return upsertDocumentacion(
-        initial?.id ? { ...payload, id: initial.id } : (payload as any)
-      );
+      // 1️⃣ Crear o actualizar documento
+      const doc = initial?.id
+        ? await updateDocumentacion(initial.id, payload)
+        : await createDocumentacion(payload);
+
+      // 2️⃣ Asegurar que todos los autores existan en backend
+      const autoresPersistidos: Autor[] = [];
+
+      for (const autor of autores) {
+        if (autor.id > 0) {
+          // ya existe
+          autoresPersistidos.push(autor);
+        } else {
+          // autor nuevo → crear
+          const creado = await createAutor(
+            autor.nombre_apellido.trim()
+          );
+          autoresPersistidos.push(creado);
+        }
+      }
+
+      // 3️⃣ Sincronizar relaciones documento ↔ autor
+      const prevIds = initial?.autores?.map((a) => a.id) ?? [];
+      const nextIds = autoresPersistidos.map((a) => a.id);
+
+      const toAdd = nextIds.filter((id) => !prevIds.includes(id));
+      const toRemove = prevIds.filter((id) => !nextIds.includes(id));
+
+      for (const autorId of toAdd) {
+        await addAutorToDocumento(doc.id, autorId);
+      }
+
+      for (const autorId of toRemove) {
+        await removeAutorFromDocumento(doc.id, autorId);
+      }
+
+      return doc;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["documentacion"] }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["documentacion"] }),
   });
 
   const submit = async () => {
@@ -98,11 +112,9 @@ export function useDocumentacionForm(initial?: Documentacion) {
 
   return {
     data,
-    change,
-    changeAutor,
-    addAutor,
-    removeAutor,
-    setAutores,   // ✔ necesario para AutoresField
+    setData,
+    autores,
+    setAutores,
     submit,
     isPending,
     years: YEARS,

@@ -5,12 +5,12 @@ import Button from "@/components/Button";
 import { getDocumentacionById } from "@/services/documentacionServices";
 
 export default function DocumentacionDetalle() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: ["documentacion", id],
-    queryFn: () => getDocumentacionById(id!),
+    queryFn: () => getDocumentacionById(Number(id)),
     enabled: !!id,
   });
 
@@ -24,19 +24,22 @@ export default function DocumentacionDetalle() {
       </h2>
 
       <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-
-        {/* Título principal */}
-        <h3 className="md:text-[25px] text-lg font-semibold mb-2">{data.titulo}</h3>
+        {/* Título */}
+        <h3 className="md:text-[25px] text-lg font-semibold mb-2">
+          {data.titulo}
+        </h3>
 
         <dl className="text-sm space-y-2">
-
           {/* Autores */}
           <Field label="Autores">
             <div className="flex flex-col">
               {data.autores?.length ? (
-                data.autores.map((a, i) => (
-                  <span key={i} className="md:text-[18px] text-slate-500 mt-2">
-                    {a}
+                data.autores.map((autor) => (
+                  <span
+                    key={autor.id}
+                    className="md:text-[18px] text-slate-500 mt-2"
+                  >
+                    {autor.nombre_apellido}
                   </span>
                 ))
               ) : (
@@ -50,7 +53,6 @@ export default function DocumentacionDetalle() {
 
           {/* Año */}
           <Field label="Año" value={String(data.anio ?? "—")} />
-
         </dl>
 
         <div className="mt-8 flex items-center justify-between font-medium">
@@ -67,7 +69,7 @@ export default function DocumentacionDetalle() {
   );
 }
 
-/* 🔥 COMPONENTE FIELD EXACTO AL DE PERSONALDETALLE */
+/* Componente Field */
 function Field({
   label,
   value,

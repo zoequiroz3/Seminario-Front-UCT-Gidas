@@ -1,4 +1,3 @@
-// pages/DocumentacionForm.tsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
@@ -7,21 +6,19 @@ import { useDocumentacionForm } from "@/hooks/useDocumentacionForm";
 import { getDocumentacionById } from "@/services/documentacionServices";
 
 export default function DocumentacionForm() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const { data: initial, isLoading } = useQuery({
     queryKey: ["documentacion", id],
-    queryFn: () => (id ? getDocumentacionById(id) : null),
+    queryFn: () => (id ? getDocumentacionById(Number(id)) : null),
     enabled: Boolean(id),
   });
 
   const {
     data,
-    change,
-    changeAutor,
-    addAutor,
-    removeAutor,
+    setData,
+    autores,
     setAutores,
     submit,
     isPending,
@@ -44,39 +41,42 @@ export default function DocumentacionForm() {
         }}
         className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm space-y-8"
       >
-        {/* Título */}
-        <Field label="Título del libro / documento">
+        <Field label="Título">
           <input
             className="input"
-            value={data.titulo ?? ""}
-            onChange={change("titulo")}
-            placeholder="Ej: Introducción a la Ingeniería"
+            value={data.titulo}
+            onChange={(e) =>
+              setData((d) => ({ ...d, titulo: e.target.value }))
+            }
           />
         </Field>
 
-        {/* Autores */}
         <AutoresField
-          value={data.autores ?? [""]}
-          onChange={(arr) => setAutores(arr)}
+          value={autores}
+          onChange={setAutores}
           label="Autores"
         />
 
-        {/* Editorial */}
         <Field label="Editorial">
           <input
             className="input"
-            value={data.editorial ?? ""}
-            onChange={change("editorial")}
-            placeholder="Ej: UTN"
+            value={data.editorial}
+            onChange={(e) =>
+              setData((d) => ({ ...d, editorial: e.target.value }))
+            }
           />
         </Field>
 
-        {/* Año */}
-        <Field label="Año de publicación">
+        <Field label="Año">
           <select
             className="input"
             value={data.anio ?? ""}
-            onChange={change("anio")}
+            onChange={(e) =>
+              setData((d) => ({
+                ...d,
+                anio: e.target.value ? Number(e.target.value) : undefined,
+              }))
+            }
           >
             <option value="">Seleccione un año</option>
             {years.map((y) => (
@@ -87,8 +87,7 @@ export default function DocumentacionForm() {
           </select>
         </Field>
 
-        {/* Footer */}
-        <div className="mt-8 flex items-center justify-between">
+        <div className="flex justify-between pt-6">
           <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
             Volver
           </Button>
@@ -110,9 +109,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="md:text-[17px] block text-sm font-medium mb-4">
-        {label}
-      </label>
+      <label className="block text-sm font-medium mb-2">{label}</label>
       {children}
     </div>
   );

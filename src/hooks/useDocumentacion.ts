@@ -1,10 +1,12 @@
-// hooks/useDocumentacion.ts
 import { useQuery } from "@tanstack/react-query";
-import { getDocumentacion, type Documentacion } from "@/services/documentacionServices";
+import {
+  getDocumentacion,
+  type Documentacion,
+} from "@/services/documentacionServices";
 
 export function useDocumentacion() {
   const {
-    data: list = [],
+    data,
     isLoading,
     isError,
     refetch,
@@ -14,7 +16,11 @@ export function useDocumentacion() {
     staleTime: 60_000,
   });
 
-  const total = list.length;
-
-  return { list, total, isLoading, isError, refetch };
+  return {
+    list: data ?? [],
+    total: data?.length ?? 0,
+    isLoading,
+    isError,
+    refetch,
+  };
 }
