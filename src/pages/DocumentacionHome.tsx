@@ -1,60 +1,135 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
+import Tarjeta from "@/components/Tarjeta";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useDocumentacion } from "@/hooks/useDocumentacion";
+import { deleteDocumentacion } from "@/services/documentacionServices";
 
 export default function DocumentacionLanding() {
   const navigate = useNavigate();
-  const { list, isLoading, isError } = useDocumentacion();
+  const qc = useQueryClient();
+  const { list = [], isLoading, isError } = useDocumentacion();
+
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const toggleSelect = (id: number, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((x) => x !== id)
+    );
+  };
+
+  const cancelSelection = () => {
+    setSelectMode(false);
+    setSelectedIds([]);
+    setShowConfirm(false);
+  };
+  
+  const selectedDocs = list
+    .filter((d) => selectedIds.includes(d.id))
+    .map((d) => d.titulo);
+
+  const confirmDelete = async () => {
+    for (const id of selectedIds) {
+      await deleteDocumentacion(id);
+    }
+    qc.invalidateQueries({ queryKey: ["documentacion"] });
+    cancelSelection();
+  };
 
   return (
-    <section className="w-full min-h-[calc(100vh-96px)] px-10 md:px-5 lg:px-1 py-2 flex flex-col">
+    <section className="w-full min-h-[calc(100vh-80px)] px-4 md:px-3 lg:px-2 py-2 flex flex-col text-sm">
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl md:text-3xl font-semibold leading-none">
           Documentación
         </h2>
 
-        <Button variant="primary" onClick={() => navigate("/documentacion/nuevo")}>
-          Agregar Documento
-        </Button>
-      </div>
+        {!selectMode ? (
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="px-3 py-1.5 text-xs"
+              onClick={() => setSelectMode(true)}
+            >
+              Seleccionar
+            </Button>
 
-      {/* Contenido */}
-      <div className="mt-6 flex-1">
-        {isLoading && <p className="text-slate-500">Cargando…</p>}
-        {isError && <p className="text-red-600">No se pudo cargar la documentación.</p>}
+            <Button
+              variant="primary"
+              size="sm"
+              className="px-3 py-1.5 text-xs"
+              onClick={() => navigate("/documentacion/nuevo")}
+            >
+              Agregar nuevo
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            {selectedIds.length > 0 && (
+              <Button
+                size="sm"
+                className="px-3 py-1.5 text-xs"
+                onClick={() => setShowConfirm(true)}
+              >
+                Eliminar
+              </Button>
+            )}
 
-        {!isLoading && !isError && (
-          list.length === 0 ? (
-            <p className="text-slate-500">Aún no hay documentos cargados.</p>
-          ) : (
-            <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-
-              {list.map((d) => (
-                <div
-                  key={d.id}
-                  onClick={() => navigate(`/documentacion/${d.id}`)}
-                  className="cursor-pointer p-6 rounded-2xl border border-slate-200 bg-white/80 hover:shadow-md transition"
-                >
-                  <h3 className="text-xl md:text-2xl font-semibold">{d.titulo}</h3>
-                  <p className="text-base md:text-lg text-slate-600 mt-2">
-                    Año: {d.anio}
-                  </p>
-                </div>
-              ))}
-
-            </div>
-          )
+            <Button
+              variant="secondary"
+              size="sm"
+              className="px-3 py-1.5 text-xs"
+              onClick={cancelSelection}
+            >
+              Cancelar
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="pt-10">
-        <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-          Volver
-        </Button>
+      {/* Grid */}
+      <div className="flex-1">
+        {isLoading && <p className="text-slate-500">Cargando…</p>}
+        {isError && <p className="text-red-600">Error al cargar.</p>}
+
+        {!isLoading && !isError && (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((d) => (
+              <Tarjeta
+                key={d.id}
+                item={d}
+                title={(x) => x.titulo}
+                subtitle={(x) => `Año: ${x.anio}`}
+                selectable={selectMode}
+                selected={selectedIds.includes(d.id)}
+                onSelectChange={(checked) =>
+                  toggleSelect(d.id, checked)
+                }
+                onClick={() =>
+                  navigate(`/documentacion/${d.id}`)
+                }
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* Confirm dialog */}
+      <ConfirmDialog
+      open={showConfirm}
+      title="Eliminar documentación"
+      message="¿Estás seguro de eliminar los siguientes documentos?"
+      items={selectedDocs}
+      onCancel={cancelSelection}
+      onConfirm={confirmDelete}
+    />
+
     </section>
   );
 }

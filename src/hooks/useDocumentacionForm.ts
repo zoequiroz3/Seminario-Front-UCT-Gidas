@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createDocumentacion,
@@ -19,6 +19,11 @@ export function useDocumentacionForm(initial?: Documentacion) {
   const qc = useQueryClient();
 
   // --------------------
+  // Flags
+  // --------------------
+  const isEdit = Boolean(initial?.id);
+
+  // --------------------
   // State
   // --------------------
   const [data, setData] = useState<{
@@ -26,17 +31,30 @@ export function useDocumentacionForm(initial?: Documentacion) {
     editorial: string;
     anio: number | undefined;
   }>({
-    titulo: initial?.titulo ?? "",
-    editorial: initial?.editorial ?? "",
-    anio: initial?.anio ?? undefined,
+    titulo: "",
+    editorial: "",
+    anio: undefined,
   });
 
-  const [autores, setAutores] = useState<Autor[]>(
-    initial?.autores ?? [{ id: -1, nombre_apellido: "" }]
-  );
+  const [autores, setAutores] = useState<Autor[]>([]);
 
   // --------------------
-  // Validación (CORREGIDA)
+  // Sync initial → state (FIX CRÍTICO)
+  // --------------------
+  useEffect(() => {
+    if (!initial) return;
+
+    setData({
+      titulo: initial.titulo ?? "",
+      editorial: initial.editorial ?? "",
+      anio: initial.anio ?? undefined,
+    });
+
+    setAutores(initial.autores ?? []);
+  }, [initial]);
+
+  // --------------------
+  // Validación
   // --------------------
   const isValid = useMemo(
     () =>
@@ -64,19 +82,17 @@ export function useDocumentacionForm(initial?: Documentacion) {
       };
 
       // 1️⃣ Crear o actualizar documento
-      const doc = initial?.id
-        ? await updateDocumentacion(initial.id, payload)
+      const doc = isEdit
+        ? await updateDocumentacion(initial!.id, payload)
         : await createDocumentacion(payload);
 
-      // 2️⃣ Asegurar que todos los autores existan en backend
+      // 2️⃣ Asegurar autores en backend
       const autoresPersistidos: Autor[] = [];
 
       for (const autor of autores) {
         if (autor.id > 0) {
-          // ya existe
           autoresPersistidos.push(autor);
         } else {
-          // autor nuevo → crear
           const creado = await createAutor(
             autor.nombre_apellido.trim()
           );
@@ -101,10 +117,19 @@ export function useDocumentacionForm(initial?: Documentacion) {
 
       return doc;
     },
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ["documentacion"] }),
+    onSuccess: (_, __, ___) => {
+      qc.invalidateQueries({ queryKey: ["documentacion"] });
+      if (isEdit && initial?.id) {
+        qc.invalidateQueries({
+          queryKey: ["documentacion", initial.id],
+        });
+      }
+    },
   });
 
+  // --------------------
+  // Submit
+  // --------------------
   const submit = async () => {
     if (!isValid || isPending) return;
     await mutateAsync();
@@ -120,3 +145,4 @@ export function useDocumentacionForm(initial?: Documentacion) {
     years: YEARS,
   };
 }
+  

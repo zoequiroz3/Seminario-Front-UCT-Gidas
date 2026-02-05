@@ -29,10 +29,11 @@ export default function DocumentacionForm() {
 
   return (
     <section className="w-full">
-      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
-        {id ? "Editar Documento" : "Nuevo Documento"}
+      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+        Documentación
       </h2>
 
+      {/* CARD IGUAL AL DETALLE */}
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -43,7 +44,7 @@ export default function DocumentacionForm() {
       >
         <Field label="Título">
           <input
-            className="input"
+            className="input md:text-[18px]"
             value={data.titulo}
             onChange={(e) =>
               setData((d) => ({ ...d, titulo: e.target.value }))
@@ -59,7 +60,7 @@ export default function DocumentacionForm() {
 
         <Field label="Editorial">
           <input
-            className="input"
+            className="input md:text-[18px]"
             value={data.editorial}
             onChange={(e) =>
               setData((d) => ({ ...d, editorial: e.target.value }))
@@ -69,7 +70,7 @@ export default function DocumentacionForm() {
 
         <Field label="Año">
           <select
-            className="input"
+            className="input md:text-[18px]"
             value={data.anio ?? ""}
             onChange={(e) =>
               setData((d) => ({
@@ -87,11 +88,24 @@ export default function DocumentacionForm() {
           </select>
         </Field>
 
+        {/* ACCIONES – MISMO PESO VISUAL QUE DETALLE */}
         <div className="flex justify-between pt-6">
-          <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="px-3 py-1 text-xs"
+            onClick={() => navigate(-1)}
+          >
             Volver
           </Button>
-          <Button type="submit" disabled={isPending}>
+
+          <Button
+            type="submit"
+            size="sm"
+            className="px-3 py-1 text-xs"
+            disabled={isPending}
+          >
             {isPending ? "Guardando…" : "Guardar"}
           </Button>
         </div>
@@ -109,7 +123,9 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium mb-2">{label}</label>
+      <label className="block text-sm font-medium mb-2">
+        {label}
+      </label>
       {children}
     </div>
   );

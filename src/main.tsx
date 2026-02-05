@@ -97,6 +97,7 @@ const router = createBrowserRouter([
       { path: "documentacion", element: <DocumentacionLanding /> },
       { path: "documentacion/nuevo", element: <DocumentacionForm /> },
       { path: "documentacion/:id", element: <DocumentacionDetalle /> },
+      { path: "documentacion/:id/editar", element: <DocumentacionForm /> },
 
       { path: "*", element: <NotFound /> },
     ],

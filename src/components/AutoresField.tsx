@@ -49,8 +49,9 @@ export default function AutoresField({
             placeholder="Nombre del autor"
           />
           <Button
-            type="button"
             variant="secondary"
+            size="sm"
+            className="px-3 py-1 text-xs"
             onClick={() => removeAutor(index)}
           >
             ✕
@@ -58,7 +59,11 @@ export default function AutoresField({
         </div>
       ))}
 
-      <Button type="button" variant="secondary" onClick={addAutor}>
+      <Button type="button"
+            variant="secondary"
+            size="sm"
+            className="px-3 py-1 text-xs"
+            onClick={addAutor}>
         + Agregar autor
       </Button>
     </div>
