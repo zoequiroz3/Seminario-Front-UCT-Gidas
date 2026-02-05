@@ -1,32 +1,56 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteUct, getUct, upsertUct, type Uct } from "@/services/uctServices";
+import {
+  deleteUct,
+  getUct,
+  upsertUct,
+  type Uct,
+} from "@/services/uctServices";
 
 export function useUct() {
   const qc = useQueryClient();
 
-  const uctQuery = useQuery({
+  // ======================
+  // Query: obtener UCT
+  // ======================
+  const uctQuery = useQuery<Uct | null>({
     queryKey: ["uct"],
     queryFn: getUct,
-    staleTime: 60_000,  // 1 min
+    staleTime: 60_000, // 1 minuto
+    retry: false,
   });
 
+  // ======================
+  // Mutation: crear / actualizar
+  // ======================
   const saveMutation = useMutation({
-    mutationFn: (data: Uct) => upsertUct(data, !!uctQuery.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["uct"] }),
+    mutationFn: (data: Uct) =>
+      upsertUct(data, Boolean(uctQuery.data)),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["uct"] });
+    },
   });
 
+  // ======================
+  // Mutation: eliminar
+  // ======================
   const deleteMutation = useMutation({
     mutationFn: deleteUct,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["uct"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["uct"] });
+    },
   });
 
   return {
-    // datos
+    // ----------------------
+    // estado
+    // ----------------------
     uct: uctQuery.data ?? null,
     isLoading: uctQuery.isLoading,
     isError: uctQuery.isError,
 
+    // ----------------------
     // acciones
+    // ----------------------
     save: saveMutation.mutateAsync,
     saving: saveMutation.isPending,
 

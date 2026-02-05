@@ -46,7 +46,9 @@ export async function upsertUct(payload: Uct, exists: boolean) {
   return http("/grupo-utn/", { method, body: JSON.stringify(body) });
 }
 
+// DELETE UCT (grupo único)
 export async function deleteUct() {
-    if (!BASE) return;
-    return http("/grupo-utn/", { method: "DELETE" });
+  return http<void>("/grupo-utn/", {
+    method: "DELETE",
+  });
 }
