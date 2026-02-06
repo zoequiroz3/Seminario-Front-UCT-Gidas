@@ -1,0 +1,67 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  getEquipamiento,
+  createEquipamiento,
+  updateEquipamiento,
+  deleteEquipamiento,
+  type Equipamiento,
+} from "@/services/equipamientoServices";
+import { getUct } from "@/services/uctServices";
+
+export function useEquipamiento() {
+  const qc = useQueryClient();
+
+  const equipamientoQuery = useQuery({
+    queryKey: ["equipamiento"],
+    queryFn: getEquipamiento,
+    staleTime: 60_000,
+  });
+
+  const uctQuery = useQuery({
+    queryKey: ["uct"],
+    queryFn: getUct,
+    staleTime: 60_000,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (
+      data: Omit<Equipamiento, "id" | "grupo" | "grupo_utn_id">
+    ) => {
+      if (!uctQuery.data?.id) {
+        throw new Error("No hay grupo UTN configurado");
+      }
+
+      return createEquipamiento({
+        ...data,
+        grupo_utn_id: uctQuery.data.id,
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipamiento"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Equipamiento> }) =>
+      updateEquipamiento(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipamiento"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteEquipamiento,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["equipamiento"] }),
+  });
+
+  return {
+    list: equipamientoQuery.data ?? [],
+    isLoading: equipamientoQuery.isLoading,
+    isError: equipamientoQuery.isError,
+
+    create: createMutation.mutateAsync,
+    creating: createMutation.isPending,
+
+    update: updateMutation.mutateAsync,
+    updating: updateMutation.isPending,
+
+    remove: deleteMutation.mutateAsync,
+    removing: deleteMutation.isPending,
+  };
+}

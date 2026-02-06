@@ -1,76 +1,58 @@
 import { http } from "@/lib/http";
 
-// ----------------- Tipos -----------------
-/**
- * Formato recomendado para la fecha: "YYYY-MM-DD"
- * (coincide con lo que envía el formulario).
- */
 export type Equipamiento = {
-  id: string;                  // generado en el mock si no existe
-  denominacion: string;        // nombre del bien o servicio
-  cantidadAdquirida: number;   // entero
-  montoInvertido: number;      // puede ser decimal
-  fechaIncorporacion: string;  // YYYY-MM-DD
-  descripcionBreve: string;
-  fuenteFinanciamiento: string;
-  destinatario: string;
+  id: number;
+  denominacion: string;
+  descripcion_breve: string;
+  fecha_incorporacion: string; // YYYY-MM-DD
+  monto_invertido: number;
+  grupo_utn_id: number;
 };
 
-// ----------------- Config API / Mock -----------------
-const BASE = import.meta.env.VITE_API_URL ?? "";
-const MOCK_KEY = "gidas_equipamiento_lista_mock";
-
-function delay(ms = 300) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-// ----------------- MOCK (sin backend) -----------------
-async function mockList(): Promise<Equipamiento[]> {
-  await delay();
-  const raw = localStorage.getItem(MOCK_KEY);
-  return raw ? (JSON.parse(raw) as Equipamiento[]) : [];
-}
-
-async function mockUpsert(payload: Equipamiento): Promise<Equipamiento> {
-  await delay();
-  const lista = await mockList();
-
-  // generar id si no viene
-  if (!payload.id) {
-    payload.id = crypto.randomUUID?.() ?? String(Date.now());
-  }
-
-  const exists = lista.some((i) => i.id === payload.id);
-  const updated = exists
-    ? lista.map((i) => (i.id === payload.id ? payload : i))
-    : [...lista, payload];
-
-  localStorage.setItem(MOCK_KEY, JSON.stringify(updated));
-  return payload;
-}
-
-async function mockDelete(id: string): Promise<void> {
-  await delay();
-  const lista = await mockList();
-  const updated = lista.filter((i) => i.id !== id);
-  localStorage.setItem(MOCK_KEY, JSON.stringify(updated));
-}
-
-// ----------------- API real -----------------
 export async function getEquipamiento() {
-  if (!BASE) return mockList();
-  return http<Equipamiento[]>("/api/equipamiento");
+  return http<Equipamiento[]>("/equipamiento/");
 }
 
-export async function upsertEquipamiento(payload: Equipamiento) {
-  if (!BASE) return mockUpsert(payload);
-  return http<Equipamiento>(payload.id ? `/api/equipamiento/${payload.id}` : "/api/equipamiento", {
-    method: payload.id ? "PUT" : "POST",
+export async function getEquipamientoById(id: number) {
+  return http<Equipamiento>(`/equipamiento/${id}`);
+}
+
+export async function createEquipamiento(payload: {
+  denominacion: string;
+  descripcion_breve: string;
+  fecha_incorporacion: string;
+  monto_invertido: number;
+}) {
+  return http("/equipamiento/", {
+    method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function deleteEquipamiento(id: string) {
-  if (!BASE) return mockDelete(id);
-  return http<void>(`/api/equipamiento/${id}`, { method: "DELETE" });
+
+
+export async function updateEquipamiento(
+  id: number,
+  payload: Partial<Omit<Equipamiento, "id">>
+) {
+  return http<Equipamiento>(`/equipamiento/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteEquipamiento(id: number) {
+  return http<void>(`/equipamiento/${id}`, {
+    method: "DELETE",
+  });
+}
+
+function toApiPayload(form: any) {
+  return {
+    denominacion: form.denominacion,
+    descripcion_breve: form.descripcionBreve,
+    fecha_incorporacion: form.fechaIncorporacion,
+    monto_invertido: form.montoInvertido,
+    grupo_utn_id: form.grupoUtnId,
+  };
 }

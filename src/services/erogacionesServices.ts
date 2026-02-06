@@ -7,6 +7,7 @@ export type Erogaciones = {
   numeroErogacion: number;
   tipoErogacion: string;
   fuenteErogaciones: string;
+  grupo_utn_id: number;
 };
 
 export async function getErogaciones() {
@@ -17,12 +18,16 @@ export async function getErogacionById(id: number) {
   return http<Erogaciones>(`/erogaciones/${id}`);
 }
 
-export async function createErogacion(payload: Omit<Erogaciones, "id">) {
+export async function createErogacion(
+  payload: Omit<Erogaciones, "id">
+) {
   return http<Erogaciones>("/erogaciones/", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
+
+
 
 export async function updateErogacion(id: number, payload: Partial<Erogaciones>) {
   return http<Erogaciones>(`/erogaciones/${id}`, {

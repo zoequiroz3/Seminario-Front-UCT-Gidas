@@ -1,6 +1,7 @@
 import { http } from "@/lib/http";
 
 export type Uct = {
+  id: number;
   facultadRegional: string;
   nombreSigla: string;
   director: string;

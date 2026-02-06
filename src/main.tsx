@@ -89,6 +89,7 @@ const router = createBrowserRouter([
       { path: "equipamiento", element: <EquipamientoLanding /> },
       { path: "equipamiento/nuevo", element: <EquipamientoForm /> },
       { path: "equipamiento/:id", element: <EquipamientoDetalle /> },
+      { path: "equipamiento/:id/editar", element: <EquipamientoForm /> },
 
       // Objetos y financiamiento
       { path: "objetosfinanciamiento", element: <ObjetosLanding /> },

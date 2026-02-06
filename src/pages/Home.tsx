@@ -6,7 +6,7 @@ import Button from "@/components/Button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 export default function Home() {
-  const { uct, isLoading, isError, remove, removing } = useUct();
+  const { uct, isLoading, isError, remove } = useUct();
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -52,20 +52,22 @@ export default function Home() {
             />
           </dl>
 
+          {/* BOTONES */}
           <div className="mt-6 flex gap-2">
             <Link
               to="/uct/nueva"
-              className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300"
+              className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-sm"
             >
               Editar
             </Link>
 
-            <Button
-              variant="secondary"
+            <button
+              type="button"
               onClick={() => setShowConfirm(true)}
+              className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-sm"
             >
               Eliminar UCT
-            </Button>
+            </button>
           </div>
         </article>
       ) : (
