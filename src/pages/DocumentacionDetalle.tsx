@@ -35,7 +35,7 @@ export default function DocumentacionDetalle() {
         </h3>
 
         {/* Info lineal */}
-        <div className="space-y-3 md:text-[18px] text-slate-500">
+        <div className="space-y-2 text-sm md:text-base text-slate-500">
           <p>
             <span className="font-medium text-slate-700">Autores:</span>{" "}
             {autores}

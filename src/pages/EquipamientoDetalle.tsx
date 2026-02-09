@@ -1,32 +1,9 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
-import DatePicker from "@/components/Calendar";
-import { useEquipamiento } from "@/hooks/useEquipamiento";
+import { getEquipamientoById } from "@/services/equipamientoServices";
 import type { Equipamiento } from "@/services/equipamientoServices";
-
-// -------- helpers fecha --------
-const parseYMD = (s?: string): Date | null => {
-  if (!s) return null;
-  const [y, m, d] = s.split("-").map(Number);
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-};
-
-const toYMD = (date: Date | null): string => {
-  if (!date) return "";
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
-
-const fmtES = (ymd?: string) => {
-  if (!ymd) return "—";
-  const [y, m, d] = ymd.split("-");
-  return `${d}/${m}/${y}`;
-};
+import { formatFecha } from "@/utils/formatFecha";
 
 const fmtMoney = (n?: number) =>
   typeof n === "number"
@@ -37,211 +14,82 @@ const fmtMoney = (n?: number) =>
       }).format(n)
     : "—";
 
-// -------- draft --------
-type Draft = Partial<Equipamiento>;
-
 export default function EquipamientoDetalle() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const qc = useQueryClient();
 
-  const { list, isLoading, isError, update, updating } = useEquipamiento();
+  const { data, isLoading, isError } = useQuery<Equipamiento>({
+    queryKey: ["equipamiento", id],
+    queryFn: () => getEquipamientoById(Number(id)),
+    enabled: !!id,
+  });
 
-  const item = list.find((e) => e.id === Number(id));
-
-  const [editing, setEditing] = useState(false);
-  const [data, setData] = useState<Draft | null>(null);
-
-  useEffect(() => {
-    if (item) setData({ ...item });
-  }, [item]);
-
-  if (isLoading)
-    return <div className="grid place-items-center min-h-[50vh]">Cargando…</div>;
-
-  if (isError || !item || !data) {
-    return (
-      <section>
-        <h2 className="text-[38px] font-semibold">Equipamiento</h2>
-        <div className="mt-6 rounded-xl border bg-white/80 p-6">
-          No se encontró el registro.
-          <div className="mt-6">
-            <Button variant="secondary" onClick={() => navigate(-1)}>
-              Volver
-            </Button>
-          </div>
-        </div>
-      </section>
-    );
+  if (isLoading) {
+    return <p className="text-slate-500">Cargando…</p>;
   }
 
-  // -------- handlers --------
-  const changeText =
-    (k: keyof Equipamiento) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const v = e.currentTarget.value;
-      setData((d) => (d ? { ...d, [k]: v } : d));
-    };
-
-  const changeDecimal =
-    (k: keyof Equipamiento) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const v = e.currentTarget.value;
-      setData((d) =>
-        d ? { ...d, [k]: v === "" ? undefined : Number(v) } : d
-      );
-    };
-
-  const setFecha = (dt: Date | null) =>
-    setData((d) => (d ? { ...d, fecha_incorporacion: toYMD(dt) } : d));
-
-  // -------- guardar --------
-  const save = async () => {
-    if (!data) return;
-
-    if (!data.denominacion?.trim()) {
-      alert("La denominación es obligatoria.");
-      return;
-    }
-    if (!data.descripcion_breve?.trim()) {
-      alert("La descripción es obligatoria.");
-      return;
-    }
-    if (!data.fecha_incorporacion) {
-      alert("La fecha de incorporación es obligatoria.");
-      return;
-    }
-    if (
-      data.monto_invertido === undefined ||
-      Number.isNaN(Number(data.monto_invertido)) ||
-      data.monto_invertido <= 0
-    ) {
-      alert("El monto invertido debe ser mayor a 0.");
-      return;
-    }
-
-    await update({
-      id: item.id,
-      data: {
-        denominacion: data.denominacion,
-        descripcion_breve: data.descripcion_breve,
-        fecha_incorporacion: data.fecha_incorporacion,
-        monto_invertido: data.monto_invertido,
-      },
-    });
-
-    qc.invalidateQueries({ queryKey: ["equipamiento"] });
-    setEditing(false);
-  };
+  if (isError || !data) {
+    return <p className="text-slate-500">No se encontró el equipamiento.</p>;
+  }
 
   return (
     <section className="flex flex-col gap-6">
-      <h2 className="text-[38px] font-semibold">Equipamiento</h2>
+      {/* Título principal */}
+      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+        Equipamiento
+      </h2>
 
-      {/* -------- VISTA -------- */}
-      {!editing ? (
-        <article className="rounded-2xl border bg-white/80 p-6 shadow-sm">
-          <h3 className="text-lg md:text-[25px] font-semibold mb-2">
-            {item.denominacion}
-          </h3>
+      {/* Tarjeta */}
+      <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
+        {/* Título tarjeta */}
+        <h3 className="md:text-[25px] text-lg font-semibold mb-6">
+          {data.denominacion}
+        </h3>
 
-          <dl className="space-y-2 text-sm">
-            <Field label="Monto invertido" value={fmtMoney(item.monto_invertido)} />
-            <Field
-              label="Fecha de incorporación"
-              value={fmtES(item.fecha_incorporacion)}
-            />
-            <Field
-              label="Descripción breve"
-              value={item.descripcion_breve || "—"}
-            />
-          </dl>
+        {/* Info */}
+        <div className="space-y-2 text-sm md:text-base text-slate-500">
+          <p>
+            <span className="font-medium text-slate-700">
+              Descripción breve:
+            </span>{" "}
+            {data.descripcion_breve || "—"}
+          </p>
 
-          <div className="mt-8 flex justify-between">
-            <Button variant="secondary" onClick={() => navigate(-1)}>
-              Volver
-            </Button>
-            <Button onClick={() => setEditing(true)}>Editar</Button>
-          </div>
-        </article>
-      ) : (
-        /* -------- EDICIÓN -------- */
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void save();
-          }}
-          className="rounded-2xl border bg-white/80 p-6 shadow-sm space-y-6"
-        >
-          <Field label="Denominación">
-            <input className="input" value={data.denominacion} disabled />
-          </Field>
+          <p>
+            <span className="font-medium text-slate-700">
+              Fecha de incorporación:
+            </span>{" "}
+            {formatFecha(data.fecha_incorporacion)}
+          </p>
 
-          <Field label="Descripción breve">
-            <input
-              className="input"
-              value={data.descripcion_breve ?? ""}
-              onChange={changeText("descripcion_breve")}
-            />
-          </Field>
+          <p>
+            <span className="font-medium text-slate-700">
+              Monto invertido:
+            </span>{" "}
+            {fmtMoney(data.monto_invertido)}
+          </p>
+        </div>
 
-          <Field label="Monto invertido">
-            <input
-              type="number"
-              step="0.01"
-              className="input"
-              value={data.monto_invertido ?? ""}
-              onChange={changeDecimal("monto_invertido")}
-            />
-          </Field>
+        {/* Acciones */}
+        <div className="mt-8 flex items-center justify-between">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="px-3 py-1 text-xs"
+            onClick={() => navigate(-1)}
+          >
+            Volver
+          </Button>
 
-          <Field label="Fecha de incorporación">
-            <DatePicker
-              value={parseYMD(data.fecha_incorporacion)}
-              onChange={setFecha}
-              helperText="DD/MM/AAAA"
-              className="input"
-            />
-          </Field>
-
-          <div className="mt-8 flex justify-between">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setEditing(false);
-                setData({ ...item });
-              }}
-            >
-              Cancelar
-            </Button>
-
-            <Button type="submit" disabled={updating}>
-              {updating ? "Guardando…" : "Guardar cambios"}
-            </Button>
-          </div>
-        </form>
-      )}
+          <Button
+            size="sm"
+            className="px-3 py-1 text-xs"
+            onClick={() => navigate(`/equipamiento/${data.id}/editar`)}
+          >
+            Editar
+          </Button>
+        </div>
+      </article>
     </section>
-  );
-}
-
-// -------- campo reutilizable --------
-function Field({
-  label,
-  value,
-  children,
-}: {
-  label: string;
-  value?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div>
-      <dt className="md:text-[20px] font-medium mt-7">{label}</dt>
-      <dd className="md:text-[18px] text-slate-500 mt-2">
-        {children ?? value ?? "—"}
-      </dd>
-    </div>
   );
 }

@@ -54,7 +54,6 @@ export default function DocumentacionLanding() {
             <Button
               variant="secondary"
               size="sm"
-              className="px-3 py-1.5 text-xs"
               onClick={() => setSelectMode(true)}
             >
               Seleccionar
@@ -63,7 +62,6 @@ export default function DocumentacionLanding() {
             <Button
               variant="primary"
               size="sm"
-              className="px-3 py-1.5 text-xs"
               onClick={() => navigate("/documentacion/nuevo")}
             >
               Agregar nuevo
@@ -105,7 +103,7 @@ export default function DocumentacionLanding() {
                 key={d.id}
                 item={d}
                 title={(x) => x.titulo}
-                subtitle={(x) => `Año: ${x.anio}`}
+                subtitle={(x) => `Editorial: ${x.editorial ?? "—"}`}
                 selectable={selectMode}
                 selected={selectedIds.includes(d.id)}
                 onSelectChange={(checked) =>

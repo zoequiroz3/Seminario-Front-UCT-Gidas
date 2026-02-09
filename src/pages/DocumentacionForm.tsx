@@ -27,10 +27,11 @@ export default function DocumentacionForm() {
 
   if (isLoading) return <p>Cargando…</p>;
 
+  const isEdit = Boolean(id);
   return (
     <section className="w-full">
       <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-        Documentación
+        {isEdit ? "Editar documentación" : "Nueva documentación"}
       </h2>
 
       {/* CARD IGUAL AL DETALLE */}
@@ -40,11 +41,11 @@ export default function DocumentacionForm() {
           await submit();
           navigate("/documentacion");
         }}
-        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm space-y-8"
+        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
       >
         <Field label="Título">
           <input
-            className="input md:text-[18px]"
+            className="input text-sm md:text-base"
             value={data.titulo}
             onChange={(e) =>
               setData((d) => ({ ...d, titulo: e.target.value }))
@@ -60,7 +61,7 @@ export default function DocumentacionForm() {
 
         <Field label="Editorial">
           <input
-            className="input md:text-[18px]"
+            className="input text-sm md:text-base"
             value={data.editorial}
             onChange={(e) =>
               setData((d) => ({ ...d, editorial: e.target.value }))
@@ -70,7 +71,7 @@ export default function DocumentacionForm() {
 
         <Field label="Año">
           <select
-            className="input md:text-[18px]"
+            className="input text-sm md:text-base"
             value={data.anio ?? ""}
             onChange={(e) =>
               setData((d) => ({

@@ -84,7 +84,7 @@ export default function EquipamientoLanding() {
                 key={e.id}
                 item={e}
                 title={(x) => x.denominacion}
-                subtitle={(x) => `Fecha: ${x.fecha_incorporacion}`}
+                subtitle={(x) => x.descripcion_breve}
                 selectable={selectMode}
                 selected={selectedIds.includes(e.id)}
                 onSelectChange={(checked) => toggleSelect(e.id, checked)}
