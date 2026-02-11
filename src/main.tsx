@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Navigate } from "react-router-dom";
 
 import "./styles/index.css";
 
@@ -38,6 +39,7 @@ import SearchPage from "./pages/SearchPage";
 import DocumentacionDetalle from "./pages/DocumentacionDetalle";
 import DocumentacionForm from "./pages/DocumentacionForm";
 import DocumentacionLanding from "./pages/DocumentacionHome";
+import PersonalForm from "@/pages/PersonalForm";
 
 // Definición de rutas
 const router = createBrowserRouter([
@@ -62,10 +64,34 @@ const router = createBrowserRouter([
       { path: "uct/nueva", element: <UctForm /> },
 
       // Personal
-      { path: "personal", element: <PersonalLanding /> },   // landing
-      { path: "personal/nuevo", element: <Personal /> },    // formulario
-      { path: "personal/:id", element: <PersonalDetalle /> }, // detalle de personal
-      { path: "investigadores", element: <PersonalLanding presetTipo="INVESTIGADOR" /> },
+      { path: "personal", element: <PersonalLanding /> },   // landing  
+      { path: "personal/nuevo", element: <PersonalForm /> },    // formulario
+      { path: "personal/:rol/:id", element: <PersonalDetalle /> }, // detalle de personal
+      { path: "personal/:rol/:id/editar", element: <PersonalForm /> }, // editar personal
+      { path: "becarios/:id/editar", element: <PersonalForm /> }, // editar becario
+      { path: "investigadores/:id/editar", element: <PersonalForm /> }, // editar investigador
+      { path: "becarios/:id", element: <PersonalDetalle /> }, // detalle de becario
+      { path: "investigadores/:id", element: <PersonalDetalle /> }, // detalle de investigador
+      { path: "ptaa/:id", element: <PersonalDetalle /> }, // detalle de PTAA
+      { path: "profesionales/:id", element: <PersonalDetalle /> }, // detalle de profesional
+      // Redirecciones para mantener compatibilidad con URLs anteriores
+      {
+        path: "investigadores",
+        element: <Navigate to="/personal?tipo=INVESTIGADOR" replace />
+      },
+      {
+        path: "becarios",
+        element: <Navigate to="/personal?tipo=BECARIO" replace />
+      },
+      {
+        path: "ptaa",
+        element: <Navigate to="/personal?tipo=PTAA" replace />
+      },
+      {
+        path: "profesionales",
+        element: <Navigate to="/personal?tipo=PROFESIONAL" replace />
+      },
+
 
       // Proyectos
       { path: "proyectos", element: <ProyectosLanding /> },
@@ -84,6 +110,7 @@ const router = createBrowserRouter([
       { path: "erogaciones", element: <ErogacionesLanding /> },
       { path: "erogaciones/nuevo", element: <ErogacionesForm /> },
       { path: "erogaciones/:id", element: <ErogacionesDetalle /> },
+      { path: "erogaciones/:id/editar", element: <ErogacionesForm /> },
 
       // Equipamiento
       { path: "equipamiento", element: <EquipamientoLanding /> },

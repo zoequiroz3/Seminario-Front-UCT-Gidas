@@ -5,10 +5,23 @@ export type Erogaciones = {
   egresos: number;
   ingresos: number;
   numeroErogacion: number;
-  tipoErogacion: string;
-  fuenteErogaciones: string;
-  grupo_utn_id: number;
+
+  tipo_erogacion?: {
+    id: number;
+    nombre: string;
+  };
+
+  fuente?: {
+    id: number;
+    nombre: string;
+  };
+
+  grupo?: {
+    id: number;
+    nombre: string;
+  };
 };
+
 
 export async function getErogaciones() {
   return http<Erogaciones[]>("/erogaciones/");
@@ -19,14 +32,23 @@ export async function getErogacionById(id: number) {
 }
 
 export async function createErogacion(
-  payload: Omit<Erogaciones, "id">
+  payload: CreateErogacionPayload
 ) {
-  return http<Erogaciones>("/erogaciones/", {
+  return http("/erogaciones/", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
+
+export type CreateErogacionPayload = {
+  numeroErogacion: number;
+  tipo_erogacion_id: number;
+  ingresos: number;
+  egresos: number;
+  fuente_financiamiento_id?: number;
+  grupo_utn_id: number;
+};
 
 
 export async function updateErogacion(id: number, payload: Partial<Erogaciones>) {

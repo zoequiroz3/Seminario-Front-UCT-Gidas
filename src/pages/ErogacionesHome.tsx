@@ -32,8 +32,11 @@ export default function ErogacionesLanding() {
     .filter((e) => selectedIds.includes(e.id))
     .map(
       (e) =>
-        `Erogación N° ${String(e.numeroErogacion).padStart(6, "0")} — ${e.tipoErogacion}`
+        `Erogación N° ${String(e.numeroErogacion).padStart(6, "0")} — ${
+          e.tipo_erogacion?.nombre ?? "—"
+        }`
     );
+
 
   const confirmDelete = async () => {
     for (const id of selectedIds) {
@@ -110,7 +113,7 @@ export default function ErogacionesLanding() {
                 title={(x) =>
                   `Erogación N° ${String(x.numeroErogacion).padStart(6, "0")}`
                 }
-                subtitle={(x) => x.tipoErogacion || "—"}
+                subtitle={(x) => x.tipo_erogacion?.nombre || "—"}
                 selectable={selectMode}
                 selected={selectedIds.includes(e.id)}
                 onSelectChange={(checked) =>

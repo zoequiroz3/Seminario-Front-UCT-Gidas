@@ -54,7 +54,7 @@ export default function ErogacionesDetalle() {
             <span className="font-medium text-slate-700">
               Tipo de erogación:
             </span>{" "}
-            {data.tipoErogacion || "—"}
+            {data.tipo_erogacion?.nombre || "—"}
           </p>
 
           <p>
@@ -75,7 +75,8 @@ export default function ErogacionesDetalle() {
             <span className="font-medium text-slate-700">
               Fuente de financiamiento:
             </span>{" "}
-            {data.fuenteErogaciones || "—"}
+            {data.fuente?.nombre || "—"}
+
           </p>
         </div>
 

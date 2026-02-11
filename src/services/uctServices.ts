@@ -14,21 +14,25 @@ const BASE = import.meta.env.VITE_API_URL;
 
 export async function getUct() {
   if (!BASE) return null;
+
   try {
-      const data = await http<any>("/grupo-utn/");
-      // Mapeo Back -> Front
-      return {
-        facultadRegional: data.nombre_unidad_academica,
-        nombreSigla: data.nombre_sigla_grupo,
-        correo: data.mail,
-        objetivos: data.objetivo_desarrollo,
-        director: data.director,
-        vicedirector: data.vicedirector
-      } as Uct;
+    const data = await http<any>("/grupo-utn/");
+
+    return {
+      id: data.id, 
+      facultadRegional: data.nombre_unidad_academica,
+      nombreSigla: data.nombre_sigla_grupo,
+      correo: data.mail,
+      objetivos: data.objetivo_desarrollo,
+      director: data.director,
+      vicedirector: data.vicedirector
+    } as Uct;
+
   } catch {
-      return null;
+    return null;
   }
 }
+
 
 export async function upsertUct(payload: Uct, exists: boolean) {
   if (!BASE) return;

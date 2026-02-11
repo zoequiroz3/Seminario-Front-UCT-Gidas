@@ -15,8 +15,8 @@ export function useUct() {
   const uctQuery = useQuery<Uct | null>({
     queryKey: ["uct"],
     queryFn: getUct,
-    staleTime: 60_000, // 1 minuto
-    retry: false,
+    staleTime: 60_000 // 1 minuto
+    
   });
 
   // ======================
