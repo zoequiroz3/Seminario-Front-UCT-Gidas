@@ -10,13 +10,14 @@ import {
 
 interface Props {
   initialData?: any;
-  onCancel?: () => void;
+  onCancel: () => void;
 }
 
 export default function FormBecario({
   initialData,
   onCancel,
 }: Props) {
+
   const { uct } = useUct();
   const { data: tiposFormacion = [] } = useTiposFormacion();
   const { fuentes = [] } = useFuentesFinanciamiento();
@@ -43,15 +44,8 @@ export default function FormBecario({
 
     if (initialData.relaciones?.fuente_financiamiento)
       setFuenteId(initialData.relaciones.fuente_financiamiento.id);
-  }, [initialData]);
 
-  const clearError = (field: string) => {
-    setErrors((prev) => {
-      const copy = { ...prev };
-      delete copy[field];
-      return copy;
-    });
-  };
+  }, [initialData]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -70,6 +64,14 @@ export default function FormBecario({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const clearError = (field: string) => {
+    setErrors(prev => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -91,101 +93,113 @@ export default function FormBecario({
       await crearBecario(payload);
     }
 
-    onCancel?.();
+    onCancel();
   };
-
-  const inputClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500 text-red-600 placeholder:text-red-500"
-        : ""
-    }`;
-
-  const selectClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
-    }`;
 
   return (
     <form onSubmit={submit} className="space-y-6">
 
-      {/* NOMBRE */}
-      <input
-        className={inputClass("nombre")}
-        placeholder={errors.nombre ?? "Nombre y apellido"}
-        value={nombreApellido}
-        onChange={(e) => {
-          const value = e.target.value;
-          setNombre(value);
-          if (value.trim()) clearError("nombre");
-        }}
-      />
+      {/* Nombre */}
+      <div>
+        <input
+          className={`input ${errors.nombre ? "border-red-500 ring-2 ring-red-500" : ""}`}
+          placeholder="Nombre y apellido"
+          value={nombreApellido}
+          onChange={(e) => {
+            setNombre(e.target.value);
+            if (e.target.value.trim()) clearError("nombre");
+          }}
+        />
+        {errors.nombre && (
+          <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+        )}
+      </div>
 
-      {/* HORAS */}
-      <input
-        type="number"
-        className={inputClass("horas")}
-        placeholder={errors.horas ?? "Horas semanales"}
-        value={horasSemanales}
-        onChange={(e) => {
-          const value = e.target.value;
-          setHoras(value === "" ? "" : +value);
-          if (value && Number(value) > 0) clearError("horas");
-        }}
-      />
+      {/* Horas */}
+      <div>
+        <input
+          type="number"
+          className={`input ${errors.horas ? "border-red-500 ring-2 ring-red-500" : ""}`}
+          placeholder="Horas semanales"
+          value={horasSemanales}
+          onChange={(e) => {
+            const value = e.target.value === "" ? "" : +e.target.value;
+            setHoras(value);
+            if (value) clearError("horas");
+          }}
+        />
+        {errors.horas && (
+          <p className="text-red-500 text-sm mt-1">{errors.horas}</p>
+        )}
+      </div>
 
-      {/* TIPO FORMACION */}
-      <select
-        className={selectClass("tipoFormacion")}
-        value={tipoFormacionId}
-        onChange={(e) => {
-          const value = e.target.value ? +e.target.value : "";
-          setTipoFormacionId(value);
-          if (value) clearError("tipoFormacion");
-        }}
-      >
-        <option value="">
-          {errors.tipoFormacion ?? "Tipo de formación"}
-        </option>
-        {tiposFormacion.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.nombre}
-          </option>
-        ))}
-      </select>
+      {/* Tipo Formación */}
+      <div>
+        <select
+          className={`input ${errors.tipoFormacion ? "border-red-500 ring-2 ring-red-500" : ""}`}
+          value={tipoFormacionId}
+          onChange={(e) => {
+            const value = e.target.value ? +e.target.value : "";
+            setTipoFormacionId(value);
+            if (value) clearError("tipoFormacion");
+          }}
+        >
+          <option value="">Seleccionar tipo de formación</option>
+          {tiposFormacion.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.nombre}
+            </option>
+          ))}
+        </select>
+        {errors.tipoFormacion && (
+          <p className="text-red-500 text-sm mt-1">{errors.tipoFormacion}</p>
+        )}
+      </div>
 
-      {/* FUENTE */}
-      <select
-        className={selectClass("fuente")}
-        value={fuenteId}
-        onChange={(e) => {
-          const value = e.target.value ? +e.target.value : "";
-          setFuenteId(value);
-          if (value) clearError("fuente");
-        }}
-      >
-        <option value="">
-          {errors.fuente ?? "Fuente de financiamiento"}
-        </option>
-        {fuentes.map((f) => (
-          <option key={f.id} value={f.id}>
-            {f.nombre}
-          </option>
-        ))}
-      </select>
+      {/* Fuente */}
+      <div>
+        <select
+          className={`input ${errors.fuente ? "border-red-500 ring-2 ring-red-500" : ""}`}
+          value={fuenteId}
+          onChange={(e) => {
+            const value = e.target.value ? +e.target.value : "";
+            setFuenteId(value);
+            if (value) clearError("fuente");
+          }}
+        >
+          <option value="">Seleccionar fuente</option>
+          {fuentes.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.nombre}
+            </option>
+          ))}
+        </select>
+        {errors.fuente && (
+          <p className="text-red-500 text-sm mt-1">{errors.fuente}</p>
+        )}
+      </div>
 
-
-      {/* BOTONES */}
+      {/* Botones */}
       <div className="flex justify-between pt-6">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="px-3 py-1 text-xs"
+          onClick={onCancel}
+        >
           Volver
         </Button>
-        <Button type="submit">
+
+        <Button
+          type="submit"
+          size="sm"
+          className="px-3 py-1 text-xs"
+        >
           {isEdit ? "Actualizar" : "Guardar"}
         </Button>
       </div>
+
     </form>
   );
 }

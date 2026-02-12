@@ -10,7 +10,7 @@ import {
 interface Props {
   tipo: "PTAA" | "PROFESIONAL";
   initialData?: any;
-  onCancel?: () => void;
+  onCancel: () => void;
 }
 
 export default function FormPTAAProfesional({
@@ -18,6 +18,7 @@ export default function FormPTAAProfesional({
   initialData,
   onCancel,
 }: Props) {
+
   const { uct } = useUct();
   const { data: tiposPersonal = [] } = useTiposPersonal();
 
@@ -42,14 +43,6 @@ export default function FormPTAAProfesional({
     }
   }, [initialData]);
 
-  const clearError = (field: string) => {
-    setErrors((prev) => {
-      const copy = { ...prev };
-      delete copy[field];
-      return copy;
-    });
-  };
-
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
@@ -62,11 +55,16 @@ export default function FormPTAAProfesional({
     if (!tipoPersonalId)
       newErrors.tipoPersonal = "Debe seleccionar tipo de personal";
 
-    if (!uct?.id)
-      newErrors.uct = "Error interno: UCT no cargada";
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const clearError = (field: string) => {
+    setErrors(prev => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -87,81 +85,90 @@ export default function FormPTAAProfesional({
       await upsertPersonal(payload);
     }
 
-    onCancel?.();
+    onCancel();
   };
-
-  const inputClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500 text-red-600 placeholder:text-red-500"
-        : ""
-    }`;
-
-  const selectClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
-    }`;
 
   return (
     <form onSubmit={submit} className="space-y-6">
 
-      {/* NOMBRE */}
-      <input
-        className={inputClass("nombre")}
-        placeholder={errors.nombre ?? "Nombre y apellido"}
-        value={nombreApellido}
-        onChange={(e) => {
-          const value = e.target.value;
-          setNombre(value);
-          if (value.trim()) clearError("nombre");
-        }}
-      />
+      {/* Nombre */}
+      <div>
+        <input
+          className={`input ${errors.nombre ? "border-red-500 ring-2 ring-red-500" : ""}`}
+          placeholder="Nombre y apellido"
+          value={nombreApellido}
+          onChange={(e) => {
+            setNombre(e.target.value);
+            if (e.target.value.trim()) clearError("nombre");
+          }}
+        />
+        {errors.nombre && (
+          <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+        )}
+      </div>
 
-      {/* HORAS */}
-      <input
-        type="number"
-        className={inputClass("horas")}
-        placeholder={errors.horas ?? "Horas semanales"}
-        value={horasSemanales}
-        onChange={(e) => {
-          const value = e.target.value;
-          setHoras(value === "" ? "" : +value);
-          if (value && Number(value) > 0) clearError("horas");
-        }}
-      />
+      {/* Horas */}
+      <div>
+        <input
+          type="number"
+          className={`input ${errors.horas ? "border-red-500 ring-2 ring-red-500" : ""}`}
+          placeholder="Horas semanales"
+          value={horasSemanales}
+          onChange={(e) => {
+            const value = e.target.value === "" ? "" : +e.target.value;
+            setHoras(value);
+            if (value) clearError("horas");
+          }}
+        />
+        {errors.horas && (
+          <p className="text-red-500 text-sm mt-1">{errors.horas}</p>
+        )}
+      </div>
 
-      {/* TIPO PERSONAL */}
-      <select
-        className={selectClass("tipoPersonal")}
-        value={tipoPersonalId}
-        onChange={(e) => {
-          const value = e.target.value ? +e.target.value : "";
-          setTipoPersonalId(value);
-          if (value) clearError("tipoPersonal");
-        }}
-      >
-        <option value="">
-          {errors.tipoPersonal ?? "Tipo de personal"}
-        </option>
-        {tiposPersonal.map((t) => (
-          <option key={t.id} value={t.id}>
-            {t.nombre}
-          </option>
-        ))}
-      </select>
+      {/* Tipo Personal */}
+      <div>
+        <select
+          className={`input ${errors.tipoPersonal ? "border-red-500 ring-2 ring-red-500" : ""}`}
+          value={tipoPersonalId}
+          onChange={(e) => {
+            const value = e.target.value ? +e.target.value : "";
+            setTipoPersonalId(value);
+            if (value) clearError("tipoPersonal");
+          }}
+        >
+          <option value="">Seleccionar tipo de personal</option>
+          {tiposPersonal.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.nombre}
+            </option>
+          ))}
+        </select>
+        {errors.tipoPersonal && (
+          <p className="text-red-500 text-sm mt-1">{errors.tipoPersonal}</p>
+        )}
+      </div>
 
-    
-      {/* BOTONES */}
+      {/* Botones */}
       <div className="flex justify-between pt-6">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="px-3 py-1 text-xs"
+          onClick={onCancel}
+        >
           Volver
         </Button>
-        <Button type="submit">
+
+        <Button
+          type="submit"
+          size="sm"
+          className="px-3 py-1 text-xs"
+        >
           {isEdit ? "Actualizar" : "Guardar"}
         </Button>
       </div>
+
     </form>
   );
 }

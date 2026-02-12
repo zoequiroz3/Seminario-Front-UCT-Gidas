@@ -11,13 +11,14 @@ import {
 
 interface Props {
   initialData?: any;
-  onCancel?: () => void;
+  onCancel: () => void;
 }
 
 export default function FormInvestigador({
   initialData,
   onCancel,
 }: Props) {
+
   const { uct } = useUct();
   const { data: dedicaciones = [] } = useDedicaciones();
   const { data: categorias = [] } = useCategoriasUtn();
@@ -41,21 +42,19 @@ export default function FormInvestigador({
     setHoras(initialData.horas_semanales);
     setActivo(initialData.activo ?? true);
 
-    if (initialData.relaciones?.tipo_dedicacion) {
+    if (initialData.relaciones?.tipo_dedicacion)
       setDedicacionId(initialData.relaciones.tipo_dedicacion.id);
-    }
 
-    if (initialData.relaciones?.categoria_utn) {
+    if (initialData.relaciones?.categoria_utn)
       setCategoriaId(initialData.relaciones.categoria_utn.id);
-    }
 
-    if (initialData.relaciones?.programa_incentivos) {
+    if (initialData.relaciones?.programa_incentivos)
       setProgramaId(initialData.relaciones.programa_incentivos.id);
-    }
+
   }, [initialData]);
 
   const clearError = (field: string) => {
-    setErrors((prev) => {
+    setErrors(prev => {
       const copy = { ...prev };
       delete copy[field];
       return copy;
@@ -65,25 +64,20 @@ export default function FormInvestigador({
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!nombreApellido.trim()) {
+    if (!nombreApellido.trim())
       newErrors.nombre = "Debe ingresar nombre y apellido";
-    }
 
-    if (!horasSemanales || Number(horasSemanales) <= 0) {
+    if (!horasSemanales || Number(horasSemanales) <= 0)
       newErrors.horas = "Debe ingresar horas válidas";
-    }
 
-    if (!dedicacionId) {
+    if (!dedicacionId)
       newErrors.dedicacion = "Debe seleccionar dedicación";
-    }
 
-    if (!categoriaId) {
+    if (!categoriaId)
       newErrors.categoria = "Debe seleccionar categoría UTN";
-    }
 
-    if (!programaId) {
+    if (!programaId)
       newErrors.programa = "Debe seleccionar programa";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -109,34 +103,21 @@ export default function FormInvestigador({
       await crearInvestigador(payload);
     }
 
-    onCancel?.();
+    onCancel();
   };
 
-  const inputClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500 text-red-600 placeholder:text-red-500"
-        : ""
-    }`;
-
-  const selectClass = (field: string) =>
-    `input ${
-      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
-    }`;
-
-    return (
+  return (
     <form onSubmit={submit} className="space-y-6">
 
-      {/* NOMBRE */}
+      {/* Nombre */}
       <div>
         <input
-          className={inputClass("nombre")}
+          className={`input ${errors.nombre ? "border-red-500 ring-2 ring-red-500" : ""}`}
           placeholder="Nombre y apellido"
           value={nombreApellido}
           onChange={(e) => {
             setNombre(e.target.value);
-            if (e.target.value.trim())
-              setErrors(prev => ({ ...prev, nombre: "" }));
+            if (e.target.value.trim()) clearError("nombre");
           }}
         />
         {errors.nombre && (
@@ -144,18 +125,17 @@ export default function FormInvestigador({
         )}
       </div>
 
-      {/* HORAS */}
+      {/* Horas */}
       <div>
         <input
           type="number"
-          className={inputClass("horas")}
+          className={`input ${errors.horas ? "border-red-500 ring-2 ring-red-500" : ""}`}
           placeholder="Horas semanales"
           value={horasSemanales}
           onChange={(e) => {
             const value = e.target.value === "" ? "" : +e.target.value;
             setHoras(value);
-            if (value && Number(value) > 0)
-              setErrors(prev => ({ ...prev, horas: "" }));
+            if (value) clearError("horas");
           }}
         />
         {errors.horas && (
@@ -163,16 +143,15 @@ export default function FormInvestigador({
         )}
       </div>
 
-      {/* DEDICACION */}
+      {/* Dedicación */}
       <div>
         <select
-          className={inputClass("dedicacion")}
+          className={`input ${errors.dedicacion ? "border-red-500 ring-2 ring-red-500" : ""}`}
           value={dedicacionId}
           onChange={(e) => {
             const value = e.target.value ? +e.target.value : "";
             setDedicacionId(value);
-            if (value)
-              setErrors(prev => ({ ...prev, dedicacion: "" }));
+            if (value) clearError("dedicacion");
           }}
         >
           <option value="">Seleccionar dedicación</option>
@@ -186,15 +165,74 @@ export default function FormInvestigador({
           <p className="text-red-500 text-sm mt-1">{errors.dedicacion}</p>
         )}
       </div>
-      {/* BOTONES */}
-            <div className="flex justify-between pt-6">
-              <Button type="button" variant="secondary" onClick={onCancel}>
-                Volver
-              </Button>
-              <Button type="submit">
-                {isEdit ? "Actualizar" : "Guardar"}
-              </Button>
-            </div>
-      </form>
+
+      {/* Categoría */}
+      <div>
+        <select
+          className={`input ${errors.categoria ? "border-red-500 ring-2 ring-red-500" : ""}`}
+          value={categoriaId}
+          onChange={(e) => {
+            const value = e.target.value ? +e.target.value : "";
+            setCategoriaId(value);
+            if (value) clearError("categoria");
+          }}
+        >
+          <option value="">Seleccionar categoría UTN</option>
+          {categorias.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nombre}
+            </option>
+          ))}
+        </select>
+        {errors.categoria && (
+          <p className="text-red-500 text-sm mt-1">{errors.categoria}</p>
+        )}
+      </div>
+
+      {/* Programa */}
+      <div>
+        <select
+          className={`input ${errors.programa ? "border-red-500 ring-2 ring-red-500" : ""}`}
+          value={programaId}
+          onChange={(e) => {
+            const value = e.target.value ? +e.target.value : "";
+            setProgramaId(value);
+            if (value) clearError("programa");
+          }}
+        >
+          <option value="">Seleccionar programa</option>
+          {programas.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nombre}
+            </option>
+          ))}
+        </select>
+        {errors.programa && (
+          <p className="text-red-500 text-sm mt-1">{errors.programa}</p>
+        )}
+      </div>
+
+      {/* Botones estilo detalle */}
+      <div className="flex justify-between pt-6">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="px-3 py-1 text-xs"
+          onClick={onCancel}
+        >
+          Volver
+        </Button>
+
+        <Button
+          type="submit"
+          size="sm"
+          className="px-3 py-1 text-xs"
+        >
+          {isEdit ? "Actualizar" : "Guardar"}
+        </Button>
+      </div>
+
+    </form>
   );
 }

@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import Button from "@/components/Button";
 
 import FormPTAAProfesional from "./FormPTAAProfesional";
 import FormBecario from "./FormBecario";
@@ -11,7 +12,6 @@ import { getPersonalCompletoByRolAndId } from "@/services/personalCompletoServic
 type Tipo = "" | "PTAA" | "PROFESIONAL" | "BECARIO" | "INVESTIGADOR";
 
 export default function PersonalForm() {
-
   const { rol, id } = useParams<{ rol?: string; id?: string }>();
   const navigate = useNavigate();
 
@@ -19,17 +19,13 @@ export default function PersonalForm() {
 
   const { data: initialData, isLoading } = useQuery({
     queryKey: ["personal-edit", rol, id],
-    queryFn: () =>
-      getPersonalCompletoByRolAndId(rol!, Number(id)),
+    queryFn: () => getPersonalCompletoByRolAndId(rol!, Number(id)),
     enabled: Boolean(rol && id),
   });
 
-  // 🔥 SIN VALOR POR DEFECTO
   const [tipo, setTipo] = useState<Tipo>("");
-
   const [errorTipo, setErrorTipo] = useState(false);
 
-  // 🔥 En edición setea automáticamente
   useEffect(() => {
     if (!initialData?.rol) return;
 
@@ -42,7 +38,6 @@ export default function PersonalForm() {
 
     const mapped = rolMap[initialData.rol.toLowerCase()];
     if (mapped) setTipo(mapped);
-
   }, [initialData]);
 
   if (isLoading) return <p>Cargando…</p>;
@@ -67,7 +62,7 @@ export default function PersonalForm() {
             </label>
 
             <select
-              className={`input text-sm md:text-base ${
+              className={`input ${
                 errorTipo ? "border-red-500 ring-2 ring-red-500 bg-red-50" : ""
               }`}
               value={tipo}
@@ -93,7 +88,22 @@ export default function PersonalForm() {
           </div>
         )}
 
-        {/* 🔥 SOLO SE MUESTRA SI HAY TIPO */}
+        {/* 🔥 SI NO HAY TIPO, SOLO BOTÓN VOLVER */}
+        {!tipo && !isEdit && (
+          <div className="border-t border-slate-200 pt-6 flex justify-start">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="px-3 py-1 text-xs"
+              onClick={() => navigate(-1)}
+            >
+              Volver
+            </Button>
+          </div>
+        )}
+
+        {/* 🔥 SUBFORMS */}
         {(tipo === "PTAA" || tipo === "PROFESIONAL") && (
           <FormPTAAProfesional
             tipo={tipo}
@@ -115,7 +125,6 @@ export default function PersonalForm() {
             onCancel={() => navigate(-1)}
           />
         )}
-
       </div>
     </section>
   );
