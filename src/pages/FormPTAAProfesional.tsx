@@ -7,6 +7,7 @@ import {
   actualizarPersonal,
 } from "@/services/personalServices";
 import { PersonalCompleto } from "@/services/personalCompletoServices";
+import { useParams } from "react-router-dom";
 
 interface Props {
   tipo: "PTAA" | "PROFESIONAL";
@@ -23,6 +24,7 @@ export default function FormPTAAProfesional({
   const { data: tiposPersonal = [] } = useTiposPersonal();
 
   const isEdit = Boolean(initialData);
+  const { rol } = useParams<{ rol: string }>();
 
   const [nombreApellido, setNombre] = useState("");
   const [horasSemanales, setHoras] = useState(0);
@@ -51,7 +53,7 @@ export default function FormPTAAProfesional({
     };
 
     if (isEdit && initialData?.id) {
-      await actualizarPersonal(initialData.id, payload);
+      await actualizarPersonal(initialData.id, payload, rol!);
     } else {
       await upsertPersonal(payload);
     }

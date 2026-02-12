@@ -64,7 +64,9 @@ export async function http<T>(
   }
 
   if (!res.ok) {
-    throw new HttpError(res.status, res.statusText, data);
-  }
+  console.error("ERROR BACKEND:", data);
+  throw new HttpError(res.status, res.statusText, data);
+}
+
   return data as T;
 }

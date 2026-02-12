@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import Button from "@/components/Button";
 import { useUct } from "@/hooks/useUct";
 import { useDedicaciones } from "@/hooks/useDedicaciones";
@@ -18,6 +19,8 @@ export default function FormInvestigador({
   initialData,
   onCancel,
 }: Props) {
+  const { rol } = useParams<{ rol: string }>();
+
   const { uct } = useUct();
   const { data: dedicaciones = [] } = useDedicaciones();
   const { data: categorias = [] } = useCategoriasUtn();
@@ -32,30 +35,41 @@ export default function FormInvestigador({
   const [programaId, setProgramaId] = useState<number>();
   const [activo, setActivo] = useState(true);
 
-  // 🔥 Cargar datos si es edición
+  // 🔥 Cargar datos cuando es edición
   useEffect(() => {
-    if (initialData) {
-      setNombre(initialData.nombre_apellido);
-      setHoras(initialData.horas_semanales);
-      setActivo(initialData.activo ?? true);
+    if (!initialData) return;
 
-      if (initialData.relaciones?.tipo_dedicacion) {
-        setDedicacionId(initialData.relaciones.tipo_dedicacion.id);
-      }
+    setNombre(initialData.nombre_apellido);
+    setHoras(initialData.horas_semanales);
+    setActivo(initialData.activo ?? true);
 
-      if (initialData.relaciones?.categoria_utn) {
-        setCategoriaId(initialData.relaciones.categoria_utn.id);
-      }
+    if (initialData.relaciones?.tipo_dedicacion) {
+      setDedicacionId(initialData.relaciones.tipo_dedicacion.id);
+    }
 
-      if (initialData.relaciones?.programa_incentivos) {
-        setProgramaId(initialData.relaciones.programa_incentivos.id);
-      }
+    if (initialData.relaciones?.categoria_utn) {
+      setCategoriaId(initialData.relaciones.categoria_utn.id);
+    }
+
+    if (initialData.relaciones?.programa_incentivos) {
+      setProgramaId(initialData.relaciones.programa_incentivos.id);
     }
   }, [initialData]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uct || !dedicacionId) return;
+
+    console.log("SUBMIT INVESTIGADOR");
+
+    if (!uct) {
+      console.error("UCT undefined");
+      return;
+    }
+
+    if (!dedicacionId) {
+      console.error("Dedicación no seleccionada");
+      return;
+    }
 
     const payload = {
       nombre_apellido: nombreApellido,
@@ -67,13 +81,19 @@ export default function FormInvestigador({
       grupo_utn_id: uct.id,
     };
 
-    if (isEdit && initialData?.id) {
-      await actualizarInvestigador(initialData.id, payload);
-    } else {
-      await crearInvestigador(payload);
-    }
+    console.log("PAYLOAD:", payload);
 
-    onCancel?.();
+    try {
+      if (isEdit && initialData?.id && rol) {
+        await actualizarInvestigador(initialData.id, payload, rol);
+      } else {
+        await crearInvestigador(payload);
+      }
+
+      onCancel?.();
+    } catch (error) {
+      console.error("ERROR ACTUALIZANDO INVESTIGADOR:", error);
+    }
   };
 
   return (

@@ -41,8 +41,8 @@ export function upsertPersonal(payload: PersonalPayload) {
   });
 }
 
-export function actualizarPersonal(id: number, payload: any) {
-  return http(`/personal/${id}`, {
+export function actualizarPersonal(id: number, payload: any, rol: string) {
+  return http(`/personal/${rol}/${id}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });

@@ -17,8 +17,12 @@ export function crearInvestigador(payload: InvestigadorPayload) {
   });
 }
 
-export function actualizarInvestigador(id: number, payload: any) {
-  return http(`/investigadores/${id}`, {
+export function actualizarInvestigador(
+  id: number,
+  payload: any,
+  rol: string
+) {
+  return http(`/personal/${rol}/${id}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
