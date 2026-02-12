@@ -47,3 +47,10 @@ export function actualizarPersonal(id: number, payload: any, rol: string) {
     body: JSON.stringify(payload),
   });
 }
+
+export function eliminarPersonal(id: number, rol: string) {
+  return http(`/personal/${rol}/${id}`, {
+    method: "DELETE",
+  });
+}
+

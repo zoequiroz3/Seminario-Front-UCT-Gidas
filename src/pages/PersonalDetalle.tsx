@@ -45,12 +45,12 @@ const renderValue = (value: any) => {
   return (
     <section className="flex flex-col gap-6">
       <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-        {persona.rol}
+        {data?.nombre_apellido ?? "Detalle de personal"}
       </h2>
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
           <div className="space-y-2 text-sm md:text-base text-slate-500">
             {Object.entries(data)
-              .filter(([key]) => key !== "id") // opcional: ocultar id
+              .filter(([key]) => key !== "id" && key !== "nombre_apellido" && key !== "activo") // opcional: ocultar id y nombre_apellido
               .map(([key, value]) => (
                 <p key={key}>
                   <span className="font-medium text-slate-700">

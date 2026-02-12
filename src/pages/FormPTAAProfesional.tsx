@@ -6,12 +6,10 @@ import {
   upsertPersonal,
   actualizarPersonal,
 } from "@/services/personalServices";
-import { PersonalCompleto } from "@/services/personalCompletoServices";
-import { useParams } from "react-router-dom";
 
 interface Props {
   tipo: "PTAA" | "PROFESIONAL";
-  initialData?: PersonalCompleto;
+  initialData?: any;
   onCancel?: () => void;
 }
 
@@ -24,36 +22,67 @@ export default function FormPTAAProfesional({
   const { data: tiposPersonal = [] } = useTiposPersonal();
 
   const isEdit = Boolean(initialData);
-  const { rol } = useParams<{ rol: string }>();
 
   const [nombreApellido, setNombre] = useState("");
-  const [horasSemanales, setHoras] = useState(0);
-  const [tipoPersonalId, setTipoPersonalId] = useState<number>();
+  const [horasSemanales, setHoras] = useState<number | "">("");
+  const [tipoPersonalId, setTipoPersonalId] = useState<number | "">("");
   const [activo, setActivo] = useState(true);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
-    if (initialData) {
-      setNombre(initialData.nombre_apellido);
-      setHoras(initialData.horas_semanales);
-      setActivo(initialData.activo ?? true);
-      setTipoPersonalId(initialData.tipo_personal_id);
+    if (!initialData) return;
+
+    setNombre(initialData.nombre_apellido);
+    setHoras(initialData.horas_semanales);
+    setActivo(initialData.activo ?? true);
+
+    if (initialData.relaciones?.tipo_personal) {
+      setTipoPersonalId(initialData.relaciones.tipo_personal.id);
     }
   }, [initialData]);
 
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!nombreApellido.trim())
+      newErrors.nombre = "Debe ingresar nombre y apellido";
+
+    if (!horasSemanales || Number(horasSemanales) <= 0)
+      newErrors.horas = "Debe ingresar horas válidas";
+
+    if (!tipoPersonalId)
+      newErrors.tipoPersonal = "Debe seleccionar tipo de personal";
+
+    if (!uct?.id)
+      newErrors.uct = "Error interno: UCT no cargada";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uct || !tipoPersonalId) return;
+    if (!validate()) return;
 
     const payload = {
       nombre_apellido: nombreApellido,
-      horas_semanales: horasSemanales,
-      tipo_personal_id: tipoPersonalId,
+      horas_semanales: Number(horasSemanales),
+      tipo_personal_id: Number(tipoPersonalId),
+      grupo_utn_id: uct!.id,
       activo,
-      grupo_utn_id: uct.id,
     };
 
     if (isEdit && initialData?.id) {
-      await actualizarPersonal(initialData.id, payload, rol!);
+      await actualizarPersonal(initialData.id, payload, "personal");
     } else {
       await upsertPersonal(payload);
     }
@@ -61,30 +90,61 @@ export default function FormPTAAProfesional({
     onCancel?.();
   };
 
+  const inputClass = (field: string) =>
+    `input ${
+      errors[field]
+        ? "!border-red-500 !ring-2 !ring-red-500 text-red-600 placeholder:text-red-500"
+        : ""
+    }`;
+
+  const selectClass = (field: string) =>
+    `input ${
+      errors[field]
+        ? "!border-red-500 !ring-2 !ring-red-500"
+        : ""
+    }`;
+
   return (
     <form onSubmit={submit} className="space-y-6">
+
+      {/* NOMBRE */}
       <input
-        className="input"
-        placeholder="Nombre y apellido"
+        className={inputClass("nombre")}
+        placeholder={errors.nombre ?? "Nombre y apellido"}
         value={nombreApellido}
-        onChange={(e) => setNombre(e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          setNombre(value);
+          if (value.trim()) clearError("nombre");
+        }}
       />
 
+      {/* HORAS */}
       <input
         type="number"
-        className="input"
-        placeholder="Horas semanales"
-        min={0}
+        className={inputClass("horas")}
+        placeholder={errors.horas ?? "Horas semanales"}
         value={horasSemanales}
-        onChange={(e) => setHoras(+e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          setHoras(value === "" ? "" : +value);
+          if (value && Number(value) > 0) clearError("horas");
+        }}
       />
 
+      {/* TIPO PERSONAL */}
       <select
-        className="input"
-        value={tipoPersonalId ?? ""}
-        onChange={(e) => setTipoPersonalId(+e.target.value)}
+        className={selectClass("tipoPersonal")}
+        value={tipoPersonalId}
+        onChange={(e) => {
+          const value = e.target.value ? +e.target.value : "";
+          setTipoPersonalId(value);
+          if (value) clearError("tipoPersonal");
+        }}
       >
-        <option value="">Tipo de personal</option>
+        <option value="">
+          {errors.tipoPersonal ?? "Tipo de personal"}
+        </option>
         {tiposPersonal.map((t) => (
           <option key={t.id} value={t.id}>
             {t.nombre}
@@ -92,8 +152,10 @@ export default function FormPTAAProfesional({
         ))}
       </select>
 
+    
+      {/* BOTONES */}
       <div className="flex justify-between pt-6">
-        <Button type="button" variant="secondary" onClick={() => onCancel?.()}>
+        <Button type="button" variant="secondary" onClick={onCancel}>
           Volver
         </Button>
         <Button type="submit">

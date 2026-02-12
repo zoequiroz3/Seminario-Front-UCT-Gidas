@@ -24,39 +24,65 @@ export default function FormBecario({
   const isEdit = Boolean(initialData);
 
   const [nombreApellido, setNombre] = useState("");
-  const [horasSemanales, setHoras] = useState(0);
-  const [tipoFormacionId, setTipoFormacionId] = useState<number>();
-  const [fuenteId, setFuenteId] = useState<number>();
+  const [horasSemanales, setHoras] = useState<number | "">("");
+  const [tipoFormacionId, setTipoFormacionId] = useState<number | "">("");
+  const [fuenteId, setFuenteId] = useState<number | "">("");
   const [activo, setActivo] = useState(true);
 
-  // 🔥 Cargar datos si es edición
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
-    if (initialData) {
-      setNombre(initialData.nombre_apellido);
-      setHoras(initialData.horas_semanales);
-      setActivo(initialData.activo ?? true);
+    if (!initialData) return;
 
-      if (initialData.relaciones?.tipo_formacion) {
-        setTipoFormacionId(initialData.relaciones.tipo_formacion.id);
-      }
+    setNombre(initialData.nombre_apellido);
+    setHoras(initialData.horas_semanales);
+    setActivo(initialData.activo ?? true);
 
-      if (initialData.relaciones?.fuente_financiamiento) {
-        setFuenteId(initialData.relaciones.fuente_financiamiento.id);
-      }
-    }
+    if (initialData.relaciones?.tipo_formacion)
+      setTipoFormacionId(initialData.relaciones.tipo_formacion.id);
+
+    if (initialData.relaciones?.fuente_financiamiento)
+      setFuenteId(initialData.relaciones.fuente_financiamiento.id);
   }, [initialData]);
+
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!nombreApellido.trim())
+      newErrors.nombre = "Debe ingresar nombre y apellido";
+
+    if (!horasSemanales || Number(horasSemanales) <= 0)
+      newErrors.horas = "Debe ingresar horas válidas";
+
+    if (!tipoFormacionId)
+      newErrors.tipoFormacion = "Debe seleccionar tipo de formación";
+
+    if (!fuenteId)
+      newErrors.fuente = "Debe seleccionar fuente";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uct || !tipoFormacionId) return;
+    if (!validate()) return;
 
     const payload = {
       nombre_apellido: nombreApellido,
-      horas_semanales: horasSemanales,
-      tipo_formacion_id: tipoFormacionId,
-      fuente_financiamiento_id: fuenteId,
+      horas_semanales: Number(horasSemanales),
+      tipo_formacion_id: Number(tipoFormacionId),
+      fuente_financiamiento_id: Number(fuenteId),
+      grupo_utn_id: uct!.id,
       activo,
-      grupo_utn_id: uct.id,
     };
 
     if (isEdit && initialData?.id) {
@@ -68,30 +94,61 @@ export default function FormBecario({
     onCancel?.();
   };
 
+  const inputClass = (field: string) =>
+    `input ${
+      errors[field]
+        ? "!border-red-500 !ring-2 !ring-red-500 text-red-600 placeholder:text-red-500"
+        : ""
+    }`;
+
+  const selectClass = (field: string) =>
+    `input ${
+      errors[field]
+        ? "!border-red-500 !ring-2 !ring-red-500"
+        : ""
+    }`;
+
   return (
     <form onSubmit={submit} className="space-y-6">
+
+      {/* NOMBRE */}
       <input
-        className="input"
-        placeholder="Nombre y apellido"
+        className={inputClass("nombre")}
+        placeholder={errors.nombre ?? "Nombre y apellido"}
         value={nombreApellido}
-        onChange={(e) => setNombre(e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          setNombre(value);
+          if (value.trim()) clearError("nombre");
+        }}
       />
 
+      {/* HORAS */}
       <input
         type="number"
-        className="input"
-        placeholder="Horas semanales"
-        min={0}
+        className={inputClass("horas")}
+        placeholder={errors.horas ?? "Horas semanales"}
         value={horasSemanales}
-        onChange={(e) => setHoras(+e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          setHoras(value === "" ? "" : +value);
+          if (value && Number(value) > 0) clearError("horas");
+        }}
       />
 
+      {/* TIPO FORMACION */}
       <select
-        className="input"
-        value={tipoFormacionId ?? ""}
-        onChange={(e) => setTipoFormacionId(+e.target.value)}
+        className={selectClass("tipoFormacion")}
+        value={tipoFormacionId}
+        onChange={(e) => {
+          const value = e.target.value ? +e.target.value : "";
+          setTipoFormacionId(value);
+          if (value) clearError("tipoFormacion");
+        }}
       >
-        <option value="">Tipo de formación</option>
+        <option value="">
+          {errors.tipoFormacion ?? "Tipo de formación"}
+        </option>
         {tiposFormacion.map((t) => (
           <option key={t.id} value={t.id}>
             {t.nombre}
@@ -99,12 +156,19 @@ export default function FormBecario({
         ))}
       </select>
 
+      {/* FUENTE */}
       <select
-        className="input"
-        value={fuenteId ?? ""}
-        onChange={(e) => setFuenteId(+e.target.value)}
+        className={selectClass("fuente")}
+        value={fuenteId}
+        onChange={(e) => {
+          const value = e.target.value ? +e.target.value : "";
+          setFuenteId(value);
+          if (value) clearError("fuente");
+        }}
       >
-        <option value="">Fuente de financiamiento</option>
+        <option value="">
+          {errors.fuente ?? "Fuente de financiamiento"}
+        </option>
         {fuentes.map((f) => (
           <option key={f.id} value={f.id}>
             {f.nombre}
@@ -112,24 +176,12 @@ export default function FormBecario({
         ))}
       </select>
 
-      <label className="flex gap-2 items-center">
-        <input
-          type="checkbox"
-          checked={activo}
-          onChange={(e) => setActivo(e.target.checked)}
-        />
-        Activo
-      </label>
 
+      {/* BOTONES */}
       <div className="flex justify-between pt-6">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => onCancel?.()}
-        >
+        <Button type="button" variant="secondary" onClick={onCancel}>
           Volver
         </Button>
-
         <Button type="submit">
           {isEdit ? "Actualizar" : "Guardar"}
         </Button>

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import Button from "@/components/Button";
 import { useUct } from "@/hooks/useUct";
 import { useDedicaciones } from "@/hooks/useDedicaciones";
@@ -19,8 +18,6 @@ export default function FormInvestigador({
   initialData,
   onCancel,
 }: Props) {
-  const { rol } = useParams<{ rol: string }>();
-
   const { uct } = useUct();
   const { data: dedicaciones = [] } = useDedicaciones();
   const { data: categorias = [] } = useCategoriasUtn();
@@ -29,13 +26,14 @@ export default function FormInvestigador({
   const isEdit = Boolean(initialData);
 
   const [nombreApellido, setNombre] = useState("");
-  const [horasSemanales, setHoras] = useState(0);
-  const [dedicacionId, setDedicacionId] = useState<number>();
-  const [categoriaId, setCategoriaId] = useState<number>();
-  const [programaId, setProgramaId] = useState<number>();
+  const [horasSemanales, setHoras] = useState<number | "">("");
+  const [dedicacionId, setDedicacionId] = useState<number | "">("");
+  const [categoriaId, setCategoriaId] = useState<number | "">("");
+  const [programaId, setProgramaId] = useState<number | "">("");
   const [activo, setActivo] = useState(true);
 
-  // 🔥 Cargar datos cuando es edición
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (!initialData) return;
 
@@ -56,125 +54,147 @@ export default function FormInvestigador({
     }
   }, [initialData]);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
 
-    console.log("SUBMIT INVESTIGADOR");
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
 
-    if (!uct) {
-      console.error("UCT undefined");
-      return;
+    if (!nombreApellido.trim()) {
+      newErrors.nombre = "Debe ingresar nombre y apellido";
+    }
+
+    if (!horasSemanales || Number(horasSemanales) <= 0) {
+      newErrors.horas = "Debe ingresar horas válidas";
     }
 
     if (!dedicacionId) {
-      console.error("Dedicación no seleccionada");
-      return;
+      newErrors.dedicacion = "Debe seleccionar dedicación";
     }
+
+    if (!categoriaId) {
+      newErrors.categoria = "Debe seleccionar categoría UTN";
+    }
+
+    if (!programaId) {
+      newErrors.programa = "Debe seleccionar programa";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
 
     const payload = {
       nombre_apellido: nombreApellido,
-      horas_semanales: horasSemanales,
-      tipo_dedicacion_id: dedicacionId,
-      categoria_utn_id: categoriaId,
-      programa_incentivos_id: programaId,
+      horas_semanales: Number(horasSemanales),
+      tipo_dedicacion_id: Number(dedicacionId),
+      categoria_utn_id: Number(categoriaId),
+      programa_incentivos_id: Number(programaId),
+      grupo_utn_id: uct!.id,
       activo,
-      grupo_utn_id: uct.id,
     };
 
-    console.log("PAYLOAD:", payload);
-
-    try {
-      if (isEdit && initialData?.id && rol) {
-        await actualizarInvestigador(initialData.id, payload, rol);
-      } else {
-        await crearInvestigador(payload);
-      }
-
-      onCancel?.();
-    } catch (error) {
-      console.error("ERROR ACTUALIZANDO INVESTIGADOR:", error);
+    if (isEdit && initialData?.id) {
+      await actualizarInvestigador(initialData.id, payload, "investigador");
+    } else {
+      await crearInvestigador(payload);
     }
+
+    onCancel?.();
   };
 
-  return (
+  const inputClass = (field: string) =>
+    `input ${
+      errors[field]
+        ? "!border-red-500 !ring-2 !ring-red-500 text-red-600 placeholder:text-red-500"
+        : ""
+    }`;
+
+  const selectClass = (field: string) =>
+    `input ${
+      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
+    }`;
+
+    return (
     <form onSubmit={submit} className="space-y-6">
-      <input
-        className="input"
-        placeholder="Nombre y apellido"
-        value={nombreApellido}
-        onChange={(e) => setNombre(e.target.value)}
-      />
 
-      <input
-        type="number"
-        className="input"
-        placeholder="Horas semanales"
-        min={0}
-        value={horasSemanales}
-        onChange={(e) => setHoras(+e.target.value)}
-      />
-
-      <select
-        className="input"
-        value={dedicacionId ?? ""}
-        onChange={(e) => setDedicacionId(+e.target.value)}
-      >
-        <option value="">Dedicación</option>
-        {dedicaciones.map((d) => (
-          <option key={d.id} value={d.id}>
-            {d.nombre}
-          </option>
-        ))}
-      </select>
-
-      <select
-        className="input"
-        value={categoriaId ?? ""}
-        onChange={(e) => setCategoriaId(+e.target.value)}
-      >
-        <option value="">Categoría UTN</option>
-        {categorias.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.nombre}
-          </option>
-        ))}
-      </select>
-
-      <select
-        className="input"
-        value={programaId ?? ""}
-        onChange={(e) => setProgramaId(+e.target.value)}
-      >
-        <option value="">Programa de incentivos</option>
-        {programas.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.nombre}
-          </option>
-        ))}
-      </select>
-
-      <label className="flex gap-2 items-center">
+      {/* NOMBRE */}
+      <div>
         <input
-          type="checkbox"
-          checked={activo}
-          onChange={(e) => setActivo(e.target.checked)}
+          className={inputClass("nombre")}
+          placeholder="Nombre y apellido"
+          value={nombreApellido}
+          onChange={(e) => {
+            setNombre(e.target.value);
+            if (e.target.value.trim())
+              setErrors(prev => ({ ...prev, nombre: "" }));
+          }}
         />
-        Activo
-      </label>
-
-      <div className="flex justify-between pt-6">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => onCancel?.()}
-        >
-          Volver
-        </Button>
-
-        <Button type="submit">
-          {isEdit ? "Actualizar" : "Guardar"}
-        </Button>
+        {errors.nombre && (
+          <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
+        )}
       </div>
-    </form>
+
+      {/* HORAS */}
+      <div>
+        <input
+          type="number"
+          className={inputClass("horas")}
+          placeholder="Horas semanales"
+          value={horasSemanales}
+          onChange={(e) => {
+            const value = e.target.value === "" ? "" : +e.target.value;
+            setHoras(value);
+            if (value && Number(value) > 0)
+              setErrors(prev => ({ ...prev, horas: "" }));
+          }}
+        />
+        {errors.horas && (
+          <p className="text-red-500 text-sm mt-1">{errors.horas}</p>
+        )}
+      </div>
+
+      {/* DEDICACION */}
+      <div>
+        <select
+          className={inputClass("dedicacion")}
+          value={dedicacionId}
+          onChange={(e) => {
+            const value = e.target.value ? +e.target.value : "";
+            setDedicacionId(value);
+            if (value)
+              setErrors(prev => ({ ...prev, dedicacion: "" }));
+          }}
+        >
+          <option value="">Seleccionar dedicación</option>
+          {dedicaciones.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.nombre}
+            </option>
+          ))}
+        </select>
+        {errors.dedicacion && (
+          <p className="text-red-500 text-sm mt-1">{errors.dedicacion}</p>
+        )}
+      </div>
+      {/* BOTONES */}
+            <div className="flex justify-between pt-6">
+              <Button type="button" variant="secondary" onClick={onCancel}>
+                Volver
+              </Button>
+              <Button type="submit">
+                {isEdit ? "Actualizar" : "Guardar"}
+              </Button>
+            </div>
+      </form>
   );
 }
