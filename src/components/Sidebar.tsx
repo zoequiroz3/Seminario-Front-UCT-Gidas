@@ -184,9 +184,9 @@ export default function Sidebar() {
             <button
               aria-label="Cerrar menú"
               onClick={close}
-              className="p-2 rounded-md hover:bg-black/5"
+              className="p-3 rounded-md hover:bg-black/5"
             >
-              <X size={18} />
+              <X size={24} />
             </button>
           </div>
           <nav className="px-4 py-2 text-xs">
@@ -204,9 +204,9 @@ export default function Sidebar() {
       <button
         aria-label="Abrir menú"
         onClick={open}
-        className="p-2 rounded-md hover:bg-slate-100 text-slate-700"
+        className="p-3 rounded-md hover:bg-slate-100 text-slate-700"
       >
-        <Menu size={18} />
+        <Menu size={24} />
       </button>
 
       {isVisible && createPortal(Overlay, document.body)}
