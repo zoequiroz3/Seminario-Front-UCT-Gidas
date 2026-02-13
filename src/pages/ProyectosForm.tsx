@@ -1,11 +1,16 @@
 // src/pages/ProyectosForm.tsx
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"; // Import useQuery
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
 import { upsertProyectos, type Proyecto } from "@/services/proyectosServices";
-import { createTipoProyecto, type Option } from "@/services/optionsService";
+import {
+  createTipoProyecto,
+  getFuentesFinanciamiento, // Import getFuentesFinanciamiento
+  getGruposUtn, // Import getGruposUtn
+  type Option,
+} from "@/services/optionsService";
 
 // Tipos de proyecto hardcodeados como base
 const initialProjectTypes: Option[] = [
@@ -20,8 +25,10 @@ const initialProjectTypes: Option[] = [
 const CREATE_NEW_ID = -1;
 
 // El tipo para el estado del formulario.
-type ProyectoDraft = Partial<Omit<Proyecto, "tipoProyectoId">> & {
+type ProyectoDraft = Partial<Proyecto> & {
   tipoProyectoId?: number;
+  fuenteFinanciamientoId?: number; // Ensure this is explicitly optional
+  grupoUtnId?: number; // Ensure this is explicitly optional
 };
 
 // helpers fecha (local, sin timezone shift)
@@ -40,17 +47,36 @@ export default function ProyectosForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
+  // --- Opciones de Select ---
+  const { data: fuentesFinanciamientoOpts } = useQuery({
+    queryKey: ["fuentesFinanciamiento"],
+    queryFn: getFuentesFinanciamiento,
+    staleTime: Infinity,
+  });
+
+  const { data: gruposUtnOpts } = useQuery({
+    queryKey: ["gruposUtn"],
+    queryFn: getGruposUtn,
+    staleTime: Infinity,
+  });
+
   // --- Estado ---
   const [data, setData] = useState<ProyectoDraft>({
     id: "",
-    codigoProyecto: "",
+    codigoProyecto: 0, // Initialize as number
     fechaInicio: "",
     fechaFinalizacion: "",
     nombreProyecto: "",
-    fuenteFinanciamiento: "",
+    descripcionProyecto: "", // New required field
+    dificultadesProyecto: "", // New optional field
+    fuenteFinanciamientoId: undefined, // Initialize as undefined
+    grupoUtnId: undefined, // Initialize as undefined
+    // planificacionId: undefined, // Not adding to form for now as it's optional and not in backend payload
   });
 
-  const [tiposProyectoOpts, setTiposProyectoOpts] = useState<Option[]>(initialProjectTypes);
+  const [tiposProyectoOpts, setTiposProyectoOpts] = useState<Option[]>(
+    initialProjectTypes
+  );
   const [isCreating, setIsCreating] = useState(false);
   const [newTypeName, setNewTypeName] = useState("");
 
@@ -81,31 +107,52 @@ export default function ProyectosForm() {
     }
   };
 
-  const change = (k: keyof ProyectoDraft) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setData((d) => ({ ...d, [k]: e.target.value }));
-  };
+  const change =
+    (k: keyof ProyectoDraft) => (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> // Include HTMLTextAreaElement and HTMLSelectElement
+    ) => {
+      let value: string | number = e.target.value;
+      if (e.target.dataset.type === "number") {
+        value = parseInt(e.target.value, 10);
+        if (isNaN(value)) value = undefined as any; // Handle invalid number input
+      }
+      setData((d) => ({ ...d, [k]: value }));
+    };
 
-  const setFecha = (k: "fechaInicio" | "fechaFinalizacion") => (dt: Date | null) =>
-    setData((d) => ({ ...d, [k]: toYMD(dt) }));
+  const setFecha = (k: "fechaInicio" | "fechaFinalizacion") => (
+    dt: Date | null
+  ) => setData((d) => ({ ...d, [k]: toYMD(dt) }));
 
   const handleSaveNewType = () => {
-    if (!newTypeName.trim()) return alert("El nombre del nuevo tipo no puede estar vacío.");
+    if (!newTypeName.trim())
+      return alert("El nombre del nuevo tipo no puede estar vacío.");
     mutateCreateType(newTypeName);
   };
-    
+
   function buildPayload(): Proyecto {
-    if (!data.nombreProyecto?.trim()) throw new Error("El nombre del proyecto es obligatorio.");
-    if (!data.tipoProyectoId) throw new Error("El tipo de proyecto es obligatorio.");
-    if (!data.fechaInicio) throw new Error("La fecha de inicio es obligatoria.");
-    
+    if (!data.nombreProyecto?.trim())
+      throw new Error("El nombre del proyecto es obligatorio.");
+    if (!data.descripcionProyecto?.trim())
+      throw new Error("La descripción del proyecto es obligatoria."); // New validation
+    if (!data.tipoProyectoId)
+      throw new Error("El tipo de proyecto es obligatorio.");
+    if (!data.codigoProyecto || isNaN(data.codigoProyecto))
+      throw new Error("El código del proyecto es obligatorio y debe ser un número."); // Validation for code
+    if (!data.fechaInicio)
+      throw new Error("La fecha de inicio es obligatoria.");
+
     return {
       id: data.id || undefined,
       nombreProyecto: data.nombreProyecto,
+      descripcionProyecto: data.descripcionProyecto,
       tipoProyectoId: data.tipoProyectoId,
-      codigoProyecto: data.codigoProyecto ?? "",
+      codigoProyecto: data.codigoProyecto,
       fechaInicio: data.fechaInicio,
-      fechaFinalizacion: data.fechaFinalizacion ?? undefined,
-      fuenteFinanciamiento: data.fuenteFinanciamiento ?? undefined,
+      fechaFinalizacion: data.fechaFinalizacion || undefined,
+      dificultadesProyecto: data.dificultadesProyecto || undefined,
+      grupoUtnId: data.grupoUtnId || undefined,
+      fuenteFinanciamientoId: data.fuenteFinanciamientoId || undefined,
+      planificacionId: data.planificacionId || undefined,
     };
   }
 
@@ -118,9 +165,12 @@ export default function ProyectosForm() {
       alert(err?.message ?? "No se pudo guardar.");
     }
   };
-  
+
   // Opciones para el select, incluyendo "Crear nuevo..."
-  const finalTypeOptions = [...tiposProyectoOpts, { id: CREATE_NEW_ID, nombre: "Crear nuevo tipo..." }];
+  const finalTypeOptions = [
+    ...tiposProyectoOpts,
+    { id: CREATE_NEW_ID, nombre: "Crear nuevo tipo..." },
+  ];
 
   return (
     <section>
@@ -142,6 +192,16 @@ export default function ProyectosForm() {
           />
         </Field>
 
+        <Field label="Descripción del proyecto">
+          <textarea
+            className="input min-h-[100px]"
+            value={data.descripcionProyecto ?? ""}
+            onChange={change("descripcionProyecto")}
+            placeholder="Describe detalladamente los objetivos, metodología y alcance del proyecto."
+            required
+          />
+        </Field>
+
         <Field label="Tipo de proyecto">
           <Select
             options={finalTypeOptions}
@@ -152,65 +212,95 @@ export default function ProyectosForm() {
             disabled={isCreating}
           />
         </Field>
-        
+
         {isCreating && (
-            <div className="p-4 bg-slate-50 rounded-lg space-y-3">
-                <label className="font-medium text-sm">Nombre del nuevo tipo</label>
-                <input
-                    className="input"
-                    value={newTypeName}
-                    onChange={(e) => setNewTypeName(e.target.value)}
-                    placeholder="Escriba el nombre y presione Guardar"
-                    autoFocus
-                />
-                <div className="flex items-center gap-2">
-                    <Button type="button" onClick={handleSaveNewType} disabled={isCreatingType}>
-                        {isCreatingType ? "Guardando..." : "Guardar Tipo"}
-                    </Button>
-                    <Button type="button" variant="secondary" onClick={() => setIsCreating(false)}>
-                        Cancelar
-                    </Button>
-                </div>
+          <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+            <label className="font-medium text-sm">
+              Nombre del nuevo tipo
+            </label>
+            <input
+              className="input"
+              value={newTypeName}
+              onChange={(e) => setNewTypeName(e.target.value)}
+              placeholder="Escriba el nombre y presione Guardar"
+              autoFocus
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={handleSaveNewType}
+                disabled={isCreatingType}
+              >
+                {isCreatingType ? "Guardando..." : "Guardar Tipo"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsCreating(false)}
+              >
+                Cancelar
+              </Button>
             </div>
+          </div>
         )}
 
         <Field label="Código del proyecto">
           <input
             className="input"
+            type="number" // Set type to number
             value={data.codigoProyecto ?? ""}
             onChange={change("codigoProyecto")}
-            placeholder="Ej. GIDAS-PRJ-001"
+            placeholder="Ej. 12345"
+            required
           />
         </Field>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Fecha de inicio">
+          <Field label="Fecha de inicio">
             <DatePicker
-                value={parseYMD(data.fechaInicio)}
-                onChange={setFecha("fechaInicio")}
-                label=""
-                className="input"
-                required
+              value={parseYMD(data.fechaInicio)}
+              onChange={setFecha("fechaInicio")}
+              label=""
+              className="input"
+              required
             />
-            </Field>
+          </Field>
 
-            <Field label="Fecha de finalización">
+          <Field label="Fecha de finalización">
             <DatePicker
-                value={parseYMD(data.fechaFinalizacion)}
-                onChange={setFecha("fechaFinalizacion")}
-                label=""
-                minDate={parseYMD(data.fechaInicio) || undefined}
-                className="input"
+              value={parseYMD(data.fechaFinalizacion)}
+              onChange={setFecha("fechaFinalizacion")}
+              label=""
+              minDate={parseYMD(data.fechaInicio) || undefined}
+              className="input"
             />
-            </Field>
+          </Field>
         </div>
 
-        <Field label="Fuente de financiamiento">
-          <input
-            className="input"
-            value={data.fuenteFinanciamiento ?? ""}
-            onChange={change("fuenteFinanciamiento")}
-            placeholder="Ej. CONICET, UNLP, BID…"
+        <Field label="Dificultades del proyecto (opcional)">
+          <textarea
+            className="input min-h-[100px]"
+            value={data.dificultadesProyecto ?? ""}
+            onChange={change("dificultadesProyecto")}
+            placeholder="Describa las dificultades encontradas durante el desarrollo del proyecto."
+          />
+        </Field>
+
+        <Field label="Fuente de financiamiento (opcional)">
+          <Select
+            options={fuentesFinanciamientoOpts || []}
+            value={data.fuenteFinanciamientoId || ""}
+            onChange={change("fuenteFinanciamientoId")}
+            placeholder="Seleccione la fuente de financiamiento"
+          />
+        </Field>
+
+        <Field label="Grupo UTN (opcional)">
+          <Select
+            options={gruposUtnOpts || []}
+            value={data.grupoUtnId || ""}
+            onChange={change("grupoUtnId")}
+            placeholder="Seleccione el grupo UTN asociado"
           />
         </Field>
 
@@ -227,7 +317,13 @@ export default function ProyectosForm() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <label className="md:text-[17px] block font-medium mb-3">{label}</label>
@@ -237,15 +333,21 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
-    options: Option[];
-    placeholder?: string;
-}
+  options: Option[];
+  placeholder?: string;
+};
 
-function Select({options, placeholder, ...props}: SelectProps) {
-    return (
-        <select className="input" data-type="number" {...props}>
-            <option value="" disabled>{placeholder ?? "Seleccione"}</option>
-            {options.map((o) => (<option key={o.id} value={o.id}>{o.nombre}</option>))}
-        </select>
-    )
+function Select({ options, placeholder, ...props }: SelectProps) {
+  return (
+    <select className="input" data-type="number" {...props}>
+      <option value="" disabled>
+        {placeholder ?? "Seleccione"}
+      </option>
+      {options.map((o) => (
+        <option key={o.id} value={o.id}>
+          {o.nombre}
+        </option>
+      ))}
+    </select>
+  );
 }

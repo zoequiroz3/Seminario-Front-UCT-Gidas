@@ -4,13 +4,15 @@ import { Option } from "./optionsService";
 export type Proyecto = {
   id?: string;
   tipoProyectoId: number; 
-  codigoProyecto: string;
+  codigoProyecto: number; // Cambiado a number
   fechaInicio: string; // YYYY-MM-DD
   fechaFinalizacion?: string;
   nombreProyecto: string;
-  fuenteFinanciamiento?: string;
-  // Campos para mostrar en la tabla, no para enviar
-  tipoProyectoNombre?: string;
+  descripcionProyecto: string; // Nuevo campo obligatorio
+  dificultadesProyecto?: string; // Nuevo campo opcional
+  grupoUtnId?: number; // Nuevo campo opcional
+  fuenteFinanciamientoId?: number; // Cambiado a number
+  planificacionId?: number; // Nuevo campo opcional
 };
 
 const BASE = import.meta.env.VITE_API_URL;
@@ -21,13 +23,16 @@ export async function getProyectos(): Promise<Proyecto[]> {
   
   return data.map((p: any) => ({
     id: String(p.id),
-    codigoProyecto: String(p.codigo_proyecto),
+    codigoProyecto: p.codigo_proyecto,
     nombreProyecto: p.nombre_proyecto,
+    descripcionProyecto: p.descripcion_proyecto, // Mapear descripcion_proyecto
+    dificultadesProyecto: p.dificultades_proyecto, // Mapear dificultades_proyecto
     fechaInicio: p.fecha_inicio,
     fechaFinalizacion: p.fecha_fin,
     tipoProyectoId: p.tipo_proyecto?.id,
-    tipoProyectoNombre: p.tipo_proyecto?.nombre || "N/A",
-    fuenteFinanciamiento: p.fuente_financiamiento?.nombre || "N/A"
+    grupoUtnId: p.grupo_utn?.id, // Mapear grupo_utn_id
+    fuenteFinanciamientoId: p.fuente_financiamiento?.id, // Mapear fuente_financiamiento_id
+    planificacionId: p.planificacion_id // Mapear planificacion_id
   }));
 }
 
@@ -35,14 +40,16 @@ export async function upsertProyectos(payload: Proyecto) {
   if (!BASE) throw new Error("Sin Backend");
 
   const body = {
-    codigo_proyecto: parseInt(payload.codigoProyecto, 10) || null,
+    codigo_proyecto: payload.codigoProyecto,
     nombre_proyecto: payload.nombreProyecto,
-    descripcion_proyecto: payload.nombreProyecto, // Usamos nombre como descripción por ahora
+    descripcion_proyecto: payload.descripcionProyecto,
     fecha_inicio: payload.fechaInicio,
-    fecha_fin: payload.fechaFinalizacion || null,
     tipo_proyecto_id: payload.tipoProyectoId,
-    // Asumiendo que fuente de financiamiento también es un ID si existe
-    // fuente_financiamiento_id: payload.fuenteFinanciamientoId,
+    fecha_fin: payload.fechaFinalizacion || null,
+    dificultades_proyecto: payload.dificultadesProyecto || null,
+    grupo_utn_id: payload.grupoUtnId || null,
+    fuente_financiamiento_id: payload.fuenteFinanciamientoId || null,
+    planificacion_id: payload.planificacionId || null,
   };
 
   const url = payload.id ? `/proyectos/${payload.id}` : "/proyectos";
