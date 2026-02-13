@@ -1,90 +1,82 @@
 import { http } from "@/lib/http";
 
-export interface DocumentacionBase {
+export interface Autor {
+  id: number;
+  nombre_apellido: string;
+}
+
+export interface Documentacion {
+  id: number;
   titulo: string;
-  autores: string[];
   editorial: string;
   anio: number;
+  grupo: string | null;
+  autores: Autor[];
 }
 
-export interface Documentacion extends DocumentacionBase {
-  id: string;
+export interface DocumentacionPayload {
+  titulo: string;
+  editorial: string;
+  anio: number;
+  grupo_id?: number;
 }
 
-export interface DocumentacionPayload extends DocumentacionBase {}
-
-const BASE = import.meta.env.VITE_API_URL ?? "";
-const MOCK_KEY = "gidas_documentacion_mock";
-
-function delay(ms = 300) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-// -------- MOCK LIST --------
-async function mockList(): Promise<Documentacion[]> {
-  await delay();
-  const raw = localStorage.getItem(MOCK_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-
-// -------- MOCK UPSERT --------
-async function mockUpsert(payload: Documentacion): Promise<Documentacion> {
-  await delay();
-
-  const list = await mockList();
-
-  // ---------------- FIX DEFINITIVO ----------------
-  const id =
-    payload.id
-      ? payload.id
-      : (typeof crypto !== "undefined" && crypto.randomUUID
-          ? crypto.randomUUID()
-          : String(Date.now()));
-
-  const updated = { ...payload, id };
-
-  const out = list.some((d) => d.id === id)
-    ? list.map((d) => (d.id === id ? updated : d))
-    : [...list, updated];
-
-  localStorage.setItem(MOCK_KEY, JSON.stringify(out));
-  return updated;
-}
-
-// -------- MOCK DELETE --------
-async function mockDelete(id: string): Promise<void> {
-  await delay();
-  const list = await mockList();
-  localStorage.setItem(
-    MOCK_KEY,
-    JSON.stringify(list.filter((d) => d.id !== id))
-  );
-}
-
-// -------- API REAL --------
+// GET ALL
 export async function getDocumentacion(): Promise<Documentacion[]> {
-  if (!BASE) return mockList();
-  return http<Documentacion[]>("/api/documentacion");
+  return http<Documentacion[]>("/documentacion-bibliografica/");
 }
 
-export async function getDocumentacionById(id: string): Promise<Documentacion> {
-  if (!BASE) {
-    const list = await mockList();
-    return list.find((d) => d.id === id)!;
-  }
-  return http<Documentacion>(`/api/documentacion/${id}`);
+// GET BY ID
+export async function getDocumentacionById(id: number): Promise<Documentacion> {
+  return http<Documentacion>(`/documentacion-bibliografica/${id}`);
 }
 
-export async function upsertDocumentacion(payload: Documentacion) {
-  if (!BASE) return mockUpsert(payload);
-
-  return http<Documentacion>("/api/documentacion", {
-    method: payload.id ? "PUT" : "POST",
+// CREATE
+export async function createDocumentacion(
+  payload: DocumentacionPayload
+): Promise<Documentacion> {
+  return http<Documentacion>("/documentacion-bibliografica/", {
+    method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function deleteDocumentacion(id: string) {
-  if (!BASE) return mockDelete(id);
-  return http<void>(`/api/documentacion/${id}`, { method: "DELETE" });
+// UPDATE
+export async function updateDocumentacion(
+  id: number,
+  payload: DocumentacionPayload
+): Promise<Documentacion> {
+  return http<Documentacion>(`/documentacion-bibliografica/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+// DELETE
+export async function deleteDocumentacion(id: number): Promise<void> {
+  return http<void>(`/documentacion-bibliografica/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// -------- RELACIÓN DOCUMENTO - AUTOR --------
+
+export async function addAutorToDocumento(
+  docId: number,
+  autorId: number
+) {
+  return http(`/documentacion-bibliografica/${docId}/autores`, {
+    method: "POST",
+    body: JSON.stringify({ autor_id: autorId }),
+  });
+}
+
+export async function removeAutorFromDocumento(
+  docId: number,
+  autorId: number
+) {
+  return http(
+    `/documentacion-bibliografica/${docId}/autores/${autorId}`,
+    { method: "DELETE" }
+  );
 }

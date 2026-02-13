@@ -1,4 +1,3 @@
-// pages/DocumentacionForm.tsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
@@ -7,21 +6,19 @@ import { useDocumentacionForm } from "@/hooks/useDocumentacionForm";
 import { getDocumentacionById } from "@/services/documentacionServices";
 
 export default function DocumentacionForm() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const { data: initial, isLoading } = useQuery({
     queryKey: ["documentacion", id],
-    queryFn: () => (id ? getDocumentacionById(id) : null),
+    queryFn: () => (id ? getDocumentacionById(Number(id)) : null),
     enabled: Boolean(id),
   });
 
   const {
     data,
-    change,
-    changeAutor,
-    addAutor,
-    removeAutor,
+    setData,
+    autores,
     setAutores,
     submit,
     isPending,
@@ -30,53 +27,58 @@ export default function DocumentacionForm() {
 
   if (isLoading) return <p>Cargando…</p>;
 
+  const isEdit = Boolean(id);
   return (
     <section className="w-full">
-      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
-        {id ? "Editar Documento" : "Nuevo Documento"}
+      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+        {isEdit ? "Editar documentación" : "Nueva documentación"}
       </h2>
 
+      {/* CARD IGUAL AL DETALLE */}
       <form
         onSubmit={async (e) => {
           e.preventDefault();
           await submit();
           navigate("/documentacion");
         }}
-        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm space-y-8"
+        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
       >
-        {/* Título */}
-        <Field label="Título del libro / documento">
+        <Field label="Título">
           <input
-            className="input"
-            value={data.titulo ?? ""}
-            onChange={change("titulo")}
-            placeholder="Ej: Introducción a la Ingeniería"
+            className="input text-sm md:text-base"
+            value={data.titulo}
+            onChange={(e) =>
+              setData((d) => ({ ...d, titulo: e.target.value }))
+            }
           />
         </Field>
 
-        {/* Autores */}
         <AutoresField
-          value={data.autores ?? [""]}
-          onChange={(arr) => setAutores(arr)}
+          value={autores}
+          onChange={setAutores}
           label="Autores"
         />
 
-        {/* Editorial */}
         <Field label="Editorial">
           <input
-            className="input"
-            value={data.editorial ?? ""}
-            onChange={change("editorial")}
-            placeholder="Ej: UTN"
+            className="input text-sm md:text-base"
+            value={data.editorial}
+            onChange={(e) =>
+              setData((d) => ({ ...d, editorial: e.target.value }))
+            }
           />
         </Field>
 
-        {/* Año */}
-        <Field label="Año de publicación">
+        <Field label="Año">
           <select
-            className="input"
+            className="input text-sm md:text-base"
             value={data.anio ?? ""}
-            onChange={change("anio")}
+            onChange={(e) =>
+              setData((d) => ({
+                ...d,
+                anio: e.target.value ? Number(e.target.value) : undefined,
+              }))
+            }
           >
             <option value="">Seleccione un año</option>
             {years.map((y) => (
@@ -87,12 +89,24 @@ export default function DocumentacionForm() {
           </select>
         </Field>
 
-        {/* Footer */}
-        <div className="mt-8 flex items-center justify-between">
-          <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+        {/* ACCIONES – MISMO PESO VISUAL QUE DETALLE */}
+        <div className="flex justify-between pt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="px-3 py-1 text-xs"
+            onClick={() => navigate(-1)}
+          >
             Volver
           </Button>
-          <Button type="submit" disabled={isPending}>
+
+          <Button
+            type="submit"
+            size="sm"
+            className="px-3 py-1 text-xs"
+            disabled={isPending}
+          >
             {isPending ? "Guardando…" : "Guardar"}
           </Button>
         </div>
@@ -110,7 +124,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="md:text-[17px] block text-sm font-medium mb-4">
+      <label className="block text-sm font-medium mb-2">
         {label}
       </label>
       {children}

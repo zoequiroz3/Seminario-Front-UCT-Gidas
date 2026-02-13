@@ -1,7 +1,8 @@
 // src/pages/ProyectosForm.tsx
-import { useState, useEffect } from "react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"; // Import useQuery
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
 import { upsertProyectos, type Proyecto } from "@/services/proyectosServices";
@@ -12,7 +13,10 @@ import {
   type Option,
 } from "@/services/optionsService";
 
-// Tipos de proyecto hardcodeados como base
+// --------------------
+// Constantes
+// --------------------
+
 const initialProjectTypes: Option[] = [
   { id: 1, nombre: "PICT" },
   { id: 2, nombre: "PID" },
@@ -31,17 +35,25 @@ type ProyectoDraft = Partial<Proyecto> & {
   grupoUtnId?: number; // Ensure this is explicitly optional
 };
 
-// helpers fecha (local, sin timezone shift)
+// --------------------
+// Helpers fechas
+// --------------------
+
 const parseYMD = (s?: string | null): Date | null => {
   if (!s) return null;
   const [y, m, d] = s.split("-").map(Number);
   if (!y || !m || !d) return null;
   return new Date(y, m - 1, d);
 };
+
 const toYMD = (date: Date | null): string => {
   if (!date) return "";
   return date.toISOString().split("T")[0];
 };
+
+// --------------------
+// Componente
+// --------------------
 
 export default function ProyectosForm() {
   const navigate = useNavigate();
@@ -80,10 +92,15 @@ export default function ProyectosForm() {
   const [isCreating, setIsCreating] = useState(false);
   const [newTypeName, setNewTypeName] = useState("");
 
-  // --- Mutaciones ---
+  // --------------------
+  // Mutaciones
+  // --------------------
+
   const { mutateAsync: mutateUpsertProject, isPending } = useMutation({
     mutationFn: (payload: Proyecto) => upsertProyectos(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["proyectos"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["proyectos"] });
+    },
   });
 
   const { mutate: mutateCreateType, isPending: isCreatingType } = useMutation({
@@ -94,10 +111,27 @@ export default function ProyectosForm() {
       setIsCreating(false);
       setNewTypeName("");
     },
-    onError: (err: any) => alert(err?.message ?? "No se pudo crear el tipo."),
+    onError: (err: any) => {
+      alert(err?.message ?? "No se pudo crear el tipo de proyecto.");
+    },
   });
 
-  // --- Handlers ---
+  // --------------------
+  // Handlers
+  // --------------------
+
+  const change =
+    (k: keyof ProyectoDraft) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setData((d) => ({ ...d, [k]: e.target.value }));
+    };
+
+  const setFecha =
+    (k: "fechaInicio" | "fechaFinalizacion") =>
+    (dt: Date | null) => {
+      setData((d) => ({ ...d, [k]: toYMD(dt) }));
+    };
+
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = Number(e.target.value);
     if (selectedId === CREATE_NEW_ID) {
@@ -128,6 +162,7 @@ export default function ProyectosForm() {
       return alert("El nombre del nuevo tipo no puede estar vacío.");
     mutateCreateType(newTypeName);
   };
+
 
   function buildPayload(): Proyecto {
     if (!data.nombreProyecto?.trim())
@@ -162,7 +197,7 @@ export default function ProyectosForm() {
       await mutateUpsertProject(buildPayload());
       navigate("/proyectos", { replace: true });
     } catch (err: any) {
-      alert(err?.message ?? "No se pudo guardar.");
+      alert(err?.message ?? "No se pudo guardar el proyecto.");
     }
   };
 
@@ -173,14 +208,14 @@ export default function ProyectosForm() {
   ];
 
   return (
-    <section>
-      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
+    <section className="px-4 py-3 w-full text-sm">
+      <h2 className="text-2xl md:text-3xl font-semibold mb-6">
         Carga de Proyectos
       </h2>
 
       <form
         onSubmit={onSubmit}
-        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm space-y-8"
+        className="rounded-xl border border-slate-200 bg-white/70 p-5 shadow-sm space-y-5"
       >
         <Field label="Nombre del proyecto">
           <input
@@ -208,10 +243,11 @@ export default function ProyectosForm() {
             value={isCreating ? "" : data.tipoProyectoId || ""}
             onChange={handleTypeChange}
             placeholder="Seleccione un tipo de proyecto"
-            required
             disabled={isCreating}
+            required
           />
         </Field>
+
 
         {isCreating && (
           <div className="p-4 bg-slate-50 rounded-lg space-y-3">
@@ -257,6 +293,7 @@ export default function ProyectosForm() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Fecha de inicio">
+          <Field label="Fecha de inicio">
             <DatePicker
               value={parseYMD(data.fechaInicio)}
               onChange={setFecha("fechaInicio")}
@@ -265,7 +302,9 @@ export default function ProyectosForm() {
               required
             />
           </Field>
+          </Field>
 
+          <Field label="Fecha de finalización">
           <Field label="Fecha de finalización">
             <DatePicker
               value={parseYMD(data.fechaFinalizacion)}
@@ -274,6 +313,7 @@ export default function ProyectosForm() {
               minDate={parseYMD(data.fechaInicio) || undefined}
               className="input"
             />
+          </Field>
           </Field>
         </div>
 
@@ -305,7 +345,11 @@ export default function ProyectosForm() {
         </Field>
 
         <div className="mt-8 flex items-center justify-between">
-          <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => navigate(-1)}
+          >
             Volver
           </Button>
           <Button type="submit" disabled={isPending}>
@@ -326,13 +370,16 @@ function Field({
 }) {
   return (
     <div>
-      <label className="md:text-[17px] block font-medium mb-3">{label}</label>
+      <label className="block font-medium mb-2">{label}</label>
       {children}
     </div>
   );
 }
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
+  options: Option[];
+  placeholder?: string;
+};
   options: Option[];
   placeholder?: string;
 };

@@ -1,68 +1,71 @@
-// components/AutoresField.tsx
-import React from "react";
+import Button from "@/components/Button";
 
-interface AutoresFieldProps {
-  value: string[];
-  onChange: (autores: string[]) => void;
+export type Autor = {
+  id: number;
+  nombre_apellido: string;
+};
+
+type AutoresFieldProps = {
+  value: Autor[];
+  onChange: (autores: Autor[]) => void;
   label?: string;
-}
+};
 
-const AutoresField: React.FC<AutoresFieldProps> = ({ value, onChange, label }) => {
-  const autores = value.length ? value : [""];
-
-  const updateAutor = (i: number, nuevo: string) => {
-    const copia = [...autores];
-    copia[i] = nuevo;
-    onChange(copia);
+export default function AutoresField({
+  value,
+  onChange,
+  label,
+}: AutoresFieldProps) {
+  const changeAutor = (index: number, nombre: string) => {
+    const next = [...value];
+    next[index] = { ...next[index], nombre_apellido: nombre };
+    onChange(next);
   };
 
-  const agregarAutor = () => {
-    onChange([...autores, ""]);
+  const addAutor = () => {
+    onChange([...value, { id: -Date.now(), nombre_apellido: "" }]);
   };
 
-  const eliminarAutor = (i: number) => {
-    if (autores.length === 1) {
-      onChange([""]);
+  const removeAutor = (index: number) => {
+    if (value.length === 1) {
+      onChange([{ id: -Date.now(), nombre_apellido: "" }]);
       return;
     }
-    onChange(autores.filter((_, idx) => idx !== i));
+    onChange(value.filter((_, i) => i !== index));
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      {label && <label className="font-medium text-sm mb-2">{label}</label>}
+    <div className="space-y-4">
+      {label && (
+        <label className="block text-sm font-medium">{label}</label>
+      )}
 
-      {autores.map((autor, i) => (
-        <div key={i} className="flex gap-2 items-center">
+      {value.map((autor, index) => (
+        <div key={autor.id} className="flex gap-2 items-center">
           <input
-            type="text"
-            value={autor}
-            placeholder={`Autor ${i + 1}`}
-            onChange={(e) => updateAutor(i, e.target.value)}
-            className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/60"
+            className="input flex-1"
+            value={autor.nombre_apellido}
+            onChange={(e) => changeAutor(index, e.target.value)}
+            placeholder="Nombre del autor"
           />
-
-          {autores.length > 1 && (
-            <button
-              type="button"
-              onClick={() => eliminarAutor(i)}
-              className="text-xs px-2 py-1 rounded-md border border-red-400 text-red-600 hover:bg-red-50"
-            >
-              Quitar
-            </button>
-          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="px-3 py-1 text-xs"
+            onClick={() => removeAutor(index)}
+          >
+            ✕
+          </Button>
         </div>
       ))}
 
-      <button
-        type="button"
-        onClick={agregarAutor}
-        className="self-start mt-1 text-xs px-3 py-1 rounded-full border border-black/30 hover:bg-black/5"
-      >
+      <Button type="button"
+            variant="secondary"
+            size="sm"
+            className="px-3 py-1 text-xs"
+            onClick={addAutor}>
         + Agregar autor
-      </button>
+      </Button>
     </div>
   );
-};
-
-export default AutoresField;
+}

@@ -1,74 +1,108 @@
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Tarjeta from "@/components/Tarjeta";
-import {
-  getEquipamiento,
-  type Equipamiento,
-} from "@/services/equipamientoServices";
-
-function subtitleLine(e: Equipamiento): string {
-  const fmt = (s?: string) => {
-    if (!s) return "—";
-    const [y, m, d] = s.split("-");
-    return `${d}/${m}/${y}`;
-  };
-  const fecha = fmt(e.fechaIncorporacion);
-  return `Fecha: ${fecha}`;
-}
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { useEquipamiento } from "@/hooks/useEquipamiento";
 
 export default function EquipamientoLanding() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { list, isLoading, isError, remove } = useEquipamiento();
 
-  const { data: list = [], isLoading, isError } = useQuery({
-    queryKey: ["equipamiento"],
-    queryFn: getEquipamiento,
-    staleTime: 60_000,
-  });
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const toggleSelect = (id: number, checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? [...prev, id] : prev.filter((x) => x !== id)
+    );
+  };
+
+  const cancelSelection = () => {
+    setSelectMode(false);
+    setSelectedIds([]);
+    setShowConfirm(false);
+  };
+
+  const selectedItems = list
+    .filter((e) => selectedIds.includes(e.id))
+    .map((e) => e.denominacion);
+
+  const confirmDelete = async () => {
+    for (const id of selectedIds) {
+      await remove(id);
+    }
+    qc.invalidateQueries({ queryKey: ["equipamiento"] });
+    cancelSelection();
+  };
+
+
+
 
   return (
-    <section className="w-full min-h-[calc(100vh-96px)] px-10 md:px-5 lg:px-1 py-2 flex flex-col">
+    
+    <section className="w-full min-h-[calc(100vh-80px)] px-4 py-2 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
-          Equipamiento
-        </h2>
-        <Button variant="primary" onClick={() => navigate("/equipamiento/nuevo")}>
-          Agregar nuevo
-        </Button>
-      </div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl md:text-3xl font-semibold">Equipamiento</h2>
 
-      {/* Contenido */}
-      <div className="mt-8 flex-1">
-        {isLoading && <p className="text-slate-500">Cargando…</p>}
-        {isError && <p className="text-red-600">No se pudo cargar la lista.</p>}
-        {!isLoading && !isError && (
-          list.length === 0 ? (
-            <p className="text-slate-500">Aún no hay registros.</p>
-          ) : (
-            <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {list.map((e) => (
-                <Tarjeta<Equipamiento>
-                  key={e.id}
-                  item={e}
-                  title={(x) => x.denominacion}
-                  subtitle={subtitleLine}
-                  titleClassName="text-xl md:text-2xl"
-                  subtitleClassName="text-base md:text-lg"
-                  onClick={() => navigate(`/equipamiento/${e.id}`)}
-                />
-              ))}
-            </div>
-          )
+        {!selectMode ? (
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setSelectMode(true)}>
+              Seleccionar
+            </Button>
+            <Button size="sm" onClick={() => navigate("/equipamiento/nuevo")}>
+              Agregar nuevo
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            {selectedIds.length > 0 && (
+              <Button size="sm" onClick={() => setShowConfirm(true)}>
+                Eliminar
+              </Button>
+            )}
+            <Button variant="secondary" size="sm" onClick={cancelSelection}>
+              Cancelar
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="pt-10">
-        <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-          Volver
-        </Button>
+      {/* Grid */}
+      <div className="flex-1">
+        {isLoading && <p>Cargando…</p>}
+        {isError && <p>Error al cargar.</p>}
+
+        {!isLoading && !isError && (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((e) => (
+              <Tarjeta
+                key={e.id}
+                item={e}
+                title={(x) => x.denominacion}
+                subtitle={(x) => x.descripcion_breve}
+                selectable={selectMode}
+                selected={selectedIds.includes(e.id)}
+                onSelectChange={(checked) => toggleSelect(e.id, checked)}
+                onClick={() => navigate(`/equipamiento/${e.id}`)}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={showConfirm}
+        title="Eliminar equipamiento"
+        message="¿Estás seguro de eliminar los siguientes ítems?"
+        items={selectedItems}
+        onCancel={cancelSelection}
+        onConfirm={confirmDelete}
+      />
     </section>
   );
 }

@@ -1,96 +1,135 @@
-// hooks/useDocumentacionForm.ts
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  upsertDocumentacion,
+  createDocumentacion,
+  updateDocumentacion,
+  addAutorToDocumento,
+  removeAutorFromDocumento,
   type Documentacion,
   type DocumentacionPayload,
 } from "@/services/documentacionServices";
+import {
+  createAutor,
+  type Autor,
+} from "@/services/autoresService";
 
 const YEARS = Array.from({ length: 2030 - 1900 + 1 }, (_, i) => 1900 + i);
 
 export function useDocumentacionForm(initial?: Documentacion) {
   const qc = useQueryClient();
 
-  // ------- state -------
+  // --------------------
+  // Flags
+  // --------------------
+  const isEdit = Boolean(initial?.id);
+
+  // --------------------
+  // State
+  // --------------------
   const [data, setData] = useState<{
     titulo: string;
-    autores: string[];
     editorial: string;
-    anio: number | undefined | "";
+    anio: number | undefined;
   }>({
-    titulo: initial?.titulo ?? "",
-    autores: initial?.autores ?? [""],
-    editorial: initial?.editorial ?? "",
-    anio: initial?.anio ?? undefined,   // ✔ FIX
+    titulo: "",
+    editorial: "",
+    anio: undefined,
   });
 
-  // ------- setters -------
-  const change =
-    (key: keyof typeof data) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      let val: any = e.target.value;
+  const [autores, setAutores] = useState<Autor[]>([]);
 
-      if (key === "anio") {
-        val = val === "" ? "" : Number(val);
-      }
+  // --------------------
+  // Sync initial → state (FIX CRÍTICO)
+  // --------------------
+  useEffect(() => {
+    if (!initial) return;
 
-      setData((d) => ({ ...d, [key]: val }));
-    };
-
-  const changeAutor = (index: number, value: string) => {
-    setData((d) => {
-      const c = [...d.autores];
-      c[index] = value;
-      return { ...d, autores: c };
+    setData({
+      titulo: initial.titulo ?? "",
+      editorial: initial.editorial ?? "",
+      anio: initial.anio ?? undefined,
     });
-  };
 
-  const addAutor = () => {
-    setData((d) => ({ ...d, autores: [...d.autores, ""] }));
-  };
+    setAutores(initial.autores ?? []);
+  }, [initial]);
 
-  const removeAutor = (index: number) => {
-    setData((d) => {
-      if (d.autores.length === 1) return { ...d, autores: [""] };
-      return { ...d, autores: d.autores.filter((_, i) => i !== index) };
-    });
-  };
-
-  const setAutores = (arr: string[]) => {
-    setData((d) => ({ ...d, autores: arr }));
-  };
-
-  // ------- validación -------
-  const autoresLimpios = useMemo(
-    () => data.autores.map((a) => a.trim()).filter((a) => a !== ""),
-    [data.autores]
+  // --------------------
+  // Validación
+  // --------------------
+  const isValid = useMemo(
+    () =>
+      data.titulo.trim() !== "" &&
+      data.editorial.trim() !== "" &&
+      data.anio !== undefined &&
+      autores.length > 0 &&
+      autores.every(
+        (a) =>
+          typeof a.nombre_apellido === "string" &&
+          a.nombre_apellido.trim() !== ""
+      ),
+    [data, autores]
   );
 
-  const isValid =
-    data.titulo.trim() !== "" &&
-    data.editorial.trim() !== "" &&
-    autoresLimpios.length > 0 &&
-    data.anio !== "" &&
-    data.anio !== undefined;
-
-  // ------- mutation -------
+  // --------------------
+  // Mutation principal
+  // --------------------
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async () => {
       const payload: DocumentacionPayload = {
         titulo: data.titulo.trim(),
-        autores: autoresLimpios,
         editorial: data.editorial.trim(),
         anio: Number(data.anio),
       };
 
-      return upsertDocumentacion(
-        initial?.id ? { ...payload, id: initial.id } : (payload as any)
-      );
+      // 1️⃣ Crear o actualizar documento
+      const doc = isEdit
+        ? await updateDocumentacion(initial!.id, payload)
+        : await createDocumentacion(payload);
+
+      // 2️⃣ Asegurar autores en backend
+      const autoresPersistidos: Autor[] = [];
+
+      for (const autor of autores) {
+        if (autor.id > 0) {
+          autoresPersistidos.push(autor);
+        } else {
+          const creado = await createAutor(
+            autor.nombre_apellido.trim()
+          );
+          autoresPersistidos.push(creado);
+        }
+      }
+
+      // 3️⃣ Sincronizar relaciones documento ↔ autor
+      const prevIds = initial?.autores?.map((a) => a.id) ?? [];
+      const nextIds = autoresPersistidos.map((a) => a.id);
+
+      const toAdd = nextIds.filter((id) => !prevIds.includes(id));
+      const toRemove = prevIds.filter((id) => !nextIds.includes(id));
+
+      for (const autorId of toAdd) {
+        await addAutorToDocumento(doc.id, autorId);
+      }
+
+      for (const autorId of toRemove) {
+        await removeAutorFromDocumento(doc.id, autorId);
+      }
+
+      return doc;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["documentacion"] }),
+    onSuccess: (_, __, ___) => {
+      qc.invalidateQueries({ queryKey: ["documentacion"] });
+      if (isEdit && initial?.id) {
+        qc.invalidateQueries({
+          queryKey: ["documentacion", initial.id],
+        });
+      }
+    },
   });
 
+  // --------------------
+  // Submit
+  // --------------------
   const submit = async () => {
     if (!isValid || isPending) return;
     await mutateAsync();
@@ -98,13 +137,12 @@ export function useDocumentacionForm(initial?: Documentacion) {
 
   return {
     data,
-    change,
-    changeAutor,
-    addAutor,
-    removeAutor,
-    setAutores,   // ✔ necesario para AutoresField
+    setData,
+    autores,
+    setAutores,
     submit,
     isPending,
     years: YEARS,
   };
 }
+  

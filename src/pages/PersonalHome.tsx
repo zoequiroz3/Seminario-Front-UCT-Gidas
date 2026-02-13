@@ -1,112 +1,156 @@
-// pages/PersonalLanding.tsx
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
-import TarjetaPersonal from "@/components/Tarjeta";
+import Tarjeta from "@/components/Tarjeta";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { usePersonal } from "@/hooks/usePersonal";
-import type { Personal, PersonalType } from "@/services/personalServices";
+import { eliminarPersonal } from "@/services/personalServices";
+import type { PersonalType } from "@/services/personalServices";
 
-function roleLine(p: Pick<Personal, "tipo">): string {
-  switch (p.tipo) {
-    case "INVESTIGADOR": return "Investigador/a";
-    case "PROFESIONAL":  return "Personal Profesional";
-    case "PTAA":         return "Administrativo/Técnico/Apoyo";
-    case "BECARIO":      return "Becario/a";
-  }
-}
-
-export default function PersonalLanding({ presetTipo }: { presetTipo?: PersonalType }) {
+export default function PersonalLanding() {
   const navigate = useNavigate();
-  const [sp, setSp] = useSearchParams();
+  const qc = useQueryClient();
+  const [sp] = useSearchParams();
+  const tipo = sp.get("tipo") as PersonalType | null;
 
-  // lee ?tipo=INVESTIGADOR | PROFESIONAL | PTAA | BECARIO
-  const tipo = (sp.get("tipo") as PersonalType) || presetTipo || undefined;
+  const { list = [], isLoading, isError } = usePersonal(tipo ?? undefined);
 
-  const { list, isLoading, isError } = usePersonal(tipo);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<
+    { id: number; rol: string; nombre: string }[]
+  >([]);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  // helper opcional para cambiar filtro desde esta misma página
-  const setTipo = (t?: PersonalType) => {
-    if (!t) {
-      sp.delete("tipo");
-      setSp(sp, { replace: true });
-    } else {
-      setSp({ tipo: t }, { replace: true });
+  // 🔵 Toggle selección usando clave compuesta rol + id
+  const toggleSelect = (
+    id: number,
+    rol: string,
+    nombre: string,
+    checked: boolean
+  ) => {
+    setSelectedItems((prev) =>
+      checked
+        ? [...prev, { id, rol, nombre }]
+        : prev.filter(
+            (x) => !(x.id === id && x.rol === rol)
+          )
+    );
+  };
+
+  const cancelSelection = () => {
+    setSelectMode(false);
+    setSelectedItems([]);
+    setShowConfirm(false);
+  };
+
+  const confirmDelete = async () => {
+    for (const item of selectedItems) {
+      await eliminarPersonal(item.id, item.rol);
     }
+
+    qc.invalidateQueries({ queryKey: ["personal"] });
+    cancelSelection();
   };
 
   return (
-    <section className="w-full min-h-[calc(100vh-96px)] px-10 md:px-5 lg:px-1 py-2 flex flex-col">
+    <section className="w-full min-h-[calc(100vh-80px)] px-4 py-2 flex flex-col">
+      
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
-          Personal{tipo ? ` — ${roleLine({ tipo } as any)}` : ""}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl md:text-3xl font-semibold">
+          Personal
         </h2>
-        <Button variant="primary" onClick={() => navigate("/personal/nuevo")}>
-          Agregar Personal
-        </Button>
-      </div>
 
-      {/* Chips de filtro (opcionales; podés quitarlos si no los necesitás) */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Chip active={!tipo} onClick={() => setTipo(undefined)}>Todos</Chip>
-        <Chip active={tipo === "INVESTIGADOR"} onClick={() => setTipo("INVESTIGADOR")}>Investigadores</Chip>
-        <Chip active={tipo === "PROFESIONAL"} onClick={() => setTipo("PROFESIONAL")}>Profesionales</Chip>
-        <Chip active={tipo === "PTAA"} onClick={() => setTipo("PTAA")}>PTAA</Chip>
-        <Chip active={tipo === "BECARIO"} onClick={() => setTipo("BECARIO")}>Becarios</Chip>
-      </div>
+        {!selectMode ? (
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setSelectMode(true)}
+            >
+              Seleccionar
+            </Button>
 
-      {/* Contenido */}
-      <div className="mt-6 flex-1">
-        {isLoading && <p className="text-slate-500">Cargando…</p>}
-        {isError && <p className="text-red-600">No se pudo cargar el personal.</p>}
-        {!isLoading && !isError && (
-          list.length === 0 ? (
-            <p className="text-slate-500">Aún no hay personal{tipo ? " para este tipo" : ""}.</p>
-          ) : (
-            <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {list.map((p) => (
-                <TarjetaPersonal<Personal>
-                  key={p.id}
-                  item={p}
-                  title={(x) => x.nombreApellido}
-                  subtitle={roleLine}
-                  titleClassName="text-xl md:text-2xl"
-                  subtitleClassName="text-base md:text-lg"
-                  onClick={() => navigate(`/personal/${p.id}`)}
-                />
-              ))}
-            </div>
-          )
+            <Button
+              size="sm"
+              onClick={() => navigate("/personal/nuevo")}
+            >
+              Agregar nuevo
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            {selectedItems.length > 0 && (
+              <Button
+                size="sm"
+                onClick={() => setShowConfirm(true)}
+              >
+                Eliminar
+              </Button>
+            )}
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={cancelSelection}
+            >
+              Cancelar
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="pt-10">
-        <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-          Volver
-        </Button>
-      </div>
-    </section>
-  );
-}
+      {/* Lista */}
+      {isLoading && <p className="text-slate-500">Cargando…</p>}
+      {isError && <p className="text-red-600">Error al cargar.</p>}
 
-/** Chip minimalista */
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-3 py-1 rounded-full border transition
-        ${active ? "bg-black text-white border-black" : "bg-white text-black border-black/20 hover:bg-black/5"}`}
-    >
-      {children}
-    </button>
+      {!isLoading && !isError && (
+        list.length === 0 ? (
+          <p className="text-slate-500">
+            No hay personal.
+          </p>
+        ) : (
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((p) => (
+              <Tarjeta
+                key={`${p.rol}-${p.id}`}
+                item={p}
+                title={(x) => x.nombre_apellido}
+                subtitle={(x) => x.rol}
+                selectable={selectMode}
+                selected={
+                  selectedItems.some(
+                    (x) => x.id === p.id && x.rol === p.rol
+                  )
+                }
+                onSelectChange={(checked) =>
+                  toggleSelect(
+                    p.id,
+                    p.rol,
+                    p.nombre_apellido,
+                    checked
+                  )
+                }
+                onClick={() =>
+                  !selectMode &&
+                  navigate(`/personal/${p.rol}/${p.id}`)
+                }
+              />
+            ))}
+          </div>
+        )
+      )}
+
+      {/* Confirm dialog */}
+      <ConfirmDialog
+        open={showConfirm}
+        title="Eliminar personal"
+        message="¿Estás seguro de dar de baja los siguientes registros?"
+        items={selectedItems.map((x) => x.nombre)}
+        onCancel={cancelSelection}
+        onConfirm={confirmDelete}
+      />
+    </section>
   );
 }

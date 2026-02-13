@@ -5,84 +5,73 @@ import Button from "@/components/Button";
 import { getDocumentacionById } from "@/services/documentacionServices";
 
 export default function DocumentacionDetalle() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: ["documentacion", id],
-    queryFn: () => getDocumentacionById(id!),
+    queryFn: () => getDocumentacionById(Number(id)),
     enabled: !!id,
   });
 
-  if (isLoading) return <p>Cargando…</p>;
-  if (!data) return <p>No se encontró el documento.</p>;
+  if (isLoading) return <p className="text-slate-500">Cargando…</p>;
+  if (!data) return <p className="text-slate-500">No se encontró el documento.</p>;
+
+  const autores = data.autores?.length
+    ? data.autores.map((a) => a.nombre_apellido).join(", ")
+    : "—";
 
   return (
     <section className="flex flex-col gap-6">
-      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">
+      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
         Documentación
       </h2>
 
       <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
 
-        {/* Título principal */}
-        <h3 className="md:text-[25px] text-lg font-semibold mb-2">{data.titulo}</h3>
+        {/* Título */}
+        <h3 className="md:text-[25px] text-lg font-semibold mb-6">
+          {data.titulo}
+        </h3>
 
-        <dl className="text-sm space-y-2">
+        {/* Info lineal */}
+        <div className="space-y-2 text-sm md:text-base text-slate-500">
+          <p>
+            <span className="font-medium text-slate-700">Autores:</span>{" "}
+            {autores}
+          </p>
 
-          {/* Autores */}
-          <Field label="Autores">
-            <div className="flex flex-col">
-              {data.autores?.length ? (
-                data.autores.map((a, i) => (
-                  <span key={i} className="md:text-[18px] text-slate-500 mt-2">
-                    {a}
-                  </span>
-                ))
-              ) : (
-                <span className="md:text-[18px] text-slate-500 mt-2">—</span>
-              )}
-            </div>
-          </Field>
+          <p>
+            <span className="font-medium text-slate-700">Editorial:</span>{" "}
+            {data.editorial ?? "—"}
+          </p>
 
-          {/* Editorial */}
-          <Field label="Editorial" value={data.editorial} />
+          <p>
+            <span className="font-medium text-slate-700">Año:</span>{" "}
+            {data.anio ?? "—"}
+          </p>
+        </div>
 
-          {/* Año */}
-          <Field label="Año" value={String(data.anio ?? "—")} />
-
-        </dl>
-
-        <div className="mt-8 flex items-center justify-between font-medium">
-          <Button variant="secondary" onClick={() => navigate(-1)}>
+        {/* Acciones */}
+        <div className="mt-8 flex items-center justify-between">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="px-3 py-1 text-xs"
+            onClick={() => navigate(-1)}
+          >
             Volver
           </Button>
 
-          <Button onClick={() => navigate(`/documentacion/${id}/editar`)}>
+          <Button
+            size="sm"
+            className="px-3 py-1 text-xs"
+            onClick={() => navigate(`/documentacion/${id}/editar`)}
+          >
             Editar
           </Button>
         </div>
       </article>
     </section>
-  );
-}
-
-/* 🔥 COMPONENTE FIELD EXACTO AL DE PERSONALDETALLE */
-function Field({
-  label,
-  value,
-  children,
-}: {
-  label: string;
-  value?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div>
-      <dt className="md:text-[20px] font-medium mt-7">{label}</dt>
-      <dd className="md:text-[18px] text-slate-500 mt-2">
-        {children ?? value ?? "—"}
-      </dd>
-    </div>
   );
 }

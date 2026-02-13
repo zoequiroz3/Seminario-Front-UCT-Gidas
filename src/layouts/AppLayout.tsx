@@ -5,16 +5,15 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen bg-[#F6F6FB] text-slate-800 flex flex-col">
       {/* Header */}
-      <header className="w-full flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
-        {/* Botón hamburguesa a la izquierda */}
+      <header className="w-full flex items-center justify-between px-2 py-1 border-b border-slate-200 bg-white text-xs h-[40px]">
         <Sidebar />
 
-        {/* Título / logo */}
-        <h1 className="font-semibold text-lg"></h1>
+        <h1 className="font-semibold text-sm"></h1>
 
-        {/* Ejemplo: avatar a la derecha */}
-        <div>👤</div>
+        <div className="text-sm leading-none">👤</div>
       </header>
+
+
 
       {/* Contenido */}
       <main className="flex-1">
