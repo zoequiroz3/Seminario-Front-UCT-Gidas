@@ -18,9 +18,7 @@ const items: Item[] = [
       {
         label: "Investigador/a",
         children: [
-          { label: "Ver todos los Investigadores", to: "/investigadores" },
-          { label: "Actividades en Docencia", to: "/docenciaInvestigador" },
-          { label: "Trabajos en Reunión Científica", to: "/trabajosCientInv" },
+          { label: "Actividades en Docencia", to: "/docenciaInvestigador" }
         ],
       },
     ],
@@ -29,13 +27,7 @@ const items: Item[] = [
     label: "Proyectos",
     children: [
       { label: "Ver todos los proyectos", to: "/proyectos" },
-      { label: "Trabajos en Revistas", to: "/trabajosProyectos" },
-      { label: "Distinciones Recibidas", to: "/distincionesProyectos" },
     ],
-  },
-  {
-    label: "Actividades I+D+i",
-    children: [{ label: "Ver todas las Actividades", to: "/actividades" }],
   },
   {
     label: "Objetos y Financiamiento",

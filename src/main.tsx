@@ -101,6 +101,7 @@ const router = createBrowserRouter([
       { path: "docenciaInvestigador", element: <DocenciaLanding /> },
       { path: "docenciaInvestigador/nuevo", element: <DocenciaForm /> },
       { path: "docenciaInvestigador/:id", element: <DocenciaDetalle /> },
+      { path: "docenciaInvestigador/:id/editar", element: <DocenciaForm /> },
 
       // Trabajos en reuniones científicas
       { path: "trabajosCientInv", element: <TrabajosReunionHome /> },

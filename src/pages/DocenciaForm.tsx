@@ -1,176 +1,256 @@
-// src/pages/DocenciaForm.tsx
-import { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import Button from "@/components/Button";
-import DatePicker from "@/components/Calendar";
-import InvestigadorSelect from "@/components/InvestigadorSelect";
-import {
-  upsertDocencia,
-  type Docencia,
-  type GradoAcademico,
-  type RolDocencia,
-} from "@/services/docenciaServices";
+import Calendar from "@/components/Calendar";
+import { useInvestigadores } from "@/hooks/useInvestigadores";
+import { crearActividadDocencia } from "@/services/actividadDocenciaServices";
 
-const GRADOS: GradoAcademico[] = ["Grado", "Posgrado", "Pregrado"];
-const ROLES: RolDocencia[] = ["Titular", "Adjunto", "JTP", "Ayudante"];
-
-// helpers fechas (mismo patrón que Personal.tsx)
-const parseYMD = (s?: string | null): Date | null => {
-  if (!s) return null;
-  const [y, m, d] = s.split("-").map(Number);
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-};
-const toYMD = (date: Date | null): string => {
-  if (!date) return "";
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
-
-type DocenciaDraft = Partial<Docencia>;
-
-export default function DocenciaForm() {
+export default function FormDocenciaInvestigador() {
   const navigate = useNavigate();
-  const qc = useQueryClient();
-  const [sp] = useSearchParams();
-  const presetId = sp.get("investigadorId") ?? undefined;
+  const { data: investigadores = [] } = useInvestigadores();
 
-  const [data, setData] = useState<DocenciaDraft>({
-    id: "",
-    investigadorId: presetId,
-    denominacionCatedra: "",
-    institucionDictada: "",
-    gradoAcademico: "Grado",
-    rolActividad: "Titular",
-    fechaInicio: "",
-    fechaFin: "",
+  const [investigadorId, setInvestigadorId] = useState<number | null>(null);
+
+  const [curso, setCurso] = useState("");
+  const [institucion, setInstitucion] = useState("");
+  const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
+  const [fechaFin, setFechaFin] = useState<Date | null>(null);
+  const [gradoAcademico, setGradoAcademico] = useState("");
+  const [rolActividad, setRolActividad] = useState("");
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const mutation = useMutation({
+    mutationFn: crearActividadDocencia,
+    onSuccess: () => navigate(-1),
   });
 
-  const change =
-    (k: keyof DocenciaDraft) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-      setData((d) => ({ ...d, [k]: e.target.value as any }));
-
-  const setDateField = (k: "fechaInicio" | "fechaFin", dt: Date | null) =>
-    setData((d) => ({ ...d, [k]: toYMD(dt) }));
-
-  const { mutateAsync, isPending } = useMutation({
-    mutationFn: (payload: Docencia) => upsertDocencia(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["docencia"] }),
-  });
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!data.investigadorId) return alert("Seleccione un/a investigador/a.");
-    if (!data.denominacionCatedra?.trim()) return alert("Complete 'Denominación de Cátedra'.");
-    if (!data.institucionDictada?.trim()) return alert("Complete 'Institución'.");
-    if (!data.fechaInicio || !data.fechaFin) return alert("Complete fechas de inicio y fin.");
-
-    await mutateAsync(data as Docencia);
-    navigate("/docenciaInvestigador", { replace: true });
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
   };
 
-  useEffect(() => {}, []);
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
 
-  return (
-    <section>
-      <h2 className="text-[38px] md:text-[45px] font-semibold leading-none">Nueva Actividad en Docencia</h2>
-
-      <form
-        onSubmit={onSubmit}
-        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-sm space-y-8"
-      >
-        <Field label="Investigador/a *">
-          <InvestigadorSelect
-            value={data.investigadorId}
-            onChange={(id) => setData((d) => ({ ...d, investigadorId: id }))}
-            className="input" // 👈 mismo tamaño que Personal.tsx
-          />
-        </Field>
-
-        <Field label="Denominación de Cátedra *">
-          <input
-            className="input"
-            value={data.denominacionCatedra ?? ""}
-            onChange={change("denominacionCatedra")}
-            placeholder=""
-          />
-        </Field>
-
-        <Field label="Institución *">
-          <input
-            className="input"
-            value={data.institucionDictada ?? ""}
-            onChange={change("institucionDictada")}
-            placeholder=""
-          />
-        </Field>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Grado Académico *">
-            <select
-              className="input"
-              value={data.gradoAcademico}
-              onChange={change("gradoAcademico")}
-            >
-              {GRADOS.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Rol *">
-            <select className="input" value={data.rolActividad} onChange={change("rolActividad")}>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <DatePicker
-            label="Fecha inicio *"
-            value={parseYMD(data.fechaInicio)}
-            onChange={(dt) => setDateField("fechaInicio", dt)}
-            helperText="DD/MM/AAAA"
-            className="input"
-          />
-          <DatePicker
-            label="Fecha fin *"
-            value={parseYMD(data.fechaFin)}
-            onChange={(dt) => setDateField("fechaFin", dt)}
-            minDate={parseYMD(data.fechaInicio) || undefined}
-            helperText="DD/MM/AAAA"
-            className="input"
-          />
-        </div>
-
-        <div className="mt-8 flex items-center justify-between">
-          <Button type="button" variant="secondary" onClick={() => navigate(-1)}>
-            Volver
-          </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Guardando…" : "Guardar"}
-          </Button>
-        </div>
-      </form>
-    </section>
-  );
+   if (!investigadorId) {
+  newErrors.investigador = "Debe seleccionar investigador";
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+
+    if (!curso.trim())
+      newErrors.curso = "Debe ingresar curso";
+
+    if (!institucion.trim())
+      newErrors.institucion = "Debe ingresar institución";
+
+    if (!fechaInicio)
+      newErrors.fechaInicio = "Debe seleccionar fecha de inicio";
+
+    if (!fechaFin)
+      newErrors.fechaFin = "Debe seleccionar fecha de fin";
+
+    if (!gradoAcademico.trim())
+      newErrors.gradoAcademico = "Debe ingresar grado académico";
+
+    if (!rolActividad.trim())
+      newErrors.rolActividad = "Debe ingresar rol";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const submit = (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validate()) return;
+
+  mutation.mutate({
+  investigador_id: investigadorId!, // ahora seguro es number
+  curso,
+  institucion,
+  fecha_inicio: fechaInicio!.toISOString().split("T")[0],
+  fecha_fin: fechaFin!.toISOString().split("T")[0],
+  grado_academico: gradoAcademico,
+  rol_actividad: rolActividad,
+});
+};  
+
+
+  const inputClass = (field: string) =>
+    `input ${
+      errors[field]
+        ? "!border-red-500 !ring-2 !ring-red-500"
+        : ""
+    }`;
+
   return (
-    <div>
-      <label className="md:text-[17px] block text-sm font-medium mb-4">{label}</label>
-      {children}
-    </div>
+    <form onSubmit={submit} className="space-y-6">
+
+      {/* INVESTIGADOR */}
+      <div>
+        <select
+  className="input"
+  value={investigadorId ?? ""}
+  onChange={(e) =>
+    setInvestigadorId(
+      e.target.value ? Number(e.target.value) : null
+    )
+  }
+>
+  <option value="">Seleccionar investigador</option>
+  {investigadores.map((inv) => (
+    <option key={`inv-${inv.id}`} value={inv.id}>
+      {inv.nombre_apellido}
+    </option>
+  ))}
+</select>
+
+        {errors.investigador && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.investigador}
+          </p>
+        )}
+      </div>
+
+      {/* CURSO */}
+      <div>
+        <input
+          className={inputClass("curso")}
+          placeholder="Curso"
+          value={curso}
+          onChange={(e) => {
+            setCurso(e.target.value);
+            if (e.target.value.trim()) clearError("curso");
+          }}
+        />
+        {errors.curso && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.curso}
+          </p>
+        )}
+      </div>
+
+      {/* INSTITUCION */}
+      <div>
+        <input
+          className={inputClass("institucion")}
+          placeholder="Institución"
+          value={institucion}
+          onChange={(e) => {
+            setInstitucion(e.target.value);
+            if (e.target.value.trim()) clearError("institucion");
+          }}
+        />
+        {errors.institucion && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.institucion}
+          </p>
+        )}
+      </div>
+
+      {/* FECHAS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* FECHA INICIO */}
+        <div>
+          <Calendar
+            label="Fecha inicio"
+            value={fechaInicio}
+            onChange={(date) => {
+              setFechaInicio(date);
+              if (date) clearError("fechaInicio");
+            }}
+            className={`input ${
+              errors.fechaInicio
+                ? "!border-red-500 !ring-2 !ring-red-500"
+                : ""
+            }`}
+            helperText={errors.fechaInicio ?? "DD/MM/AAAA"}
+          />
+        </div>
+
+        {/* FECHA FIN */}
+        <div>
+          <Calendar
+            label="Fecha fin"
+            value={fechaFin}
+            onChange={(date) => {
+              setFechaFin(date);
+              if (date) clearError("fechaFin");
+            }}
+            className={`input ${
+              errors.fechaFin
+                ? "!border-red-500 !ring-2 !ring-red-500"
+                : ""
+            }`}
+            helperText={errors.fechaFin ?? "DD/MM/AAAA"}
+          />
+        </div>
+      </div>
+
+
+
+
+      {/* GRADO */}
+      <div>
+        <input
+          className={inputClass("gradoAcademico")}
+          placeholder="Grado académico"
+          value={gradoAcademico}
+          onChange={(e) => {
+            setGradoAcademico(e.target.value);
+            if (e.target.value.trim()) clearError("gradoAcademico");
+          }}
+        />
+        {errors.gradoAcademico && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.gradoAcademico}
+          </p>
+        )}
+      </div>
+
+      {/* ROL */}
+      <div>
+        <input
+          className={inputClass("rolActividad")}
+          placeholder="Rol en actividad"
+          value={rolActividad}
+          onChange={(e) => {
+            setRolActividad(e.target.value);
+            if (e.target.value.trim()) clearError("rolActividad");
+          }}
+        />
+        {errors.rolActividad && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.rolActividad}
+          </p>
+        )}
+      </div>
+
+      {/* BOTONES */}
+      <div className="flex justify-between pt-6">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="px-3 py-1 text-xs"
+          onClick={() => navigate(-1)}
+        >
+          Volver
+        </Button>
+
+        <Button
+          type="submit"
+          size="sm"
+          className="px-3 py-1 text-xs"
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? "Guardando…" : "Guardar"}
+        </Button>
+      </div>
+    </form>
   );
 }

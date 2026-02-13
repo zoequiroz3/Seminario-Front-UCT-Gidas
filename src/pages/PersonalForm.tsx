@@ -26,19 +26,20 @@ export default function PersonalForm() {
   const [tipo, setTipo] = useState<Tipo>("");
   const [errorTipo, setErrorTipo] = useState(false);
 
-  useEffect(() => {
-    if (!initialData?.rol) return;
+useEffect(() => {
+  if (!rol) return;
 
-    const rolMap: Record<string, Tipo> = {
-      personal: "PTAA",
-      profesional: "PROFESIONAL",
-      becario: "BECARIO",
-      investigador: "INVESTIGADOR",
-    };
+  const rolMap: Record<string, Tipo> = {
+    personal: "PTAA",
+    profesional: "PROFESIONAL",
+    becario: "BECARIO",
+    investigador: "INVESTIGADOR",
+  };
 
-    const mapped = rolMap[initialData.rol.toLowerCase()];
-    if (mapped) setTipo(mapped);
-  }, [initialData]);
+  const mapped = rolMap[rol.toLowerCase()];
+  if (mapped) setTipo(mapped);
+}, [rol]);
+
 
   if (isLoading) return <p>Cargando…</p>;
 

@@ -27,3 +27,16 @@ export function actualizarInvestigador(
     body: JSON.stringify(payload),
   });
 }
+
+
+export function getInvestigadorById(id: number) {
+  return http(`/investigadores/${id}`, {
+    method: "GET",
+  });
+}
+
+export function getInvestigadores() {
+  return http("/investigadores/", {
+    method: "GET",
+  });
+}
