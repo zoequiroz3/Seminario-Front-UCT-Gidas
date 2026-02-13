@@ -34,21 +34,17 @@ const formatFecha = (fecha?: string | null) => {
   return (
     <section className="flex flex-col gap-6">
       <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-        Actividad de Docencia
+        {data.curso}
       </h2>
 
       <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
 
-        {/* Título */}
-        <h3 className="md:text-[25px] text-lg font-semibold mb-6">
-          {data.investigador}
-        </h3>
 
         {/* Info */}
         <div className="space-y-2 text-sm md:text-base text-slate-500">
           <p>
-            <span className="font-medium text-slate-700">Curso:</span>{" "}
-            {data.curso ?? "—"}
+            <span className="font-medium text-slate-700">Investigador:</span>{" "}
+            {data.investigador ?? "—"}
           </p>
 
           <p>

@@ -81,7 +81,7 @@ export const actualizarActividadDocencia = async (
 ): Promise<ActividadDocencia> => {
 
   return http<ActividadDocencia>(
-    `/actividades-docencia/${id}/editar`,
+    `/actividades-docencia/${id}`,
     {
       method: "PUT",
       body: JSON.stringify(payload),

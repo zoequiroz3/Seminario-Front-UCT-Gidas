@@ -1,9 +1,12 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import Button from "@/components/Button";
 import AutoresField from "@/components/AutoresField";
 import { useDocumentacionForm } from "@/hooks/useDocumentacionForm";
 import { getDocumentacionById } from "@/services/documentacionServices";
+import { removeAutorFromDocumentacion } from "@/services/documentacionServices";
+
 
 export default function DocumentacionForm() {
   const { id } = useParams<{ id: string }>();
@@ -25,77 +28,189 @@ export default function DocumentacionForm() {
     years,
   } = useDocumentacionForm(initial ?? undefined);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   if (isLoading) return <p>Cargando…</p>;
 
   const isEdit = Boolean(id);
+
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!data.titulo.trim())
+      newErrors.titulo = "Debe ingresar título";
+
+    if (!autores || autores.length === 0)
+      newErrors.autores = "Debe ingresar al menos un autor";
+
+    if (!data.anio)
+      newErrors.anio = "Debe seleccionar año";
+    
+    if (!data.editorial.trim())
+      newErrors.editorial = "Debe ingresar editorial";
+
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const inputClass = (field: string) =>
+    `input text-sm md:text-base ${
+      errors[field]
+        ? "!border-red-500 !ring-2 !ring-red-500"
+        : ""
+    }`;
+
   return (
     <section className="w-full">
       <h2 className="text-2xl md:text-3xl font-semibold leading-none">
         {isEdit ? "Editar documentación" : "Nueva documentación"}
       </h2>
 
-      {/* CARD IGUAL AL DETALLE */}
       <form
         onSubmit={async (e) => {
           e.preventDefault();
+          if (!validate()) return;
           await submit();
           navigate("/documentacion");
         }}
         className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
       >
+        {/* Título */}
         <Field label="Título">
-          <input
-            className="input text-sm md:text-base"
-            value={data.titulo}
-            onChange={(e) =>
-              setData((d) => ({ ...d, titulo: e.target.value }))
-            }
-          />
+          <>
+            <input
+              className={inputClass("titulo")}
+              value={data.titulo}
+              onChange={(e) => {
+                setData((d) => ({
+                  ...d,
+                  titulo: e.target.value,
+                }));
+                if (e.target.value.trim())
+                  clearError("titulo");
+              }}
+            />
+            {errors.titulo && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.titulo}
+              </p>
+            )}
+          </>
         </Field>
 
-        <AutoresField
-          value={autores}
-          onChange={setAutores}
-          label="Autores"
-        />
+        {/* Autores */}
+        <div>
+          <AutoresField
+  value={autores}
+  onChange={async (updatedAutores) => {
 
+    // Detectar autores eliminados
+    const removed = autores.filter(
+      (a) => !updatedAutores.some((u) => u.id === a.id)
+    );
+
+    if (isEdit && id && removed.length > 0) {
+      for (const autor of removed) {
+        await removeAutorFromDocumentacion(
+          Number(id),
+          autor.id
+        );
+      }
+    }
+
+    setAutores(updatedAutores);
+
+    if (updatedAutores.length > 0)
+      clearError("autores");
+  }}
+  label="Autores"
+/>
+
+          {errors.autores && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.autores}
+            </p>
+          )}
+        </div>
+
+        {/* Editorial */}
         <Field label="Editorial">
-          <input
-            className="input text-sm md:text-base"
-            value={data.editorial}
-            onChange={(e) =>
-              setData((d) => ({ ...d, editorial: e.target.value }))
-            }
-          />
-        </Field>
+  <>
+    <input
+      className={inputClass("editorial")}
+      value={data.editorial}
+      onChange={(e) => {
+        setData((d) => ({
+          ...d,
+          editorial: e.target.value,
+        }));
+        if (e.target.value.trim())
+          clearError("editorial");
+      }}
+    />
+    {errors.editorial && (
+      <p className="text-red-500 text-sm mt-1">
+        {errors.editorial}
+      </p>
+    )}
+  </>
+</Field>
 
+
+        {/* Año */}
         <Field label="Año">
-          <select
-            className="input text-sm md:text-base"
-            value={data.anio ?? ""}
-            onChange={(e) =>
-              setData((d) => ({
-                ...d,
-                anio: e.target.value ? Number(e.target.value) : undefined,
-              }))
-            }
-          >
-            <option value="">Seleccione un año</option>
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
+          <>
+            <select
+              className={`${inputClass("anio")} ${
+                !data.anio
+                  ? "text-slate-400"
+                  : "text-slate-900"
+              }`}
+              value={data.anio ?? ""}
+              onChange={(e) => {
+                const value = e.target.value
+                  ? Number(e.target.value)
+                  : undefined;
+
+                setData((d) => ({
+                  ...d,
+                  anio: value,
+                }));
+
+                if (value) clearError("anio");
+              }}
+            >
+              <option value="" disabled>
+                Seleccione un año
               </option>
-            ))}
-          </select>
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+            {errors.anio && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.anio}
+              </p>
+            )}
+          </>
         </Field>
 
-        {/* ACCIONES – MISMO PESO VISUAL QUE DETALLE */}
         <div className="flex justify-between pt-6">
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            className="px-3 py-1 text-xs"
             onClick={() => navigate(-1)}
           >
             Volver
@@ -104,10 +219,13 @@ export default function DocumentacionForm() {
           <Button
             type="submit"
             size="sm"
-            className="px-3 py-1 text-xs"
             disabled={isPending}
           >
-            {isPending ? "Guardando…" : "Guardar"}
+            {isPending
+              ? "Guardando…"
+              : isEdit
+              ? "Actualizar"
+              : "Guardar"}
           </Button>
         </div>
       </form>

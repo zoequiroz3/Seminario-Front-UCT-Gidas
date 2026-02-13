@@ -18,7 +18,6 @@ export default function FormPTAAProfesional({
   initialData,
   onCancel,
 }: Props) {
-
   const { uct } = useUct();
   const { data: tiposPersonal = [] } = useTiposPersonal();
 
@@ -60,7 +59,7 @@ export default function FormPTAAProfesional({
   };
 
   const clearError = (field: string) => {
-    setErrors(prev => {
+    setErrors((prev) => {
       const copy = { ...prev };
       delete copy[field];
       return copy;
@@ -89,64 +88,92 @@ export default function FormPTAAProfesional({
   };
 
   return (
-    <form onSubmit={submit} className="space-y-6">
-
+    <form
+      onSubmit={submit}
+      className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
+    >
       {/* Nombre */}
-      <div>
-        <input
-          className={`input ${errors.nombre ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          placeholder="Nombre y apellido"
-          value={nombreApellido}
-          onChange={(e) => {
-            setNombre(e.target.value);
-            if (e.target.value.trim()) clearError("nombre");
-          }}
-        />
-        {errors.nombre && (
-          <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
-        )}
-      </div>
+      <Field label="Nombre y apellido">
+        <>
+          <input
+            className={`input ${
+              errors.nombre ? "border-red-500 ring-2 ring-red-500" : ""
+            }`}
+            value={nombreApellido}
+            onChange={(e) => {
+              setNombre(e.target.value);
+              if (e.target.value.trim()) clearError("nombre");
+            }}
+          />
+          {errors.nombre && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.nombre}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Horas */}
-      <div>
-        <input
-          type="number"
-          className={`input ${errors.horas ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          placeholder="Horas semanales"
-          value={horasSemanales}
-          onChange={(e) => {
-            const value = e.target.value === "" ? "" : +e.target.value;
-            setHoras(value);
-            if (value) clearError("horas");
-          }}
-        />
-        {errors.horas && (
-          <p className="text-red-500 text-sm mt-1">{errors.horas}</p>
-        )}
-      </div>
+      <Field label="Horas semanales">
+        <>
+          <input
+            type="number"
+            className={`input ${
+              errors.horas ? "border-red-500 ring-2 ring-red-500" : ""
+            }`}
+            value={horasSemanales}
+            onChange={(e) => {
+              const value = e.target.value === "" ? "" : +e.target.value;
+              setHoras(value);
+              if (value) clearError("horas");
+            }}
+          />
+          {errors.horas && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.horas}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Tipo Personal */}
-      <div>
-        <select
-          className={`input ${errors.tipoPersonal ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          value={tipoPersonalId}
-          onChange={(e) => {
-            const value = e.target.value ? +e.target.value : "";
-            setTipoPersonalId(value);
-            if (value) clearError("tipoPersonal");
-          }}
-        >
-          <option value="">Seleccionar tipo de personal</option>
-          {tiposPersonal.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nombre}
+      <Field label="Tipo de personal">
+        <>
+          <select
+            className={`input ${
+              errors.tipoPersonal ? "border-red-500 ring-2 ring-red-500" : ""
+            } ${
+              !tipoPersonalId
+                ? "text-slate-400"
+                : "text-slate-900"
+            }`}
+            value={tipoPersonalId}
+            onChange={(e) => {
+              const value = e.target.value ? +e.target.value : "";
+              setTipoPersonalId(value);
+              if (value) clearError("tipoPersonal");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar tipo de personal
             </option>
-          ))}
-        </select>
-        {errors.tipoPersonal && (
-          <p className="text-red-500 text-sm mt-1">{errors.tipoPersonal}</p>
-        )}
-      </div>
+            {tiposPersonal.map((t) => (
+              <option
+                key={t.id}
+                value={t.id}
+                className="text-slate-900"
+              >
+                {t.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.tipoPersonal && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.tipoPersonal}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Botones */}
       <div className="flex justify-between pt-6">
@@ -154,21 +181,35 @@ export default function FormPTAAProfesional({
           type="button"
           variant="secondary"
           size="sm"
-          className="px-3 py-1 text-xs"
           onClick={onCancel}
         >
           Volver
         </Button>
 
-        <Button
-          type="submit"
-          size="sm"
-          className="px-3 py-1 text-xs"
-        >
+        <Button type="submit" size="sm">
           {isEdit ? "Actualizar" : "Guardar"}
         </Button>
       </div>
-
     </form>
+  );
+}
+
+/* =========================
+   FIELD COMPONENT
+   ========================= */
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-2">
+        {label}
+      </label>
+      {children}
+    </div>
   );
 }

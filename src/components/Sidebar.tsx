@@ -43,7 +43,6 @@ const items: Item[] = [
       { label: "Ver todo en documentación y biblioteca", to: "/documentacion" }
     ],
   },
-  { label: "Búsqueda", to: "/busqueda"},
 ];
 
 export default function Sidebar() {

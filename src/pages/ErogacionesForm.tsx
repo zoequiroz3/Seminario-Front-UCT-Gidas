@@ -31,9 +31,8 @@ export default function ErogacionesForm() {
     egresos: "",
   });
 
-  /* =========================
-     CARGA DE DATOS (EDICIÓN)
-     ========================= */
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const { data: erogacion, isLoading: loadingErogacion } = useQuery({
     queryKey: ["erogaciones", id],
     queryFn: () => getErogacionById(Number(id)),
@@ -54,9 +53,33 @@ export default function ErogacionesForm() {
     }
   }, [erogacion]);
 
-  /* =========================
-     MUTACIÓN
-     ========================= */
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!data.numeroErogacion)
+      newErrors.numero = "Debe ingresar número de erogación";
+
+    if (!data.tipoErogacionId)
+      newErrors.tipo = "Debe seleccionar tipo de erogación";
+
+    if (data.ingresos && Number(data.ingresos) < 0)
+      newErrors.ingresos = "Ingresos no puede ser negativo";
+
+    if (data.egresos && Number(data.egresos) < 0)
+      newErrors.egresos = "Egresos no puede ser negativo";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (payload: any) =>
       isEdit
@@ -68,17 +91,10 @@ export default function ErogacionesForm() {
     },
   });
 
-  /* =========================
-     SUBMIT
-     ========================= */
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uct) return;
-
-    if (!data.tipoErogacionId) {
-      alert("Debe seleccionar un tipo de erogación");
-      return;
-    }
+    if (!validate()) return;
 
     await mutateAsync({
       numeroErogacion: Number(data.numeroErogacion),
@@ -92,9 +108,15 @@ export default function ErogacionesForm() {
     });
   };
 
-  if (isEdit && loadingErogacion) {
+  if (isEdit && loadingErogacion)
     return <p className="text-slate-500">Cargando erogación…</p>;
-  }
+
+  const inputClass = (field: string) =>
+    `input ${
+      errors[field]
+        ? "!border-red-500 !ring-2 !ring-red-500"
+        : ""
+    }`;
 
   return (
     <section className="w-full">
@@ -108,120 +130,129 @@ export default function ErogacionesForm() {
       >
         {/* Número */}
         <Field label="Número de erogación">
-          <input
-            className="input"
-            type="number"
-            value={data.numeroErogacion}
-            onChange={(e) =>
-              setData({ ...data, numeroErogacion: e.target.value })
-            }
-            required
-          />
+          <>
+            <input
+              type="number"
+              className={inputClass("numero")}
+              value={data.numeroErogacion}
+              onChange={(e) => {
+                setData({
+                  ...data,
+                  numeroErogacion: e.target.value,
+                });
+                if (e.target.value) clearError("numero");
+              }}
+            />
+            {errors.numero && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.numero}
+              </p>
+            )}
+          </>
         </Field>
 
-        {/* Tipo de erogación */}
+        {/* Tipo */}
         <Field label="Tipo de erogación">
-          {loadingTipos ? (
-            <p className="text-sm text-slate-500">
-              Cargando tipos…
-            </p>
-          ) : isError ? (
-            <p className="text-sm text-red-600">
-              Error al cargar tipos
-            </p>
-          ) : (
+          <>
             <select
-              className={`input ${
+              className={`${inputClass("tipo")} ${
                 !data.tipoErogacionId
                   ? "text-slate-400"
                   : "text-slate-900"
               }`}
               value={data.tipoErogacionId}
-              onChange={(e) =>
+              onChange={(e) => {
                 setData({
                   ...data,
                   tipoErogacionId: e.target.value,
-                })
-              }
+                });
+                if (e.target.value) clearError("tipo");
+              }}
             >
               <option value="" disabled>
-                Seleccionar tipo de erogación
+                Seleccionar tipo
               </option>
               {tipos.map((t) => (
-                <option
-                  key={t.id}
-                  value={t.id}
-                  className="text-slate-900"
-                >
+                <option key={t.id} value={t.id}>
                   {t.nombre}
                 </option>
               ))}
             </select>
-          )}
+            {errors.tipo && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.tipo}
+              </p>
+            )}
+          </>
         </Field>
 
         {/* Ingresos */}
         <Field label="Ingresos">
-          <input
-            className="input"
-            type="number"
-            value={data.ingresos}
-            onChange={(e) =>
-              setData({ ...data, ingresos: e.target.value })
-            }
-          />
+          <>
+            <input
+              type="number"
+              className={inputClass("ingresos")}
+              value={data.ingresos}
+              onChange={(e) => {
+                setData({ ...data, ingresos: e.target.value });
+                clearError("ingresos");
+              }}
+            />
+            {errors.ingresos && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.ingresos}
+              </p>
+            )}
+          </>
         </Field>
 
         {/* Egresos */}
         <Field label="Egresos">
-          <input
-            className="input"
-            type="number"
-            value={data.egresos}
-            onChange={(e) =>
-              setData({ ...data, egresos: e.target.value })
-            }
-          />
+          <>
+            <input
+              type="number"
+              className={inputClass("egresos")}
+              value={data.egresos}
+              onChange={(e) => {
+                setData({ ...data, egresos: e.target.value });
+                clearError("egresos");
+              }}
+            />
+            {errors.egresos && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.egresos}
+              </p>
+            )}
+          </>
         </Field>
 
-        {/* Fuente de financiamiento */}
+        {/* Fuente */}
         <Field label="Fuente de financiamiento">
-          {loadingFuentes ? (
-            <p className="text-sm text-slate-500">
-              Cargando fuentes…
-            </p>
-          ) : (
-            <select
-              className={`input ${
-                !data.fuenteFinanciamientoId
-                  ? "text-slate-400"
-                  : "text-slate-900"
-              }`}
-              value={data.fuenteFinanciamientoId}
-              onChange={(e) =>
-                setData({
-                  ...data,
-                  fuenteFinanciamientoId: e.target.value,
-                })
-              }
-            >
-              <option value="" disabled>
-                Seleccionar fuente
+          <select
+            className={`input ${
+              !data.fuenteFinanciamientoId
+                ? "text-slate-400"
+                : "text-slate-900"
+            }`}
+            value={data.fuenteFinanciamientoId}
+            onChange={(e) =>
+              setData({
+                ...data,
+                fuenteFinanciamientoId: e.target.value,
+              })
+            }
+          >
+            <option value="" disabled>
+              Seleccionar fuente
+            </option>
+            {fuentes.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.nombre}
               </option>
-              {fuentes.map((f) => (
-                <option
-                  key={f.id}
-                  value={f.id}
-                  className="text-slate-900"
-                >
-                  {f.nombre}
-                </option>
-              ))}
-            </select>
-          )}
+            ))}
+          </select>
         </Field>
 
-        {/* Acciones */}
         <div className="flex justify-between pt-6">
           <Button
             type="button"
@@ -237,7 +268,11 @@ export default function ErogacionesForm() {
             size="sm"
             disabled={isPending}
           >
-            {isPending ? "Guardando…" : "Guardar"}
+            {isPending
+              ? "Guardando…"
+              : isEdit
+              ? "Actualizar"
+              : "Guardar"}
           </Button>
         </div>
       </form>
@@ -245,9 +280,6 @@ export default function ErogacionesForm() {
   );
 }
 
-/* =========================
-   FIELD COMPONENT
-   ========================= */
 function Field({
   label,
   children,

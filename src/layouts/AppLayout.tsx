@@ -1,21 +1,70 @@
 import { Outlet } from "react-router-dom";
-import Sidebar from "@/components/Sidebar"; // ahora es el botón hamburguesa
+import { useState, useRef, useEffect } from "react";
+import Sidebar from "@/components/Sidebar";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AppLayout() {
+  const { logout } = useAuth();
+
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Cerrar si clickeo afuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#F6F6FB] text-slate-800 flex flex-col">
-      {/* Header */}
-      <header className="w-full flex items-center justify-between px-2 py-1 border-b border-slate-200 bg-white text-xs h-[40px]">
+      
+      {/* HEADER */}
+      <header className="w-full flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-white h-[48px]">
         <Sidebar />
 
-        <h1 className="font-semibold text-sm"></h1>
+        <h1 className="font-semibold text-sm tracking-tight">
+          
+        </h1>
 
-        <div className="text-sm leading-none">👤</div>
+        {/* USER MENU */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setOpen(!open)}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition"
+          >
+            👤
+          </button>
+
+          {open && (
+            <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50">
+              
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  logout();
+                }}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-slate-100 transition"
+              >
+                Cerrar sesión
+              </button>
+
+            </div>
+          )}
+        </div>
       </header>
 
-
-
-      {/* Contenido */}
+      {/* CONTENIDO */}
       <main className="flex-1">
         <div className="w-full px-6 lg:px-10 py-8">
           <Outlet />
