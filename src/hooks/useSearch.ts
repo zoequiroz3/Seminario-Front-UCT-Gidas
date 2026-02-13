@@ -9,15 +9,11 @@ function useDebounce<T>(value: T, ms = 350) {
 
 export function useSearch() {
   const [q, setQ] = useState("");
-  const [types, setTypes] = useState<RecordType[]>([]);
-  const [dateFrom, setDateFrom] = useState<string | undefined>();
-  const [dateTo, setDateTo] = useState<string | undefined>();
-  const [sort, setSort] = useState<SearchParams["sort"]>("date_desc");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const debounced = useDebounce({ q, types, dateFrom, dateTo, sort }, 300);
+  const debounced = useDebounce({ q }, 300);
   const params = useMemo<SearchParams>(() => debounced, [debounced]);
 
   useEffect(() => {
@@ -39,18 +35,10 @@ export function useSearch() {
 
   function clearAll() {
     setQ("");
-    setTypes([]);
-    setDateFrom(undefined);
-    setDateTo(undefined);
-    setSort("date_desc");
   }
 
   return {
     q, setQ,
-    types, setTypes,
-    dateFrom, setDateFrom,
-    dateTo, setDateTo,
-    sort, setSort,
     loading, results, error,
     clearAll,
   };

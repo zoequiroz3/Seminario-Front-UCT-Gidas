@@ -45,81 +45,12 @@ export default function SearchPage() {
           <button
             type="button"
             className="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-100"
-            onClick={() => setShowAdvanced((s) => !s)}
-            aria-expanded={showAdvanced}
-            aria-controls="advanced-panel"
-            title="Búsqueda avanzada"
-          >
-            <Filter className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            className="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-100"
             onClick={clearAll}
             title="Limpiar búsqueda"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
-
-        {/* Filtros avanzados */}
-        {showAdvanced && (
-          <div id="advanced-panel" className="mt-4 grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2 sm:col-span-2">
-              <div className="text-sm text-slate-600">Tipo de registro</div>
-              <div className="flex flex-wrap gap-2">
-                {typeOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => toggleType(opt.value)}
-                    className={[
-                      "px-3 py-1.5 rounded-full border text-sm",
-                      types.includes(opt.value as any)
-                        ? "bg-slate-900 text-white border-slate-900"
-                        : "border-slate-300 hover:bg-slate-100",
-                    ].join(" ")}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-sm text-slate-600">Ordenar por</div>
-              <select
-                className="input"
-                value={sort}
-                onChange={(e) => setSort(e.target.value as any)}
-              >
-                <option value="date_desc">Fecha: recientes → antiguos</option>
-                <option value="date_asc">Fecha: antiguos → recientes</option>
-                <option value="alpha_asc">Alfabético: A → Z</option>
-                <option value="alpha_desc">Alfabético: Z → A</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-sm text-slate-600">Desde</div>
-              <input
-                type="date"
-                className="input"
-                value={dateFrom ?? ""}
-                onChange={(e) => setDateFrom(e.target.value || undefined)}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm text-slate-600">Hasta</div>
-              <input
-                type="date"
-                className="input"
-                value={dateTo ?? ""}
-                onChange={(e) => setDateTo(e.target.value || undefined)}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* resultados */}
