@@ -36,15 +36,11 @@ export default function EquipamientoDetalle() {
     <section className="flex flex-col gap-6">
       {/* Título principal */}
       <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-        Equipamiento
+        {data.denominacion}
       </h2>
 
       {/* Tarjeta */}
       <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-        {/* Título tarjeta */}
-        <h3 className="md:text-[25px] text-lg font-semibold mb-6">
-          {data.denominacion}
-        </h3>
 
         {/* Info */}
         <div className="space-y-2 text-sm md:text-base text-slate-500">

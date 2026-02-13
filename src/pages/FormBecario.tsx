@@ -17,7 +17,6 @@ export default function FormBecario({
   initialData,
   onCancel,
 }: Props) {
-
   const { uct } = useUct();
   const { data: tiposFormacion = [] } = useTiposFormacion();
   const { fuentes = [] } = useFuentesFinanciamiento();
@@ -44,7 +43,6 @@ export default function FormBecario({
 
     if (initialData.relaciones?.fuente_financiamiento)
       setFuenteId(initialData.relaciones.fuente_financiamiento.id);
-
   }, [initialData]);
 
   const validate = () => {
@@ -57,7 +55,8 @@ export default function FormBecario({
       newErrors.horas = "Debe ingresar horas válidas";
 
     if (!tipoFormacionId)
-      newErrors.tipoFormacion = "Debe seleccionar tipo de formación";
+      newErrors.tipoFormacion =
+        "Debe seleccionar tipo de formación";
 
     if (!fuenteId)
       newErrors.fuente = "Debe seleccionar fuente";
@@ -67,7 +66,7 @@ export default function FormBecario({
   };
 
   const clearError = (field: string) => {
-    setErrors(prev => {
+    setErrors((prev) => {
       const copy = { ...prev };
       delete copy[field];
       return copy;
@@ -97,87 +96,149 @@ export default function FormBecario({
   };
 
   return (
-    <form onSubmit={submit} className="space-y-6">
-
+    <form
+      onSubmit={submit}
+      className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
+    >
       {/* Nombre */}
-      <div>
-        <input
-          className={`input ${errors.nombre ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          placeholder="Nombre y apellido"
-          value={nombreApellido}
-          onChange={(e) => {
-            setNombre(e.target.value);
-            if (e.target.value.trim()) clearError("nombre");
-          }}
-        />
-        {errors.nombre && (
-          <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
-        )}
-      </div>
+      <Field label="Nombre y apellido">
+        <>
+          <input
+            className={`input ${
+              errors.nombre
+                ? "border-red-500 ring-2 ring-red-500"
+                : ""
+            }`}
+            value={nombreApellido}
+            onChange={(e) => {
+              setNombre(e.target.value);
+              if (e.target.value.trim())
+                clearError("nombre");
+            }}
+          />
+          {errors.nombre && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.nombre}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Horas */}
-      <div>
-        <input
-          type="number"
-          className={`input ${errors.horas ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          placeholder="Horas semanales"
-          value={horasSemanales}
-          onChange={(e) => {
-            const value = e.target.value === "" ? "" : +e.target.value;
-            setHoras(value);
-            if (value) clearError("horas");
-          }}
-        />
-        {errors.horas && (
-          <p className="text-red-500 text-sm mt-1">{errors.horas}</p>
-        )}
-      </div>
+      <Field label="Horas semanales">
+        <>
+          <input
+            type="number"
+            className={`input ${
+              errors.horas
+                ? "border-red-500 ring-2 ring-red-500"
+                : ""
+            }`}
+            value={horasSemanales}
+            onChange={(e) => {
+              const value =
+                e.target.value === ""
+                  ? ""
+                  : +e.target.value;
+              setHoras(value);
+              if (value) clearError("horas");
+            }}
+          />
+          {errors.horas && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.horas}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Tipo Formación */}
-      <div>
-        <select
-          className={`input ${errors.tipoFormacion ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          value={tipoFormacionId}
-          onChange={(e) => {
-            const value = e.target.value ? +e.target.value : "";
-            setTipoFormacionId(value);
-            if (value) clearError("tipoFormacion");
-          }}
-        >
-          <option value="">Seleccionar tipo de formación</option>
-          {tiposFormacion.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nombre}
+      <Field label="Tipo de formación">
+        <>
+          <select
+            className={`input ${
+              errors.tipoFormacion
+                ? "border-red-500 ring-2 ring-red-500"
+                : ""
+            } ${
+              !tipoFormacionId
+                ? "text-slate-400"
+                : "text-slate-900"
+            }`}
+            value={tipoFormacionId}
+            onChange={(e) => {
+              const value = e.target.value
+                ? +e.target.value
+                : "";
+              setTipoFormacionId(value);
+              if (value)
+                clearError("tipoFormacion");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar tipo de formación
             </option>
-          ))}
-        </select>
-        {errors.tipoFormacion && (
-          <p className="text-red-500 text-sm mt-1">{errors.tipoFormacion}</p>
-        )}
-      </div>
+            {tiposFormacion.map((t) => (
+              <option
+                key={t.id}
+                value={t.id}
+                className="text-slate-900"
+              >
+                {t.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.tipoFormacion && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.tipoFormacion}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Fuente */}
-      <div>
-        <select
-          className={`input ${errors.fuente ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          value={fuenteId}
-          onChange={(e) => {
-            const value = e.target.value ? +e.target.value : "";
-            setFuenteId(value);
-            if (value) clearError("fuente");
-          }}
-        >
-          <option value="">Seleccionar fuente</option>
-          {fuentes.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.nombre}
+      <Field label="Fuente de financiamiento">
+        <>
+          <select
+            className={`input ${
+              errors.fuente
+                ? "border-red-500 ring-2 ring-red-500"
+                : ""
+            } ${
+              !fuenteId
+                ? "text-slate-400"
+                : "text-slate-900"
+            }`}
+            value={fuenteId}
+            onChange={(e) => {
+              const value = e.target.value
+                ? +e.target.value
+                : "";
+              setFuenteId(value);
+              if (value) clearError("fuente");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar fuente
             </option>
-          ))}
-        </select>
-        {errors.fuente && (
-          <p className="text-red-500 text-sm mt-1">{errors.fuente}</p>
-        )}
-      </div>
+            {fuentes.map((f) => (
+              <option
+                key={f.id}
+                value={f.id}
+                className="text-slate-900"
+              >
+                {f.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.fuente && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.fuente}
+            </p>
+          )}
+        </>
+      </Field>
+
 
       {/* Botones */}
       <div className="flex justify-between pt-6">
@@ -185,21 +246,35 @@ export default function FormBecario({
           type="button"
           variant="secondary"
           size="sm"
-          className="px-3 py-1 text-xs"
           onClick={onCancel}
         >
           Volver
         </Button>
 
-        <Button
-          type="submit"
-          size="sm"
-          className="px-3 py-1 text-xs"
-        >
+        <Button type="submit" size="sm">
           {isEdit ? "Actualizar" : "Guardar"}
         </Button>
       </div>
-
     </form>
+  );
+}
+
+/* =========================
+   FIELD COMPONENT
+   ========================= */
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-2">
+        {label}
+      </label>
+      {children}
+    </div>
   );
 }

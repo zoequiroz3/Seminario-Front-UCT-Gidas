@@ -2,11 +2,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
-import { getEquipamientoById, createEquipamiento } from "@/services/equipamientoServices";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import {
+  getEquipamientoById,
+  createEquipamiento,
+} from "@/services/equipamientoServices";
 
-
-// helpers fecha (local, sin timezone shift)
 const parseYMD = (s?: string | null): Date | null => {
   if (!s) return null;
   const [y, m, d] = s.split("-").map(Number);
@@ -19,30 +20,67 @@ export default function EquipamientoForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
+  const isEdit = Boolean(id);
+
   const { data: initial, isLoading } = useQuery({
     queryKey: ["equipamiento", id],
     queryFn: () => (id ? getEquipamientoById(Number(id)) : null),
-    enabled: Boolean(id),
+    enabled: isEdit,
   });
 
-  const [data, setData] = React.useState({
+  const [data, setData] = useState({
     denominacion: "",
     descripcion_breve: "",
     monto_invertido: undefined as number | undefined,
     fecha_incorporacion: "",
   });
 
-  // cargar datos si es edición
-  React.useEffect(() => {
-    if (initial) {
-      setData({
-        denominacion: initial.denominacion ?? "",
-        descripcion_breve: initial.descripcion_breve ?? "",
-        monto_invertido: initial.monto_invertido ?? undefined,
-        fecha_incorporacion: initial.fecha_incorporacion ?? "",
-      });
-    }
-  }, [initial]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+  if (initial) {
+    const formattedDate = initial.fecha_incorporacion
+      ? new Date(initial.fecha_incorporacion)
+          .toISOString()
+          .split("T")[0]
+      : "";
+
+    setData({
+      denominacion: initial.denominacion ?? "",
+      descripcion_breve: initial.descripcion_breve ?? "",
+      monto_invertido: initial.monto_invertido ?? undefined,
+      fecha_incorporacion: formattedDate,
+    });
+  }
+}, [initial]);
+
+
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!data.denominacion.trim())
+      newErrors.denominacion = "La denominación es obligatoria";
+
+    if (!data.descripcion_breve.trim())
+      newErrors.descripcion = "La descripción es obligatoria";
+
+    if (!data.fecha_incorporacion)
+      newErrors.fecha = "La fecha es obligatoria";
+
+    if (!data.monto_invertido || data.monto_invertido <= 0)
+      newErrors.monto = "El monto debe ser mayor a 0";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: createEquipamiento,
@@ -53,8 +91,12 @@ export default function EquipamientoForm() {
 
   if (isLoading) return <p>Cargando…</p>;
 
-const isEdit = Boolean(id);
-
+  const inputClass = (field: string) =>
+    `input text-sm md:text-base ${
+      errors[field]
+        ? "!border-red-500 !ring-2 !ring-red-500"
+        : ""
+    }`;
 
   return (
     <section className="w-full">
@@ -65,98 +107,125 @@ const isEdit = Boolean(id);
       <form
         onSubmit={async (e) => {
           e.preventDefault();
+          if (!validate()) return;
 
-          // 🔴 validaciones mínimas
-          if (!data.denominacion.trim()) {
-            alert("La denominación es obligatoria");
-            return;
-          }
-          if (!data.descripcion_breve.trim()) {
-            alert("La descripción es obligatoria");
-            return;
-          }
-          if (!data.fecha_incorporacion) {
-            alert("La fecha es obligatoria");
-            return;
-          }
-          if (!data.monto_invertido || data.monto_invertido <= 0) {
-            alert("El monto debe ser mayor a 0");
-            return;
-          }
-
-          // 🟢 payload EXACTO para el backend
           await mutateAsync({
             denominacion: data.denominacion,
             descripcion_breve: data.descripcion_breve,
             fecha_incorporacion: data.fecha_incorporacion,
-            monto_invertido: data.monto_invertido,
+            monto_invertido: data.monto_invertido!,
           });
 
           navigate("/equipamiento");
         }}
         className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
       >
+        {/* Denominación */}
         <Field label="Denominación">
-          <input
-            className="input text-sm md:text-base"
-            value={data.denominacion}
-            onChange={(e) =>
-              setData((d) => ({ ...d, denominacion: e.target.value }))
-            }
-          />
+          <>
+            <input
+              className={inputClass("denominacion")}
+              value={data.denominacion}
+              onChange={(e) => {
+                setData((d) => ({
+                  ...d,
+                  denominacion: e.target.value,
+                }));
+                if (e.target.value.trim())
+                  clearError("denominacion");
+              }}
+            />
+            {errors.denominacion && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.denominacion}
+              </p>
+            )}
+          </>
         </Field>
 
+        {/* Descripción */}
         <Field label="Descripción breve">
-          <input
-            className="input text-sm md:text-base"
-            value={data.descripcion_breve}
-            onChange={(e) =>
-              setData((d) => ({ ...d, descripcion_breve: e.target.value }))
-            }
-          />
+          <>
+            <input
+              className={inputClass("descripcion")}
+              value={data.descripcion_breve}
+              onChange={(e) => {
+                setData((d) => ({
+                  ...d,
+                  descripcion_breve: e.target.value,
+                }));
+                if (e.target.value.trim())
+                  clearError("descripcion");
+              }}
+            />
+            {errors.descripcion && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.descripcion}
+              </p>
+            )}
+          </>
         </Field>
 
+        {/* Monto */}
         <Field label="Monto invertido">
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            min={0}
-            className="input text-sm md:text-base"
-            value={data.monto_invertido ?? ""}
-            onChange={(e) =>
-              setData((d) => ({
-                ...d,
-                monto_invertido: e.target.value
+          <>
+            <input
+              type="number"
+              step="0.01"
+              min={0}
+              className={inputClass("monto")}
+              value={data.monto_invertido ?? ""}
+              onChange={(e) => {
+                const value = e.target.value
                   ? Number(e.target.value)
-                  : undefined,
-              }))
-            }
-          />
+                  : undefined;
+
+                setData((d) => ({
+                  ...d,
+                  monto_invertido: value,
+                }));
+
+                if (value && value > 0)
+                  clearError("monto");
+              }}
+            />
+            {errors.monto && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.monto}
+              </p>
+            )}
+          </>
         </Field>
 
+        {/* Fecha */}
         <Field label="Fecha de incorporación">
-          <DatePicker
-            value={parseYMD(data.fecha_incorporacion)}
-            onChange={(dt) =>
-              setData((d) => ({
-                ...d,
-                fecha_incorporacion: dt
-                  ? dt.toISOString().slice(0, 10)
-                  : "",
-              }))
-            }
-            helperText="DD/MM/AAAA"
-            className="input text-sm md:text-base"
-          />
-        </Field>
+  <DatePicker
+  value={
+    data.fecha_incorporacion
+      ? new Date(data.fecha_incorporacion)
+      : null
+  }
+  onChange={(dt) => {
+    setData((d) => ({
+      ...d,
+      fecha_incorporacion: dt
+        ? dt.toISOString().split("T")[0]
+        : "",
+    }));
+  }}
+  helperText={errors.fecha ?? "DD/MM/AAAA"}
+  className={inputClass("fecha")}
+/>
+
+
+</Field>
+
 
         <div className="flex justify-between pt-6">
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            className="px-3 py-1 text-xs"
             onClick={() => navigate(-1)}
           >
             Volver
@@ -165,10 +234,13 @@ const isEdit = Boolean(id);
           <Button
             type="submit"
             size="sm"
-            className="px-3 py-1 text-xs"
             disabled={isPending}
           >
-            {isPending ? "Guardando…" : "Guardar"}
+            {isPending
+              ? "Guardando…"
+              : isEdit
+              ? "Actualizar"
+              : "Guardar"}
           </Button>
         </div>
       </form>
@@ -185,7 +257,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium mb-1.5">  
+      <label className="block text-sm font-medium mb-2">
         {label}
       </label>
       {children}

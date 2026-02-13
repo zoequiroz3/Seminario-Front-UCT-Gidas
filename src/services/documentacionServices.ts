@@ -80,3 +80,16 @@ export async function removeAutorFromDocumento(
     { method: "DELETE" }
   );
 }
+
+
+export const removeAutorFromDocumentacion = async (
+  docId: number,
+  autorId: number
+) => {
+  return http(
+    `/documentacion-bibliografica/${docId}/autores/${autorId}`,
+    {
+      method: "DELETE",
+    }
+  );
+};

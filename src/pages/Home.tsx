@@ -9,83 +9,96 @@ export default function Home() {
   const { uct, isLoading, isError, remove } = useUct();
   const { logout } = useAuth();
   const navigate = useNavigate();
-
   const [showConfirm, setShowConfirm] = useState(false);
 
   if (isLoading) {
     return (
-      <div className="grid place-items-center min-h-[50vh]">
-        Cargando…
+      <div className="grid place-items-center min-h-[60vh] text-slate-500">
+        Cargando configuración…
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="grid place-items-center min-h-[50vh] text-center space-y-3">
-        <p>No se pudo contactar al servidor.</p>
+      <div className="grid place-items-center min-h-[60vh] text-center space-y-4">
+        <p className="text-slate-600">
+          No se pudo contactar al servidor.
+        </p>
         <Button onClick={() => navigate("/uct/nueva")}>
-          Agregar una nueva UCT
+          Crear configuración
         </Button>
       </div>
     );
   }
 
   return (
-    <section className="space-y-6">
-      <h1 className="text-3xl font-semibold">
-        Unidad Científico Tecnológica
-      </h1>
+    <section className="space-y-10">
 
+      {/* HEADER */}
+      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Unidad Científico Tecnológica
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Configuración institucional
+          </p>
+        </div>
+
+        {uct && (
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => navigate("/uct/nueva")}
+            >
+              Editar
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowConfirm(true)}
+            >
+              Eliminar
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* CONTENIDO */}
       {uct ? (
-        <article className="card">
-          <dl className="grid sm:grid-cols-2 gap-6 text-sm">
+        <article className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
+
+          <dl className="grid md:grid-cols-2 gap-y-8 gap-x-12 text-sm">
             <Field label="Facultad Regional" value={uct.facultadRegional} />
             <Field label="Nombre y Sigla" value={uct.nombreSigla} />
             <Field label="Director/a" value={uct.director} />
             <Field label="Vicedirector/a" value={uct.vicedirector} />
-            <Field label="Correo" value={uct.correo} />
+            <Field label="Correo electrónico" value={uct.correo} />
             <Field
               label="Objetivos y desarrollo"
               value={uct.objetivos}
-              className="sm:col-span-2"
+              className="md:col-span-2"
             />
           </dl>
 
-          {/* BOTONES */}
-          <div className="mt-6 flex gap-2">
-            <Link
-              to="/uct/nueva"
-              className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-sm"
-            >
-              Editar
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => setShowConfirm(true)}
-              className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-sm"
-            >
-              Eliminar UCT
-            </button>
-          </div>
         </article>
       ) : (
-        <div className="text-center py-10 border-2 border-dashed rounded-lg space-y-4">
-          <p>No hay una UCT cargada en el sistema.</p>
+        <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-12 text-center space-y-4">
+          <p className="text-slate-600">
+            No hay una UCT configurada en el sistema.
+          </p>
           <Button onClick={() => navigate("/uct/nueva")}>
-            Agregar Nueva UCT
+            Crear configuración inicial
           </Button>
         </div>
       )}
 
-      <div className="pt-4 border-t border-slate-200">
-        <Button variant="secondary" onClick={logout}>
-          Cerrar Sesión
-        </Button>
-      </div>
+      
 
-      {/* POPUP CONFIRMACIÓN */}
+      {/* CONFIRM DIALOG */}
       <ConfirmDialog
         open={showConfirm}
         title="Eliminar Unidad Científico Tecnológica"
@@ -116,8 +129,12 @@ function Field({
 }) {
   return (
     <div className={className}>
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="font-medium">{value || "—"}</dd>
+      <dt className="text-slate-500 text-xs uppercase tracking-wide">
+        {label}
+      </dt>
+      <dd className="mt-1 text-base font-medium text-slate-900 whitespace-pre-wrap">
+        {value || "—"}
+      </dd>
     </div>
   );
 }

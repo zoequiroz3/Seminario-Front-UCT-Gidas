@@ -6,33 +6,33 @@ import {
   type Uct,
 } from "@/services/uctServices";
 
+type UctPayload = Omit<Uct, "id">;
+
 export function useUct() {
   const qc = useQueryClient();
 
-  // ======================
-  // Query: obtener UCT
-  // ======================
   const uctQuery = useQuery<Uct | null>({
     queryKey: ["uct"],
     queryFn: getUct,
-    staleTime: 60_000 // 1 minuto
-    
+    staleTime: 60_000,
   });
 
-  // ======================
-  // Mutation: crear / actualizar
-  // ======================
   const saveMutation = useMutation({
-    mutationFn: (data: Uct) =>
-      upsertUct(data, Boolean(uctQuery.data)),
+    mutationFn: (data: UctPayload) => {
+      if (uctQuery.data?.id) {
+        return upsertUct(
+          { ...data, id: uctQuery.data.id },
+          true
+        );
+      }
+
+      return upsertUct(data as Uct, false);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["uct"] });
     },
   });
 
-  // ======================
-  // Mutation: eliminar
-  // ======================
   const deleteMutation = useMutation({
     mutationFn: deleteUct,
     onSuccess: () => {
@@ -41,16 +41,10 @@ export function useUct() {
   });
 
   return {
-    // ----------------------
-    // estado
-    // ----------------------
     uct: uctQuery.data ?? null,
     isLoading: uctQuery.isLoading,
     isError: uctQuery.isError,
 
-    // ----------------------
-    // acciones
-    // ----------------------
     save: saveMutation.mutateAsync,
     saving: saveMutation.isPending,
 

@@ -18,7 +18,6 @@ export default function FormInvestigador({
   initialData,
   onCancel,
 }: Props) {
-
   const { uct } = useUct();
   const { data: dedicaciones = [] } = useDedicaciones();
   const { data: categorias = [] } = useCategoriasUtn();
@@ -50,11 +49,10 @@ export default function FormInvestigador({
 
     if (initialData.relaciones?.programa_incentivos)
       setProgramaId(initialData.relaciones.programa_incentivos.id);
-
   }, [initialData]);
 
   const clearError = (field: string) => {
-    setErrors(prev => {
+    setErrors((prev) => {
       const copy = { ...prev };
       delete copy[field];
       return copy;
@@ -98,7 +96,11 @@ export default function FormInvestigador({
     };
 
     if (isEdit && initialData?.id) {
-      await actualizarInvestigador(initialData.id, payload, "investigador");
+      await actualizarInvestigador(
+        initialData.id,
+        payload,
+        "investigador"
+      );
     } else {
       await crearInvestigador(payload);
     }
@@ -107,132 +109,230 @@ export default function FormInvestigador({
   };
 
   return (
-    <form onSubmit={submit} className="space-y-6">
-
+    <form
+      onSubmit={submit}
+      className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
+    >
       {/* Nombre */}
-      <div>
-        <input
-          className={`input ${errors.nombre ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          placeholder="Nombre y apellido"
-          value={nombreApellido}
-          onChange={(e) => {
-            setNombre(e.target.value);
-            if (e.target.value.trim()) clearError("nombre");
-          }}
-        />
-        {errors.nombre && (
-          <p className="text-red-500 text-sm mt-1">{errors.nombre}</p>
-        )}
-      </div>
+      <Field label="Nombre y apellido">
+        <>
+          <input
+            className={`input ${
+              errors.nombre
+                ? "border-red-500 ring-2 ring-red-500"
+                : ""
+            }`}
+            value={nombreApellido}
+            onChange={(e) => {
+              setNombre(e.target.value);
+              if (e.target.value.trim())
+                clearError("nombre");
+            }}
+          />
+          {errors.nombre && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.nombre}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Horas */}
-      <div>
-        <input
-          type="number"
-          className={`input ${errors.horas ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          placeholder="Horas semanales"
-          value={horasSemanales}
-          onChange={(e) => {
-            const value = e.target.value === "" ? "" : +e.target.value;
-            setHoras(value);
-            if (value) clearError("horas");
-          }}
-        />
-        {errors.horas && (
-          <p className="text-red-500 text-sm mt-1">{errors.horas}</p>
-        )}
-      </div>
+      <Field label="Horas semanales">
+        <>
+          <input
+            type="number"
+            className={`input ${
+              errors.horas
+                ? "border-red-500 ring-2 ring-red-500"
+                : ""
+            }`}
+            value={horasSemanales}
+            onChange={(e) => {
+              const value =
+                e.target.value === ""
+                  ? ""
+                  : +e.target.value;
+              setHoras(value);
+              if (value) clearError("horas");
+            }}
+          />
+          {errors.horas && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.horas}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Dedicación */}
-      <div>
-        <select
-          className={`input ${errors.dedicacion ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          value={dedicacionId}
-          onChange={(e) => {
-            const value = e.target.value ? +e.target.value : "";
-            setDedicacionId(value);
-            if (value) clearError("dedicacion");
-          }}
-        >
-          <option value="">Seleccionar dedicación</option>
-          {dedicaciones.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.nombre}
+      <Field label="Dedicación">
+        <>
+          <select
+            className={`input ${
+              errors.dedicacion
+                ? "border-red-500 ring-2 ring-red-500"
+                : ""
+            } ${
+              !dedicacionId
+                ? "text-slate-400"
+                : "text-slate-900"
+            }`}
+            value={dedicacionId}
+            onChange={(e) => {
+              const value = e.target.value
+                ? +e.target.value
+                : "";
+              setDedicacionId(value);
+              if (value)
+                clearError("dedicacion");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar dedicación
             </option>
-          ))}
-        </select>
-        {errors.dedicacion && (
-          <p className="text-red-500 text-sm mt-1">{errors.dedicacion}</p>
-        )}
-      </div>
+            {dedicaciones.map((d) => (
+              <option
+                key={d.id}
+                value={d.id}
+                className="text-slate-900"
+              >
+                {d.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.dedicacion && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.dedicacion}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Categoría */}
-      <div>
-        <select
-          className={`input ${errors.categoria ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          value={categoriaId}
-          onChange={(e) => {
-            const value = e.target.value ? +e.target.value : "";
-            setCategoriaId(value);
-            if (value) clearError("categoria");
-          }}
-        >
-          <option value="">Seleccionar categoría UTN</option>
-          {categorias.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nombre}
+      <Field label="Categoría UTN">
+        <>
+          <select
+            className={`input ${
+              errors.categoria
+                ? "border-red-500 ring-2 ring-red-500"
+                : ""
+            } ${
+              !categoriaId
+                ? "text-slate-400"
+                : "text-slate-900"
+            }`}
+            value={categoriaId}
+            onChange={(e) => {
+              const value = e.target.value
+                ? +e.target.value
+                : "";
+              setCategoriaId(value);
+              if (value)
+                clearError("categoria");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar categoría
             </option>
-          ))}
-        </select>
-        {errors.categoria && (
-          <p className="text-red-500 text-sm mt-1">{errors.categoria}</p>
-        )}
-      </div>
+            {categorias.map((c) => (
+              <option
+                key={c.id}
+                value={c.id}
+                className="text-slate-900"
+              >
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.categoria && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.categoria}
+            </p>
+          )}
+        </>
+      </Field>
 
       {/* Programa */}
-      <div>
-        <select
-          className={`input ${errors.programa ? "border-red-500 ring-2 ring-red-500" : ""}`}
-          value={programaId}
-          onChange={(e) => {
-            const value = e.target.value ? +e.target.value : "";
-            setProgramaId(value);
-            if (value) clearError("programa");
-          }}
-        >
-          <option value="">Seleccionar programa</option>
-          {programas.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre}
+      <Field label="Programa de incentivos">
+        <>
+          <select
+            className={`input ${
+              errors.programa
+                ? "border-red-500 ring-2 ring-red-500"
+                : ""
+            } ${
+              !programaId
+                ? "text-slate-400"
+                : "text-slate-900"
+            }`}
+            value={programaId}
+            onChange={(e) => {
+              const value = e.target.value
+                ? +e.target.value
+                : "";
+              setProgramaId(value);
+              if (value)
+                clearError("programa");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar programa
             </option>
-          ))}
-        </select>
-        {errors.programa && (
-          <p className="text-red-500 text-sm mt-1">{errors.programa}</p>
-        )}
-      </div>
+            {programas.map((p) => (
+              <option
+                key={p.id}
+                value={p.id}
+                className="text-slate-900"
+              >
+                {p.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.programa && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.programa}
+            </p>
+          )}
+        </>
+      </Field>
 
-      {/* Botones estilo detalle */}
+
+      {/* Botones */}
       <div className="flex justify-between pt-6">
         <Button
           type="button"
           variant="secondary"
           size="sm"
-          className="px-3 py-1 text-xs"
           onClick={onCancel}
         >
           Volver
         </Button>
 
-        <Button
-          type="submit"
-          size="sm"
-          className="px-3 py-1 text-xs"
-        >
+        <Button type="submit" size="sm">
           {isEdit ? "Actualizar" : "Guardar"}
         </Button>
       </div>
-
     </form>
+  );
+}
+
+/* =========================
+   FIELD COMPONENT
+   ========================= */
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-2">
+        {label}
+      </label>
+      {children}
+    </div>
   );
 }
