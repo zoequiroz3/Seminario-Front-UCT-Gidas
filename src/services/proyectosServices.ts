@@ -4,7 +4,7 @@ import { Option } from "./optionsService";
 export type Proyecto = {
   id?: string;
   tipoProyectoId: number; 
-  codigoProyecto: number; // Cambiado a number
+  codigoProyecto: number;
   fechaInicio: string; // YYYY-MM-DD
   fechaFinalizacion?: string;
   nombreProyecto: string;
@@ -23,7 +23,7 @@ export async function getProyectos(): Promise<Proyecto[]> {
   
   return data.map((p: any) => ({
     id: String(p.id),
-    codigoProyecto: p.codigo_proyecto,
+    codigoProyecto: p.codigo_proyecto, // Re-added mapping
     nombreProyecto: p.nombre_proyecto,
     descripcionProyecto: p.descripcion_proyecto, // Mapear descripcion_proyecto
     dificultadesProyecto: p.dificultades_proyecto, // Mapear dificultades_proyecto
@@ -40,7 +40,7 @@ export async function upsertProyectos(payload: Proyecto) {
   if (!BASE) throw new Error("Sin Backend");
 
   const body = {
-    codigo_proyecto: payload.codigoProyecto,
+    codigo_proyecto: payload.codigoProyecto, // Re-added to payload
     nombre_proyecto: payload.nombreProyecto,
     descripcion_proyecto: payload.descripcionProyecto,
     fecha_inicio: payload.fechaInicio,

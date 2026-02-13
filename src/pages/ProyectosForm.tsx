@@ -31,6 +31,7 @@ const CREATE_NEW_ID = -1;
 // El tipo para el estado del formulario.
 type ProyectoDraft = Partial<Proyecto> & {
   tipoProyectoId?: number;
+  codigoProyecto?: number; 
   fuenteFinanciamientoId?: number; // Ensure this is explicitly optional
   grupoUtnId?: number; // Ensure this is explicitly optional
 };
@@ -75,7 +76,7 @@ export default function ProyectosForm() {
   // --- Estado ---
   const [data, setData] = useState<ProyectoDraft>({
     id: "",
-    codigoProyecto: 0, // Initialize as number
+    codigoProyecto: 0, // Re-added
     fechaInicio: "",
     fechaFinalizacion: "",
     nombreProyecto: "",
@@ -161,21 +162,21 @@ export default function ProyectosForm() {
       throw new Error("El nombre del proyecto es obligatorio.");
     if (!data.descripcionProyecto?.trim())
       throw new Error("La descripción del proyecto es obligatoria."); // New validation
-    if (!data.tipoProyectoId)
-      throw new Error("El tipo de proyecto es obligatorio.");
-    if (!data.codigoProyecto || isNaN(data.codigoProyecto))
-      throw new Error("El código del proyecto es obligatorio y debe ser un número."); // Validation for code
-    if (!data.fechaInicio)
-      throw new Error("La fecha de inicio es obligatoria.");
-
-    return {
-      id: data.id || undefined,
-      nombreProyecto: data.nombreProyecto,
-      descripcionProyecto: data.descripcionProyecto,
-      tipoProyectoId: data.tipoProyectoId,
-      codigoProyecto: data.codigoProyecto,
-      fechaInicio: data.fechaInicio,
-      fechaFinalizacion: data.fechaFinalizacion || undefined,
+        if (!data.tipoProyectoId)
+          throw new Error("El tipo de proyecto es obligatorio.");
+        if (!data.codigoProyecto || isNaN(data.codigoProyecto))
+          throw new Error("El código del proyecto es obligatorio y debe ser un número."); // Validation for code
+        if (!data.fechaInicio)
+          throw new Error("La fecha de inicio es obligatoria.");
+    
+        return {
+          id: data.id || undefined,
+          nombreProyecto: data.nombreProyecto,
+          descripcionProyecto: data.descripcionProyecto,
+          tipoProyectoId: data.tipoProyectoId,
+          codigoProyecto: data.codigoProyecto, // Re-added to payload
+          fechaInicio: data.fechaInicio,
+          fechaFinalizacion: data.fechaFinalizacion || undefined,
       dificultadesProyecto: data.dificultadesProyecto || undefined,
       grupoUtnId: data.grupoUtnId || undefined,
       fuenteFinanciamientoId: data.fuenteFinanciamientoId || undefined,
@@ -241,58 +242,133 @@ export default function ProyectosForm() {
         </Field>
 
 
-        {isCreating && (
-          <div className="p-4 bg-slate-50 rounded-lg space-y-3">
-            <label className="font-medium text-sm">
-              Nombre del nuevo tipo
-            </label>
-            <input
-              className="input"
-              value={newTypeName}
-              onChange={(e) => setNewTypeName(e.target.value)}
-              placeholder="Escriba el nombre y presione Guardar"
-              autoFocus
-            />
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                onClick={handleSaveNewType}
-                disabled={isCreatingType}
-              >
-                {isCreatingType ? "Guardando..." : "Guardar Tipo"}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setIsCreating(false)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        )}
+                {isCreating && (
 
-        <Field label="Código del proyecto">
-          <input
-            className="input"
-            type="number" // Set type to number
-            value={data.codigoProyecto ?? ""}
-            onChange={change("codigoProyecto")}
-            placeholder="Ej. 12345"
-            required
-          />
-        </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Fecha de inicio">
-            <DatePicker
-              value={parseYMD(data.fechaInicio)}
-              onChange={setFecha("fechaInicio")}
-              label=""
-              className="input"
-              required
-            />
-          </Field>
+                  <div className="p-4 bg-slate-50 rounded-lg space-y-3">
+
+
+                    <label className="font-medium text-sm">
+
+
+                      Nombre del nuevo tipo
+
+
+                    </label>
+
+
+                    <input
+
+
+                      className="input"
+
+
+                      value={newTypeName}
+
+
+                      onChange={(e) => setNewTypeName(e.target.value)}
+
+
+                      placeholder="Escriba el nombre y presione Guardar"
+
+
+                      autoFocus
+
+
+                    />
+
+
+                    <div className="flex items-center gap-2">
+
+
+                      <Button
+
+
+                        type="button"
+
+
+                        onClick={handleSaveNewType}
+
+
+                        disabled={isCreatingType}
+
+
+                      >
+
+
+                        {isCreatingType ? "Guardando..." : "Guardar Tipo"}
+
+
+                      </Button>
+
+
+                      <Button
+
+
+                        type="button"
+
+
+                        variant="secondary"
+
+
+                        onClick={() => setIsCreating(false)}
+
+
+                      >
+
+
+                        Cancelar
+
+
+                      </Button>
+
+
+                    </div>
+
+
+                  </div>
+
+
+                )}
+
+
+        
+
+
+                
+
+
+        
+
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+
+                  <Field label="Fecha de inicio">
+
+
+                    <DatePicker
+
+
+                      value={parseYMD(data.fechaInicio)}
+
+
+                      onChange={setFecha("fechaInicio")}
+
+
+                      label=""
+
+
+                      className="input"
+
+
+                      required
+
+
+                    />
+
+
+                  </Field>
 
           <Field label="Fecha de finalización">
             <DatePicker
