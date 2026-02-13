@@ -120,17 +120,9 @@ export default function ProyectosForm() {
   // Handlers
   // --------------------
 
-  const change =
-    (k: keyof ProyectoDraft) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setData((d) => ({ ...d, [k]: e.target.value }));
-    };
 
-  const setFecha =
-    (k: "fechaInicio" | "fechaFinalizacion") =>
-    (dt: Date | null) => {
-      setData((d) => ({ ...d, [k]: toYMD(dt) }));
-    };
+
+
 
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = Number(e.target.value);
@@ -293,7 +285,6 @@ export default function ProyectosForm() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Fecha de inicio">
-          <Field label="Fecha de inicio">
             <DatePicker
               value={parseYMD(data.fechaInicio)}
               onChange={setFecha("fechaInicio")}
@@ -302,9 +293,7 @@ export default function ProyectosForm() {
               required
             />
           </Field>
-          </Field>
 
-          <Field label="Fecha de finalización">
           <Field label="Fecha de finalización">
             <DatePicker
               value={parseYMD(data.fechaFinalizacion)}
@@ -313,7 +302,6 @@ export default function ProyectosForm() {
               minDate={parseYMD(data.fechaInicio) || undefined}
               className="input"
             />
-          </Field>
           </Field>
         </div>
 
@@ -377,9 +365,6 @@ function Field({
 }
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
-  options: Option[];
-  placeholder?: string;
-};
   options: Option[];
   placeholder?: string;
 };
