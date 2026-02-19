@@ -40,6 +40,9 @@ import DocumentacionDetalle from "./pages/DocumentacionDetalle";
 import DocumentacionForm from "./pages/DocumentacionForm";
 import DocumentacionLanding from "./pages/DocumentacionHome";
 import PersonalForm from "@/pages/PersonalForm";
+import TransferenciasHome from "./pages/TransferenciasHome";
+import TransferenciasForm from "./pages/TransferenciasForm";
+import TransferenciasDetalle from "./pages/TransferenciasDetalle";
 
 // Definición de rutas
 const router = createBrowserRouter([
@@ -127,6 +130,12 @@ const router = createBrowserRouter([
       { path: "documentacion/nuevo", element: <DocumentacionForm /> },
       { path: "documentacion/:id", element: <DocumentacionDetalle /> },
       { path: "documentacion/:id/editar", element: <DocumentacionForm /> },
+
+      // Transferencias (Vinculación Socio-Productiva)
+      { path: "transferencias", element: <TransferenciasHome /> },
+      { path: "transferencias/nuevo", element: <TransferenciasForm /> },
+      { path: "transferencias/:id", element: <TransferenciasDetalle /> },
+      { path: "transferencias/:id/editar", element: <TransferenciasForm /> },
 
       { path: "*", element: <NotFound /> },
     ],

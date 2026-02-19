@@ -43,6 +43,12 @@ const items: Item[] = [
       { label: "Ver todo en documentación y biblioteca", to: "/documentacion" }
     ],
   },
+  {
+    label: "Vinculación Socio-Productiva",
+    children: [
+      { label: "Transferencias", to: "/transferencias" },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -109,8 +115,7 @@ export default function Sidebar() {
                   to={node.to}
                   onClick={close}
                   className={({ isActive }) =>
-                    `flex-1 px-3 py-3 hover:bg-black/5 ${
-                      level === 0 ? "text-slate-900" : "text-slate-700"
+                    `flex-1 px-3 py-3 hover:bg-black/5 ${level === 0 ? "text-slate-900" : "text-slate-700"
                     } ${isActive ? "font-semibold" : ""}`
                   }
                   end
@@ -119,9 +124,8 @@ export default function Sidebar() {
                 </NavLink>
               ) : (
                 <span
-                  className={`flex-1 px-3 py-3 ${
-                    level === 0 ? "text-slate-900" : "text-slate-700"
-                  }`}
+                  className={`flex-1 px-3 py-3 ${level === 0 ? "text-slate-900" : "text-slate-700"
+                    }`}
                 >
                   {node.label}
                 </span>
@@ -139,18 +143,16 @@ export default function Sidebar() {
                   className="px-3 py-3 hover:bg-black/5 text-slate-900"
                 >
                   <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-300 ${
-                      isNodeOpen ? "rotate-180" : ""
-                    }`}
+                    className={`w-4 h-4 transition-transform duration-300 ${isNodeOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
               )}
             </div>
 
             <div
-              className={`transition-all duration-300 overflow-hidden ${
-                isNodeOpen ? "max-h-[500px] opacity-100 py-2" : "max-h-0 opacity-0"
-              }`}
+              className={`transition-all duration-300 overflow-hidden ${isNodeOpen ? "max-h-[500px] opacity-100 py-2" : "max-h-0 opacity-0"
+                }`}
             >
               {hasChildren && (
                 <MenuList nodes={node.children!} parentKey={key} level={level + 1} />
