@@ -3,15 +3,29 @@ import { Option } from "./optionsService";
 
 export type Proyecto = {
   id?: string;
-  tipoProyectoId: number; 
-  codigoProyecto: string;
-  fechaInicio: string; // YYYY-MM-DD
-  fechaFinalizacion?: string;
-  nombreProyecto: string;
-  fuenteFinanciamiento?: string;
-  // Campos para mostrar en la tabla, no para enviar
+  tipoProyectoId: number;
   tipoProyectoNombre?: string;
+
+  codigoProyecto: string;
+  nombreProyecto: string;
+
+  fechaInicio: string;
+  fechaFinalizacion?: string;
+
+  fuenteFinanciamientoId?: number;
+  fuenteFinanciamientoNombre?: string;
+  descripcionProyecto?: string;
+   investigadores?: {
+    id: number;
+    nombre_apellido: string;
+  }[];
+
+  becarios?: {
+    id: number;
+    nombre_apellido: string;
+  }[];
 };
+
 
 const BASE = import.meta.env.VITE_API_URL;
 
@@ -20,29 +34,41 @@ export async function getProyectos(): Promise<Proyecto[]> {
   const data = await http<any[]>("/proyectos/");
   
   return data.map((p: any) => ({
-    id: String(p.id),
-    codigoProyecto: String(p.codigo_proyecto),
-    nombreProyecto: p.nombre_proyecto,
-    fechaInicio: p.fecha_inicio,
-    fechaFinalizacion: p.fecha_fin,
-    tipoProyectoId: p.tipo_proyecto?.id,
-    tipoProyectoNombre: p.tipo_proyecto?.nombre || "N/A",
-    fuenteFinanciamiento: p.fuente_financiamiento?.nombre || "N/A"
-  }));
+  id: String(p.id),
+  codigoProyecto: String(p.codigo_proyecto),
+  nombreProyecto: p.nombre_proyecto,
+  fechaInicio: p.fecha_inicio,
+  fechaFinalizacion: p.fecha_fin,
+
+  tipoProyectoId: p.tipo_proyecto?.id,
+  tipoProyectoNombre: p.tipo_proyecto?.nombre || "N/A",
+
+  fuenteFinanciamientoId: p.fuente_financiamiento?.id,
+  fuenteFinanciamientoNombre: p.fuente_financiamiento?.nombre || "N/A",
+  descripcionProyecto: p.descripcion_proyecto || "",
+  investigadores: p.investigadores || [],
+  becarios: p.becarios || [],
+  
+}));
+
 }
 
-export async function upsertProyectos(payload: Proyecto) {
+export async function upsertProyectos(payload: any)
+ {
   if (!BASE) throw new Error("Sin Backend");
 
   const body = {
     codigo_proyecto: parseInt(payload.codigoProyecto, 10) || null,
     nombre_proyecto: payload.nombreProyecto,
-    descripcion_proyecto: payload.nombreProyecto, // Usamos nombre como descripción por ahora
+    descripcion_proyecto: payload.descripcionProyecto, // Usamos nombre como descripción por ahora
     fecha_inicio: payload.fechaInicio,
     fecha_fin: payload.fechaFinalizacion || null,
     tipo_proyecto_id: payload.tipoProyectoId,
     // Asumiendo que fuente de financiamiento también es un ID si existe
-    // fuente_financiamiento_id: payload.fuenteFinanciamientoId,
+    fuente_financiamiento_id: payload.fuenteFinanciamientoId,
+    investigadores_ids: payload.investigadoresIds || [], // 🔵 NUEVO
+    becarios_ids: payload.becariosIds || [], // 🔵 NUEVO
+  
   };
 
   const url = payload.id ? `/proyectos/${payload.id}` : "/proyectos";
@@ -54,3 +80,69 @@ export async function upsertProyectos(payload: Proyecto) {
 export async function deleteProyectos(id: string) {
   return http<void>(`/proyectos/${id}`, { method: "DELETE" });
 }
+
+export async function getProyectoById(id: number) {
+  const data = await http<any>(`/proyectos/${id}`);
+
+  return {
+    id: String(data.id),
+    codigoProyecto: String(data.codigo_proyecto),
+    nombreProyecto: data.nombre_proyecto,
+    descripcionProyecto: data.descripcion_proyecto,
+    fechaInicio: data.fecha_inicio,
+    fechaFinalizacion: data.fecha_fin,
+
+    tipoProyectoId: data.tipo_proyecto?.id,
+    tipoProyectoNombre: data.tipo_proyecto?.nombre,
+
+    grupoUtnId: data.grupo_utn?.id,
+    grupoUtnNombre: data.grupo_utn?.nombre,
+
+    fuenteFinanciamientoId: data.fuente_financiamiento?.id,
+    fuenteFinanciamientoNombre:
+      data.fuente_financiamiento?.nombre,
+
+    planificacionId: data.planificacion?.id,
+    planificacionDescripcion:
+      data.planificacion?.descripcion,
+    investigadores: data.investigadores || [],
+    becarios: data.becarios || [],
+  };
+}
+
+export async function cerrarProyecto(
+  id: string,
+  fechaFin: string
+) {
+  return http(`/proyectos/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      fecha_fin: fechaFin,
+    }),
+  });
+}
+
+export function vincularInvestigadores(
+  proyectoId: number,
+  investigadoresIds: number[]
+) {
+  return http(`/proyectos/${proyectoId}/investigadores`, {
+    method: "POST",
+    body: JSON.stringify({
+      investigadores_ids: investigadoresIds,
+    }),
+  });
+}
+
+export function vincularBecarios(
+  proyectoId: number,
+  becariosIds: number[]
+) {
+  return http(`/proyectos/${proyectoId}/becarios`, {
+    method: "POST",
+    body: JSON.stringify({
+      becarios_ids: becariosIds,
+    }),
+  });
+}
+

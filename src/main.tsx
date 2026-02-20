@@ -40,6 +40,10 @@ import DocumentacionDetalle from "./pages/DocumentacionDetalle";
 import DocumentacionForm from "./pages/DocumentacionForm";
 import DocumentacionLanding from "./pages/DocumentacionHome";
 import PersonalForm from "@/pages/PersonalForm";
+import ProyectosDetalle from "./pages/ProyectosDetalle";
+import RegistrosPropiedadHome from "./pages/RegistrosPropiedadHome";
+import RegistrosPropiedadForm from "./pages/RegistrosPropiedadForm";
+import RegistrosPropiedadDetalle from "./pages/RegistrosPropiedadDetalle";
 
 // Definición de rutas
 const router = createBrowserRouter([
@@ -96,7 +100,8 @@ const router = createBrowserRouter([
       // Proyectos
       { path: "proyectos", element: <ProyectosLanding /> },
       { path: "proyectos/nuevo", element: <ProyectosForm /> },
-
+      { path: "proyectos/:id", element: <ProyectosDetalle /> },
+      { path: "proyectos/editar/:id", element: <ProyectosForm /> },
       // Docencia
       { path: "docenciaInvestigador", element: <DocenciaLanding /> },
       { path: "docenciaInvestigador/nuevo", element: <DocenciaForm /> },
@@ -106,6 +111,13 @@ const router = createBrowserRouter([
       // Trabajos en reuniones científicas
       { path: "trabajosCientInv", element: <TrabajosReunionHome /> },
       { path: "trabajosCientInv/nuevo", element: <TrabajosReunionForm /> },
+      
+      //Actividades I+D+I
+      { path: "registros-propiedad", element: <RegistrosPropiedadHome /> },
+      { path: "registros-propiedad/nuevo", element: <RegistrosPropiedadForm /> },
+      { path: "registros-propiedad/:id", element: <RegistrosPropiedadDetalle /> },
+      { path: "registros-propiedad/:id/editar", element: <RegistrosPropiedadForm /> },
+
 
       // Erogaciones / Compras
       { path: "erogaciones", element: <ErogacionesLanding /> },

@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Calendar from "@/components/Calendar";
 import { useInvestigadores } from "@/hooks/useInvestigadores";
+import { useGradosAcademicos } from "@/hooks/useGradoAcademico";
+import { useRolesActividadDocencia } from "@/hooks/useActividadDocenciaRol";
 import {
   crearActividadDocencia,
   getActividadDocenciaById,
@@ -14,51 +16,36 @@ export default function FormDocenciaInvestigador() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
-
   const isEdit = Boolean(id);
 
   const { data: investigadores = [] } = useInvestigadores();
+  const { data: gradosAcademicos = [] } = useGradosAcademicos();
+  const { data: rolesActividad = [] } = useRolesActividadDocencia();
 
-  /* =========================
-     CARGA DATOS SI ES EDICIÓN
-     ========================= */
   const { data: initialData, isLoading } = useQuery({
-    queryKey: ["actividad-docencia", id],
+    queryKey: ["docencia", id],
     queryFn: () =>
       id ? getActividadDocenciaById(Number(id)) : null,
     enabled: isEdit,
   });
 
-  /* =========================
-     STATE
-     ========================= */
-  const [investigadorId, setInvestigadorId] =
-    useState<number | null>(null);
+  const [investigadorId, setInvestigadorId] = useState<number | null>(null);
   const [curso, setCurso] = useState("");
   const [institucion, setInstitucion] = useState("");
-  const [fechaInicio, setFechaInicio] =
-    useState<Date | null>(null);
-  const [fechaFin, setFechaFin] =
-    useState<Date | null>(null);
-  const [gradoAcademico, setGradoAcademico] =
-    useState("");
-  const [rolActividad, setRolActividad] =
-    useState("");
+  const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
+  const [fechaFin, setFechaFin] = useState<Date | null>(null);
+  const [gradoAcademicoId, setGradoAcademicoId] = useState<number | null>(null);
+  const [rolActividadId, setRolActividadId] = useState<number | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [errors, setErrors] =
-    useState<Record<string, string>>({});
-
-  /* =========================
-     PRECARGAR DATOS
-     ========================= */
   useEffect(() => {
     if (!initialData) return;
 
     setInvestigadorId(initialData.investigador_id);
     setCurso(initialData.curso ?? "");
     setInstitucion(initialData.institucion ?? "");
-    setGradoAcademico(initialData.grado_academico ?? "");
-    setRolActividad(initialData.rol_actividad ?? "");
+    setGradoAcademicoId(initialData.grado_academico_id ?? null);
+    setRolActividadId(initialData.rol_actividad_id ?? null);
 
     if (initialData.fecha_inicio)
       setFechaInicio(new Date(initialData.fecha_inicio));
@@ -67,19 +54,21 @@ export default function FormDocenciaInvestigador() {
       setFechaFin(new Date(initialData.fecha_fin));
   }, [initialData]);
 
-  /* =========================
-     MUTATION
-     ========================= */
   const mutation = useMutation({
     mutationFn: (payload: any) =>
       isEdit
         ? actualizarActividadDocencia(Number(id), payload)
         : crearActividadDocencia(payload),
     onSuccess: () => {
-      qc.invalidateQueries({
-        queryKey: ["actividades-docencia"],
+      qc.invalidateQueries({ queryKey: ["docencia", "all"] });
+
+      navigate("/docenciaInvestigador", {
+        state: {
+          successMessage: isEdit
+            ? "Actualizado con éxito!"
+            : "Creado con éxito!",
+        },
       });
-      navigate(-1);
     },
   });
 
@@ -95,31 +84,19 @@ export default function FormDocenciaInvestigador() {
     const newErrors: Record<string, string> = {};
 
     if (!investigadorId)
-      newErrors.investigador =
-        "Debe seleccionar investigador";
-
+      newErrors.investigador = "Debe seleccionar investigador";
     if (!curso.trim())
       newErrors.curso = "Debe ingresar curso";
-
     if (!institucion.trim())
-      newErrors.institucion =
-        "Debe ingresar institución";
-
+      newErrors.institucion = "Debe ingresar institución";
     if (!fechaInicio)
-      newErrors.fechaInicio =
-        "Debe seleccionar fecha de inicio";
-
+      newErrors.fechaInicio = "Debe seleccionar fecha de inicio";
     if (!fechaFin)
-      newErrors.fechaFin =
-        "Debe seleccionar fecha de fin";
-
-    if (!gradoAcademico.trim())
-      newErrors.gradoAcademico =
-        "Debe ingresar grado académico";
-
-    if (!rolActividad.trim())
-      newErrors.rolActividad =
-        "Debe ingresar rol";
+      newErrors.fechaFin = "Debe seleccionar fecha de fin";
+    if (!gradoAcademicoId)
+      newErrors.gradoAcademico = "Debe seleccionar grado académico";
+    if (!rolActividadId)
+      newErrors.rolActividad = "Debe seleccionar rol";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -133,23 +110,18 @@ export default function FormDocenciaInvestigador() {
       investigador_id: investigadorId!,
       curso,
       institucion,
-      fecha_inicio:
-        fechaInicio!.toISOString().split("T")[0],
-      fecha_fin:
-        fechaFin!.toISOString().split("T")[0],
-      grado_academico: gradoAcademico,
-      rol_actividad: rolActividad,
+      fecha_inicio: fechaInicio!.toISOString().split("T")[0],
+      fecha_fin: fechaFin!.toISOString().split("T")[0],
+      grado_academico_id: gradoAcademicoId,
+      rol_actividad_id: rolActividadId,
     });
   };
 
-  if (isEdit && isLoading)
-    return <p>Cargando actividad…</p>;
+  if (isEdit && isLoading) return <p>Cargando actividad…</p>;
 
   const inputClass = (field: string) =>
     `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
+      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
     }`;
 
   return (
@@ -161,193 +133,206 @@ export default function FormDocenciaInvestigador() {
       </h2>
 
       <form
-  onSubmit={submit}
-  className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
->
-
-  {/* Investigador */}
-  <Field label="Investigador">
-    <>
-      <select
-        className={inputClass("investigador")}
-        value={investigadorId ?? ""}
-        onChange={(e) => {
-          const value = e.target.value
-            ? Number(e.target.value)
-            : null;
-          setInvestigadorId(value);
-          if (value) clearError("investigador");
-        }}
+        onSubmit={submit}
+        className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
-        <option value="" disabled>
-          Seleccionar investigador
-        </option>
-        {investigadores.map((inv) => (
-          <option key={inv.id} value={inv.id}>
-            {inv.nombre_apellido}
-          </option>
-        ))}
-      </select>
 
-      {errors.investigador && (
-        <p className="text-red-500 text-sm mt-1">
-          {errors.investigador}
-        </p>
-      )}
-    </>
-  </Field>
+        {/* Investigador */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Investigador
+          </label>
+          <select
+            className={inputClass("investigador")}
+            value={investigadorId ?? ""}
+            onChange={(e) => {
+              const value = e.target.value
+                ? Number(e.target.value)
+                : null;
+              setInvestigadorId(value);
+              if (value) clearError("investigador");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar investigador
+            </option>
+            {investigadores.map((inv) => (
+              <option key={inv.id} value={inv.id}>
+                {inv.nombre_apellido}
+              </option>
+            ))}
+          </select>
+          {errors.investigador && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.investigador}
+            </p>
+          )}
+        </div>
 
-  {/* Curso */}
-  <Field label="Curso">
-    <>
-      <input
-        className={inputClass("curso")}
-        value={curso}
-        onChange={(e) => {
-          setCurso(e.target.value);
-          if (e.target.value.trim())
-            clearError("curso");
-        }}
-      />
-      {errors.curso && (
-        <p className="text-red-500 text-sm mt-1">
-          {errors.curso}
-        </p>
-      )}
-    </>
-  </Field>
+        {/* Curso */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Curso
+          </label>
+          <input
+            className={inputClass("curso")}
+            value={curso}
+            onChange={(e) => {
+              setCurso(e.target.value);
+              if (e.target.value.trim()) clearError("curso");
+            }}
+          />
+          {errors.curso && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.curso}
+            </p>
+          )}
+        </div>
 
-  {/* Institución */}
-  <Field label="Institución">
-    <>
-      <input
-        className={inputClass("institucion")}
-        value={institucion}
-        onChange={(e) => {
-          setInstitucion(e.target.value);
-          if (e.target.value.trim())
-            clearError("institucion");
-        }}
-      />
-      {errors.institucion && (
-        <p className="text-red-500 text-sm mt-1">
-          {errors.institucion}
-        </p>
-      )}
-    </>
-  </Field>
+        {/* Institución */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Institución
+          </label>
+          <input
+            className={inputClass("institucion")}
+            value={institucion}
+            onChange={(e) => {
+              setInstitucion(e.target.value);
+              if (e.target.value.trim())
+                clearError("institucion");
+            }}
+          />
+          {errors.institucion && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.institucion}
+            </p>
+          )}
+        </div>
 
-  {/* Fechas */}
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <Field label="Fecha inicio">
-      <Calendar
-        value={fechaInicio}
-        onChange={(date) => {
-          setFechaInicio(date);
-          if (date)
-            clearError("fechaInicio");
-        }}
-        className={inputClass("fechaInicio")}
-        helperText={errors.fechaInicio ?? "DD/MM/AAAA"}
-      />
-    </Field>
+        {/* Fechas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Fecha inicio
+            </label>
+            <Calendar
+              value={fechaInicio}
+              onChange={(date) => {
+                setFechaInicio(date);
+                if (date) clearError("fechaInicio");
+              }}
+              className={inputClass("fechaInicio")}
+              helperText={errors.fechaInicio ?? "DD/MM/AAAA"}
+            />
+            {errors.fechaInicio && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.fechaInicio}
+              </p>
+            )}
+          </div>
 
-    <Field label="Fecha fin">
-      <Calendar
-        value={fechaFin}
-        onChange={(date) => {
-          setFechaFin(date);
-          if (date)
-            clearError("fechaFin");
-        }}
-        className={inputClass("fechaFin")}
-        helperText={errors.fechaFin ?? "DD/MM/AAAA"}
-      />
-    </Field>
-  </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Fecha fin
+            </label>
+            <Calendar
+              value={fechaFin}
+              onChange={(date) => {
+                setFechaFin(date);
+                if (date) clearError("fechaFin");
+              }}
+              className={inputClass("fechaFin")}
+              helperText={errors.fechaFin ?? "DD/MM/AAAA"}
+            />
+            {errors.fechaFin && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.fechaFin}
+              </p>
+            )}
+          </div>
+        </div>
 
-  {/* Grado académico */}
-  <Field label="Grado académico">
-    <>
-      <input
-        className={inputClass("gradoAcademico")}
-        value={gradoAcademico}
-        onChange={(e) => {
-          setGradoAcademico(e.target.value);
-          if (e.target.value.trim())
-            clearError("gradoAcademico");
-        }}
-      />
-      {errors.gradoAcademico && (
-        <p className="text-red-500 text-sm mt-1">
-          {errors.gradoAcademico}
-        </p>
-      )}
-    </>
-  </Field>
+        {/* Grado académico */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Grado académico
+          </label>
+          <select
+            className={inputClass("gradoAcademico")}
+            value={gradoAcademicoId ?? ""}
+            onChange={(e) => {
+              const value = e.target.value
+                ? Number(e.target.value)
+                : null;
+              setGradoAcademicoId(value);
+              if (value) clearError("gradoAcademico");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar grado académico
+            </option>
+            {gradosAcademicos.map((grado) => (
+              <option key={grado.id} value={grado.id}>
+                {grado.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.gradoAcademico && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.gradoAcademico}
+            </p>
+          )}
+        </div>
 
-  {/* Rol */}
-  <Field label="Rol en la actividad">
-    <>
-      <input
-        className={inputClass("rolActividad")}
-        value={rolActividad}
-        onChange={(e) => {
-          setRolActividad(e.target.value);
-          if (e.target.value.trim())
-            clearError("rolActividad");
-        }}
-      />
-      {errors.rolActividad && (
-        <p className="text-red-500 text-sm mt-1">
-          {errors.rolActividad}
-        </p>
-      )}
-    </>
-  </Field>
+        {/* Rol actividad */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Rol en la actividad
+          </label>
+          <select
+            className={inputClass("rolActividad")}
+            value={rolActividadId ?? ""}
+            onChange={(e) => {
+              const value = e.target.value
+                ? Number(e.target.value)
+                : null;
+              setRolActividadId(value);
+              if (value) clearError("rolActividad");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar rol
+            </option>
+            {rolesActividad.map((rol) => (
+              <option key={rol.id} value={rol.id}>
+                {rol.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.rolActividad && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.rolActividad}
+            </p>
+          )}
+        </div>
 
-  {/* Botones */}
-  <div className="flex justify-between pt-6">
-    <Button
-      type="button"
-      variant="secondary"
-      size="sm"
-      onClick={() => navigate(-1)}
-    >
-      Volver
-    </Button>
+        {/* Botones */}
+        <div className="flex justify-between pt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate(-1)}
+          >
+            Volver
+          </Button>
 
-    <Button
-      type="submit"
-      size="sm"
-      disabled={mutation.isPending}
-    >
-      {mutation.isPending
-        ? "Guardando…"
-        : isEdit
-        ? "Actualizar"
-        : "Guardar"}
-    </Button>
-  </div>
-</form>
-
+          <Button type="submit" size="sm">
+            {isEdit ? "Actualizar" : "Guardar"}
+          </Button>
+        </div>
+      </form>
     </section>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }

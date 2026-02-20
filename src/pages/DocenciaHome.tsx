@@ -1,9 +1,10 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Tarjeta from "@/components/Tarjeta";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import SuccessToast from "@/components/SuccessToast";
 import {
   getActividadesDocencia,
   eliminarActividadDocencia,
@@ -12,6 +13,7 @@ import {
 
 export default function DocenciaLanding() {
   const navigate = useNavigate();
+  const location = useLocation();
   const qc = useQueryClient();
 
   const { data: list = [], isLoading, isError } = useQuery({
@@ -22,6 +24,22 @@ export default function DocenciaLanding() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  /* =========================
+     LEER MENSAJE DESDE FORM
+     ========================= */
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      setShowSuccess(true);
+
+      // limpiar state para que no vuelva a mostrarse
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state]);
 
   const toggleSelect = (id: number, checked: boolean) => {
     setSelectedIds((prev) =>
@@ -44,13 +62,17 @@ export default function DocenciaLanding() {
       await eliminarActividadDocencia(id);
     }
 
-    qc.invalidateQueries({ queryKey: ["docencia", "all"] });
+    await qc.invalidateQueries({ queryKey: ["docencia", "all"] });
+
     cancelSelection();
+
+    setSuccessMessage("Eliminado con éxito!");
+    setShowSuccess(true);
   };
 
   return (
     <section className="w-full min-h-[calc(100vh-80px)] px-4 md:px-3 lg:px-2 py-2 flex flex-col text-sm">
-      
+
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl md:text-3xl font-semibold leading-none">
@@ -137,6 +159,13 @@ export default function DocenciaLanding() {
         onCancel={cancelSelection}
         onConfirm={confirmDelete}
       />
+
+      <SuccessToast
+        open={showSuccess}
+        message={successMessage}
+        onClose={() => setShowSuccess(false)}
+      />
+
     </section>
   );
 }

@@ -9,6 +9,7 @@ type UctPayload = Omit<Uct, "id">;
 export default function UctForm() {
   const { uct, save, saving } = useUct();
   const navigate = useNavigate();
+  const isEdit = !!uct;
 
   const [data, setData] = useState<UctPayload>({
     facultadRegional: "",
@@ -47,7 +48,6 @@ export default function UctForm() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const value = e.target.value;
       setData((d) => ({ ...d, [k]: value }));
-
       if (value.trim()) clearError(k);
     };
 
@@ -92,7 +92,13 @@ export default function UctForm() {
       objetivos: data.objetivos.trim(),
     });
 
-    navigate("/");
+    navigate("/", {
+      state: {
+        successMessage: isEdit
+          ? "UCT actualizada con éxito!"
+          : "UCT creada con éxito!",
+      },
+    });
   };
 
   const inputClass = (field: string) =>

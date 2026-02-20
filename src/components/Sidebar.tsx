@@ -30,6 +30,17 @@ const items: Item[] = [
     ],
   },
   {
+    label: "Actividades I+D+I",
+    children: [
+      {
+        label: "Registros de Propiedad",
+        children: [
+          { label: "Ver todos los registros de propiedad", to: "/registros-propiedad" }
+        ],
+      },
+    ],
+  },
+  {
     label: "Objetos y Financiamiento",
     children: [
       { label: "Ver todos los objetos y financiamiento", to: "/objetosfinanciamiento" },

@@ -4,7 +4,7 @@ export type Erogaciones = {
   id: number;
   egresos: number;
   ingresos: number;
-  numeroErogacion: number;
+  numero_erogacion: number;
 
   tipo_erogacion?: {
     id: number;

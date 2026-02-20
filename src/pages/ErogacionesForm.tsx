@@ -16,12 +16,10 @@ export default function ErogacionesForm() {
   const qc = useQueryClient();
   const { uct } = useUct();
   const { id } = useParams<{ id: string }>();
-
   const isEdit = !!id;
 
-  const { tipos, isLoading: loadingTipos, isError } = useTiposErogacion();
-  const { fuentes, isLoading: loadingFuentes } =
-    useFuentesFinanciamiento();
+  const { tipos } = useTiposErogacion();
+  const { fuentes } = useFuentesFinanciamiento();
 
   const [data, setData] = useState({
     numeroErogacion: "",
@@ -42,7 +40,7 @@ export default function ErogacionesForm() {
   useEffect(() => {
     if (erogacion) {
       setData({
-        numeroErogacion: erogacion.numeroErogacion?.toString() ?? "",
+        numeroErogacion: erogacion.numero_erogacion?.toString() ?? "",
         tipoErogacionId:
           erogacion.tipo_erogacion?.id?.toString() ?? "",
         fuenteFinanciamientoId:
@@ -87,7 +85,6 @@ export default function ErogacionesForm() {
         : createErogacion(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["erogaciones"] });
-      navigate("/erogaciones");
     },
   });
 
@@ -97,7 +94,7 @@ export default function ErogacionesForm() {
     if (!validate()) return;
 
     await mutateAsync({
-      numeroErogacion: Number(data.numeroErogacion),
+      numero_erogacion: Number(data.numeroErogacion),
       tipo_erogacion_id: Number(data.tipoErogacionId),
       ingresos: data.ingresos === "" ? 0 : Number(data.ingresos),
       egresos: data.egresos === "" ? 0 : Number(data.egresos),
@@ -106,6 +103,20 @@ export default function ErogacionesForm() {
         : undefined,
       grupo_utn_id: uct.id,
     });
+
+    if (isEdit) {
+      navigate(`/erogaciones/${id}`, {
+        state: {
+          successMessage: "Erogación actualizada con éxito!",
+        },
+      });
+    } else {
+      navigate("/erogaciones", {
+        state: {
+          successMessage: "Erogación creada con éxito!",
+        },
+      });
+    }
   };
 
   if (isEdit && loadingErogacion)
@@ -129,111 +140,108 @@ export default function ErogacionesForm() {
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
         {/* Número */}
-        <Field label="Número de erogación">
-          <>
-            <input
-              type="number"
-              className={inputClass("numero")}
-              value={data.numeroErogacion}
-              onChange={(e) => {
-                setData({
-                  ...data,
-                  numeroErogacion: e.target.value,
-                });
-                if (e.target.value) clearError("numero");
-              }}
-            />
-            {errors.numero && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.numero}
-              </p>
-            )}
-          </>
-        </Field>
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Número de erogación
+          </label>
+          <input
+            type="number"
+            className={inputClass("numero")}
+            value={data.numeroErogacion}
+            onChange={(e) => {
+              setData({ ...data, numeroErogacion: e.target.value });
+              if (e.target.value) clearError("numero");
+            }}
+          />
+          {errors.numero && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.numero}
+            </p>
+          )}
+        </div>
 
         {/* Tipo */}
-        <Field label="Tipo de erogación">
-          <>
-            <select
-              className={`${inputClass("tipo")} ${
-                !data.tipoErogacionId
-                  ? "text-slate-400"
-                  : "text-slate-900"
-              }`}
-              value={data.tipoErogacionId}
-              onChange={(e) => {
-                setData({
-                  ...data,
-                  tipoErogacionId: e.target.value,
-                });
-                if (e.target.value) clearError("tipo");
-              }}
-            >
-              <option value="" disabled>
-                Seleccionar tipo
-              </option>
-              {tipos.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nombre}
-                </option>
-              ))}
-            </select>
-            {errors.tipo && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.tipo}
-              </p>
-            )}
-          </>
-        </Field>
-
-        {/* Ingresos */}
-        <Field label="Ingresos">
-          <>
-            <input
-              type="number"
-              className={inputClass("ingresos")}
-              value={data.ingresos}
-              onChange={(e) => {
-                setData({ ...data, ingresos: e.target.value });
-                clearError("ingresos");
-              }}
-            />
-            {errors.ingresos && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.ingresos}
-              </p>
-            )}
-          </>
-        </Field>
-
-        {/* Egresos */}
-        <Field label="Egresos">
-          <>
-            <input
-              type="number"
-              className={inputClass("egresos")}
-              value={data.egresos}
-              onChange={(e) => {
-                setData({ ...data, egresos: e.target.value });
-                clearError("egresos");
-              }}
-            />
-            {errors.egresos && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.egresos}
-              </p>
-            )}
-          </>
-        </Field>
-
-        {/* Fuente */}
-        <Field label="Fuente de financiamiento">
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Tipo de erogación
+          </label>
           <select
-            className={`input ${
-              !data.fuenteFinanciamientoId
+            className={`${inputClass("tipo")} ${
+              !data.tipoErogacionId
                 ? "text-slate-400"
                 : "text-slate-900"
             }`}
+            value={data.tipoErogacionId}
+            onChange={(e) => {
+              setData({ ...data, tipoErogacionId: e.target.value });
+              if (e.target.value) clearError("tipo");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar tipo
+            </option>
+            {tipos.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.tipo && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.tipo}
+            </p>
+          )}
+        </div>
+
+        {/* Ingresos */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Ingresos
+          </label>
+          <input
+            type="number"
+            className={inputClass("ingresos")}
+            value={data.ingresos}
+            onChange={(e) => {
+              setData({ ...data, ingresos: e.target.value });
+              clearError("ingresos");
+            }}
+          />
+          {errors.ingresos && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.ingresos}
+            </p>
+          )}
+        </div>
+
+        {/* Egresos */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Egresos
+          </label>
+          <input
+            type="number"
+            className={inputClass("egresos")}
+            value={data.egresos}
+            onChange={(e) => {
+              setData({ ...data, egresos: e.target.value });
+              clearError("egresos");
+            }}
+          />
+          {errors.egresos && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.egresos}
+            </p>
+          )}
+        </div>
+
+        {/* Fuente */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Fuente de financiamiento
+          </label>
+          <select
+            className="input"
             value={data.fuenteFinanciamientoId}
             onChange={(e) =>
               setData({
@@ -251,7 +259,7 @@ export default function ErogacionesForm() {
               </option>
             ))}
           </select>
-        </Field>
+        </div>
 
         <div className="flex justify-between pt-6">
           <Button
@@ -277,22 +285,5 @@ export default function ErogacionesForm() {
         </div>
       </form>
     </section>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }

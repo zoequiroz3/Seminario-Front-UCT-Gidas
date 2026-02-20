@@ -6,14 +6,8 @@ import React, { useState, useEffect } from "react";
 import {
   getEquipamientoById,
   createEquipamiento,
+  updateEquipamiento,
 } from "@/services/equipamientoServices";
-
-const parseYMD = (s?: string | null): Date | null => {
-  if (!s) return null;
-  const [y, m, d] = s.split("-").map(Number);
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-};
 
 export default function EquipamientoForm() {
   const { id } = useParams<{ id: string }>();
@@ -38,22 +32,21 @@ export default function EquipamientoForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-  if (initial) {
-    const formattedDate = initial.fecha_incorporacion
-      ? new Date(initial.fecha_incorporacion)
-          .toISOString()
-          .split("T")[0]
-      : "";
+    if (initial) {
+      const formattedDate = initial.fecha_incorporacion
+        ? new Date(initial.fecha_incorporacion)
+            .toISOString()
+            .split("T")[0]
+        : "";
 
-    setData({
-      denominacion: initial.denominacion ?? "",
-      descripcion_breve: initial.descripcion_breve ?? "",
-      monto_invertido: initial.monto_invertido ?? undefined,
-      fecha_incorporacion: formattedDate,
-    });
-  }
-}, [initial]);
-
+      setData({
+        denominacion: initial.denominacion ?? "",
+        descripcion_breve: initial.descripcion_breve ?? "",
+        monto_invertido: initial.monto_invertido ?? undefined,
+        fecha_incorporacion: formattedDate,
+      });
+    }
+  }, [initial]);
 
   const clearError = (field: string) => {
     setErrors((prev) => {
@@ -73,7 +66,7 @@ export default function EquipamientoForm() {
       newErrors.descripcion = "La descripción es obligatoria";
 
     if (!data.fecha_incorporacion)
-      newErrors.fecha = "La fecha es obligatoria";
+      newErrors.fecha_incorporacion = "La fecha es obligatoria";
 
     if (!data.monto_invertido || data.monto_invertido <= 0)
       newErrors.monto = "El monto debe ser mayor a 0";
@@ -83,7 +76,10 @@ export default function EquipamientoForm() {
   };
 
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: createEquipamiento,
+    mutationFn: (payload: any) =>
+      isEdit
+        ? updateEquipamiento(Number(id), payload)
+        : createEquipamiento(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["equipamiento"] });
     },
@@ -93,9 +89,7 @@ export default function EquipamientoForm() {
 
   const inputClass = (field: string) =>
     `input text-sm md:text-base ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
+      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
     }`;
 
   return (
@@ -116,11 +110,22 @@ export default function EquipamientoForm() {
             monto_invertido: data.monto_invertido!,
           });
 
-          navigate("/equipamiento");
+          if (isEdit) {
+            navigate(`/equipamiento/${id}`, {
+              state: {
+                successMessage: "Equipamiento actualizado con éxito!",
+              },
+            });
+          } else {
+            navigate("/equipamiento", {
+              state: {
+                successMessage: "Equipamiento creado con éxito!",
+              },
+            });
+          }
         }}
         className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
       >
-        {/* Denominación */}
         <Field label="Denominación">
           <>
             <input
@@ -143,7 +148,6 @@ export default function EquipamientoForm() {
           </>
         </Field>
 
-        {/* Descripción */}
         <Field label="Descripción breve">
           <>
             <input
@@ -166,7 +170,6 @@ export default function EquipamientoForm() {
           </>
         </Field>
 
-        {/* Monto */}
         <Field label="Monto invertido">
           <>
             <input
@@ -197,29 +200,27 @@ export default function EquipamientoForm() {
           </>
         </Field>
 
-        {/* Fecha */}
         <Field label="Fecha de incorporación">
-  <DatePicker
-  value={
-    data.fecha_incorporacion
-      ? new Date(data.fecha_incorporacion)
-      : null
-  }
-  onChange={(dt) => {
-    setData((d) => ({
-      ...d,
-      fecha_incorporacion: dt
-        ? dt.toISOString().split("T")[0]
-        : "",
-    }));
-  }}
-  helperText={errors.fecha ?? "DD/MM/AAAA"}
-  className={inputClass("fecha")}
-/>
+          <DatePicker
+            value={
+              data.fecha_incorporacion
+                ? new Date(data.fecha_incorporacion)
+                : null
+            }
+            onChange={(dt) => {
+              setData((d) => ({
+                ...d,
+                fecha_incorporacion: dt
+                  ? dt.toISOString().split("T")[0]
+                  : "",
+              }));
 
-
-</Field>
-
+              if (dt) clearError("fecha_incorporacion");
+            }}
+            helperText={errors.fecha_incorporacion ?? "DD/MM/AAAA"}
+            className={inputClass("fecha_incorporacion")}
+          />
+        </Field>
 
         <div className="flex justify-between pt-6">
           <Button

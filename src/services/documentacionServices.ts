@@ -10,8 +10,9 @@ export interface Documentacion {
   titulo: string;
   editorial: string;
   anio: number;
-  grupo: string | null;
+  grupo_id: string | null;
   autores: Autor[];
+  
 }
 
 export interface DocumentacionPayload {

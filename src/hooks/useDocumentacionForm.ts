@@ -17,30 +17,16 @@ const YEARS = Array.from({ length: 2030 - 1900 + 1 }, (_, i) => 1900 + i);
 
 export function useDocumentacionForm(initial?: Documentacion) {
   const qc = useQueryClient();
-
-  // --------------------
-  // Flags
-  // --------------------
   const isEdit = Boolean(initial?.id);
 
-  // --------------------
-  // State
-  // --------------------
-  const [data, setData] = useState<{
-    titulo: string;
-    editorial: string;
-    anio: number | undefined;
-  }>({
+  const [data, setData] = useState({
     titulo: "",
     editorial: "",
-    anio: undefined,
+    anio: undefined as number | undefined,
   });
 
   const [autores, setAutores] = useState<Autor[]>([]);
 
-  // --------------------
-  // Sync initial → state (FIX CRÍTICO)
-  // --------------------
   useEffect(() => {
     if (!initial) return;
 
@@ -53,40 +39,24 @@ export function useDocumentacionForm(initial?: Documentacion) {
     setAutores(initial.autores ?? []);
   }, [initial]);
 
-  // --------------------
-  // Validación
-  // --------------------
   const isValid = useMemo(
     () =>
       data.titulo.trim() !== "" &&
       data.editorial.trim() !== "" &&
       data.anio !== undefined &&
-      autores.length > 0 &&
-      autores.every(
-        (a) =>
-          typeof a.nombre_apellido === "string" &&
-          a.nombre_apellido.trim() !== ""
-      ),
+      autores.length > 0,
     [data, autores]
   );
 
-  // --------------------
-  // Mutation principal
-  // --------------------
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: async () => {
-      const payload: DocumentacionPayload = {
-        titulo: data.titulo.trim(),
-        editorial: data.editorial.trim(),
-        anio: Number(data.anio),
-      };
+    mutationFn: async (payload: DocumentacionPayload) => {
 
       // 1️⃣ Crear o actualizar documento
       const doc = isEdit
         ? await updateDocumentacion(initial!.id, payload)
         : await createDocumentacion(payload);
 
-      // 2️⃣ Asegurar autores en backend
+      // 2️⃣ Persistir autores
       const autoresPersistidos: Autor[] = [];
 
       for (const autor of autores) {
@@ -100,7 +70,6 @@ export function useDocumentacionForm(initial?: Documentacion) {
         }
       }
 
-      // 3️⃣ Sincronizar relaciones documento ↔ autor
       const prevIds = initial?.autores?.map((a) => a.id) ?? [];
       const nextIds = autoresPersistidos.map((a) => a.id);
 
@@ -117,8 +86,9 @@ export function useDocumentacionForm(initial?: Documentacion) {
 
       return doc;
     },
-    onSuccess: (_, __, ___) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["documentacion"] });
+
       if (isEdit && initial?.id) {
         qc.invalidateQueries({
           queryKey: ["documentacion", initial.id],
@@ -127,12 +97,18 @@ export function useDocumentacionForm(initial?: Documentacion) {
     },
   });
 
-  // --------------------
-  // Submit
-  // --------------------
-  const submit = async () => {
+  // 🔥 ESTA ES LA PARTE CLAVE
+  const submit = async (grupo_id: number) => {
     if (!isValid || isPending) return;
-    await mutateAsync();
+
+    const payload: DocumentacionPayload = {
+      titulo: data.titulo.trim(),
+      editorial: data.editorial.trim(),
+      anio: Number(data.anio),
+      grupo_id, // 🔥 AHORA SÍ SE USA
+    };
+
+    await mutateAsync(payload);
   };
 
   return {
@@ -145,4 +121,3 @@ export function useDocumentacionForm(initial?: Documentacion) {
     years: YEARS,
   };
 }
-  
