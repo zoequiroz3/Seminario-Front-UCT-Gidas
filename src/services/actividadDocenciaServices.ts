@@ -1,6 +1,8 @@
 import {http} from "@/lib/http";
 
 export interface ActividadDocencia {
+  rol_actividad_id: null;
+  grado_academico_id: null;
   id: number;
   curso: string;
   institucion: string;

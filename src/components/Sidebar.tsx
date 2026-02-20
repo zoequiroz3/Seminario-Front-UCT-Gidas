@@ -30,16 +30,37 @@ const items: Item[] = [
     ],
   },
   {
-    label: "Actividades I+D+I",
-    children: [
-      {
-        label: "Registros de Propiedad",
-        children: [
-          { label: "Ver todos los registros de propiedad", to: "/registros-propiedad" }
-        ],
-      },
-    ],
-  },
+  label: "Actividades I+D+I",
+  children: [
+    {
+      label: "Registros de Propiedad",
+      children: [
+        {
+          label: "Ver todos los registros de propiedad",
+          to: "/registros-propiedad"
+        }
+      ],
+    },
+    {
+      label: "Trabajos en Reunión Científica",
+      children: [
+        {
+          label: "Ver todos los trabajos en reunión científica",
+          to: "/trabajos-reunion"
+        }
+      ],
+    },
+    {
+      label: "Trabajos en Revistas",
+      children: [
+        {
+          label: "Ver todos los trabajos en revistas",
+          to: "/trabajos-revistas"
+        }
+      ],
+    },
+  ],
+},
   {
     label: "Objetos y Financiamiento",
     children: [
@@ -52,6 +73,12 @@ const items: Item[] = [
     label: "Documentación y Biblioteca",
     children: [
       { label: "Ver todo en documentación y biblioteca", to: "/documentacion" }
+    ],
+  },
+  {
+    label: "Programa de Actividades",
+    children: [
+      { label: "Ver todos los programas de actividades", to: "/planificaciones" }
     ],
   },
 ];

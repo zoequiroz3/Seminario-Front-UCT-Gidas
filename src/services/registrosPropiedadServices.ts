@@ -1,6 +1,7 @@
 import { http } from "@/lib/http";
 
 export interface RegistroPropiedad {
+  tipo_registro_id: any;
   id: number;
   nombre_articulo: string;
   organismo_registrante: string;

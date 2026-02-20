@@ -1,61 +1,100 @@
-// services/trabajosReunionServices.ts
-const BASE = import.meta.env.VITE_API_URL ?? "";
-const MOCK_KEY = "gidas_trabajos_reunion_mock";
+import { http } from "@/lib/http";
 
-export type TipoParticipacion = "Poster" | "Oral" | "Otro";
+export interface TipoReunion {
+  id: number;
+  nombre: string;
+}
 
-export type TipoNacionalidad = "Nacional" | "Internacional";
+export interface InvestigadorResumen {
+  id: number;
+  nombre_apellido: string;
+}
 
-export type TrabajoReunion = {
-  id: string;
-  investigadorId: string;
-  titulo: string;
-  evento: string;
-  fecha: string;        // ISO
-  lugar?: string;
-  tipo: TipoParticipacion;
-  tipoNacionalidad: TipoNacionalidad;
+export interface TrabajoReunion {
+  id: number;
+  titulo_trabajo: string;
+  nombre_reunion: string;
+  procedencia: string;
+  fecha_inicio: string;
+  tipo_reunion: TipoReunion;
+  investigadores: InvestigadorResumen[];
+  grupo_utn: string;
+}
+
+export interface TrabajoReunionPayload {
+  titulo_trabajo: string;
+  nombre_reunion: string;
+  procedencia: string;
+  fecha_inicio: string;
+  tipo_reunion_id: number;
+  grupo_utn_id: number;
+}
+
+export const getTrabajosReunion = async (): Promise<TrabajoReunion[]> => {
+  return http("/trabajos-reunion-cientifica", {
+    method: "GET",
+  });
 };
 
-function delay(ms=250){ return new Promise(r=>setTimeout(r,ms)); }
-async function mockList(): Promise<TrabajoReunion[]> {
-  await delay(); const raw = localStorage.getItem(MOCK_KEY);
-  return raw ? JSON.parse(raw) as TrabajoReunion[] : [];
-}
-async function mockSave(item: TrabajoReunion){
-  const list = await mockList();
-  const id = item.id || (crypto.randomUUID?.() ?? String(Date.now()));
-  const upd = { ...item, id };
-  const out = list.some(x=>x.id===id) ? list.map(x=>x.id===id?upd:x) : [...list, upd];
-  localStorage.setItem(MOCK_KEY, JSON.stringify(out));
-  return upd;
-}
-async function mockDelete(id: string){
-  const list = await mockList();
-  localStorage.setItem(MOCK_KEY, JSON.stringify(list.filter(x=>x.id!==id)));
-}
-
-export async function getTrabajos(params?: { investigadorId?: string }) {
-  if (!BASE) {
-    const all = await mockList();
-    return params?.investigadorId ? all.filter(x=>x.investigadorId===params.investigadorId) : all;
-  }
-  const qs = params?.investigadorId ? `?investigadorId=${encodeURIComponent(params.investigadorId)}` : "";
-  const res = await fetch(`/api/trabajos-reunion${qs}`);
-  return res.json() as Promise<TrabajoReunion[]>;
-}
-
-export async function upsertTrabajo(payload: TrabajoReunion) {
-  if (!BASE) return mockSave(payload);
-  const res = await fetch(`/api/trabajos-reunion`, {
-    method: payload.id ? "PUT" : "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+export const getTrabajoReunionById = async (
+  id: number
+): Promise<TrabajoReunion> => {
+  return http(`/trabajos-reunion-cientifica/${id}`, {
+    method: "GET",
   });
-  return res.json() as Promise<TrabajoReunion>;
-}
+};
 
-export async function deleteTrabajo(id: string) {
-  if (!BASE) return mockDelete(id);
-  await fetch(`/api/trabajos-reunion/${id}`, { method: "DELETE" });
-}
+export const createTrabajoReunion = async (
+  data: TrabajoReunionPayload
+) => {
+  return http("/trabajos-reunion-cientifica", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+
+export const updateTrabajoReunion = async (
+  id: number,
+  data: Partial<TrabajoReunionPayload>
+) => {
+  return http(`/trabajos-reunion-cientifica/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+
+export const deleteTrabajoReunion = async (id: number) => {
+  return http(`/trabajos-reunion-cientifica/${id}`, {
+    method: "DELETE",
+  });
+};
+
+export const vincularInvestigadoresTrabajo = async (
+  trabajoId: number,
+  investigadoresIds: number[]
+) => {
+  return http(
+    `/trabajos-reunion-cientifica/${trabajoId}/investigadores`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        investigadores_ids: investigadoresIds,
+      }),
+    }
+  );
+};
+
+export const desvincularInvestigadoresTrabajo = async (
+  trabajoId: number,
+  investigadoresIds: number[]
+) => {
+  return http(
+    `/trabajos-reunion-cientifica/${trabajoId}/investigadores`,
+    {
+      method: "DELETE",
+      body: JSON.stringify({
+        investigadores_ids: investigadoresIds,
+      }),
+    }
+  );
+};

@@ -4,14 +4,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Tarjeta from "@/components/Tarjeta";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { useTrabajosReunion } from "@/hooks/useTrabajosReunion";
-import { deleteTrabajoReunion } from "@/services/trabajosReunionServices";
+import { usePlanificaciones } from "@/hooks/usePlanificacionesGrupo";
+import { deletePlanificacion } from "@/services/planificacionGrupoServices";
 import SuccessToast from "@/components/SuccessToast";
 
-export default function TrabajosReunionLanding() {
+export default function PlanificacionGrupoLanding() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { list, isLoading, isError } = useTrabajosReunion();
+  const { list = [], isLoading, isError } = usePlanificaciones();
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -41,14 +41,14 @@ export default function TrabajosReunionLanding() {
   };
 
   const selectedItems = list
-    .filter((t) => selectedIds.includes(t.id))
-    .map((t) => t.titulo_trabajo);
+    .filter((p) => selectedIds.includes(p.id))
+    .map((p) => `Planificación ${p.anio}`);
 
   const confirmDelete = async () => {
     for (const id of selectedIds) {
-      await deleteTrabajoReunion(id);
+      await deletePlanificacion(id);
     }
-    qc.invalidateQueries({ queryKey: ["trabajos-reunion"] });
+    qc.invalidateQueries({ queryKey: ["planificaciones"] });
     cancelSelection();
     setShowSuccess(true);
   };
@@ -57,7 +57,7 @@ export default function TrabajosReunionLanding() {
     <section className="w-full min-h-[calc(100vh-80px)] px-4 py-2 flex flex-col text-sm">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-          Trabajos presentados en Congresos
+          Planificaciones
         </h2>
 
         {!selectMode ? (
@@ -73,7 +73,7 @@ export default function TrabajosReunionLanding() {
             <Button
               size="sm"
               onClick={() =>
-                navigate("/trabajos-reunion/nuevo")
+                navigate("/planificaciones/nuevo")
               }
             >
               Agregar nuevo
@@ -82,7 +82,10 @@ export default function TrabajosReunionLanding() {
         ) : (
           <div className="flex gap-2">
             {selectedIds.length > 0 && (
-              <Button size="sm" onClick={() => setShowConfirm(true)}>
+              <Button
+                size="sm"
+                onClick={() => setShowConfirm(true)}
+              >
                 Eliminar
               </Button>
             )}
@@ -100,34 +103,36 @@ export default function TrabajosReunionLanding() {
 
       <div className="flex-1">
         {isLoading && <p className="text-slate-500">Cargando…</p>}
-        {isError && <p className="text-red-600">Error al cargar.</p>}
+        {isError && (
+          <p className="text-red-600">Error al cargar.</p>
+        )}
 
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {list.map((t) => (
-            <Tarjeta
-              key={t.id}
-              item={t}
-              title={(x) => x.titulo_trabajo}
-              subtitle={(x) =>
-                `${x.nombre_reunion} · ${x.fecha_inicio}`
-              }
-              selectable={selectMode}
-              selected={selectedIds.includes(t.id)}
-              onSelectChange={(checked) =>
-                toggleSelect(t.id, checked)
-              }
-              onClick={() =>
-                navigate(`/trabajos-reunion/${t.id}`)
-              }
-            />
-          ))}
-        </div>
+        {!isLoading && !isError && (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((p) => (
+              <Tarjeta
+                key={p.id}
+                item={p}
+                title={(x) => `Planificación ${x.anio}`}
+                
+                selectable={selectMode}
+                selected={selectedIds.includes(p.id)}
+                onSelectChange={(checked) =>
+                  toggleSelect(p.id, checked)
+                }
+                onClick={() =>
+                  navigate(`/planificaciones/${p.id}`)
+                }
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <ConfirmDialog
         open={showConfirm}
-        title="Eliminar trabajos"
-        message="¿Eliminar los siguientes trabajos?"
+        title="Eliminar planificaciones"
+        message="¿Estás seguro de eliminar las siguientes planificaciones?"
         items={selectedItems}
         onCancel={cancelSelection}
         onConfirm={confirmDelete}

@@ -44,6 +44,10 @@ import ProyectosDetalle from "./pages/ProyectosDetalle";
 import RegistrosPropiedadHome from "./pages/RegistrosPropiedadHome";
 import RegistrosPropiedadForm from "./pages/RegistrosPropiedadForm";
 import RegistrosPropiedadDetalle from "./pages/RegistrosPropiedadDetalle";
+import PlanificacionGrupoLanding from "./pages/PlanificacionesGrupoHome";
+import PlanificacionesGrupoForm from "./pages/PlanificacionesGrupoForm";
+import PlanificacionGrupoDetalle from "./pages/PlanificacionGrupoDetalle";
+import TrabajosReunionDetalle from "./pages/TrabajosReunionDetalle";
 
 // Definición de rutas
 const router = createBrowserRouter([
@@ -113,12 +117,27 @@ const router = createBrowserRouter([
       { path: "trabajosCientInv/nuevo", element: <TrabajosReunionForm /> },
       
       //Actividades I+D+I
+      //Registros de propiedad  e industrial
       { path: "registros-propiedad", element: <RegistrosPropiedadHome /> },
       { path: "registros-propiedad/nuevo", element: <RegistrosPropiedadForm /> },
       { path: "registros-propiedad/:id", element: <RegistrosPropiedadDetalle /> },
       { path: "registros-propiedad/:id/editar", element: <RegistrosPropiedadForm /> },
+      
+      // Planificaciones de grupo
+      { path: "planificaciones", element: <PlanificacionGrupoLanding /> },
+      { path: "planificaciones/nuevo", element: <PlanificacionesGrupoForm /> },
+      { path: "planificaciones/:id", element: <PlanificacionGrupoDetalle /> },
+      { path: "planificaciones/:id/editar", element: <PlanificacionesGrupoForm /> },
 
-
+      //Trabajos en reuniones científicas
+      { path: "trabajos-reunion", element: <TrabajosReunionHome /> },
+      { path: "trabajos-reunion/nuevo", element: <TrabajosReunionForm /> },
+      { path: "trabajos-reunion/:id", element: <TrabajosReunionDetalle /> },
+      { path: "trabajos-reunion/:id/editar", element: <TrabajosReunionForm /> },
+      
+      
+      
+      
       // Erogaciones / Compras
       { path: "erogaciones", element: <ErogacionesLanding /> },
       { path: "erogaciones/nuevo", element: <ErogacionesForm /> },
