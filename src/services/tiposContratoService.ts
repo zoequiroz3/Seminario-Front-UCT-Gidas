@@ -30,7 +30,7 @@ export function isMockMode(): boolean {
 /** Obtener los tipos de contrato del backend. */
 export async function getTiposContrato(): Promise<TipoContratoItem[]> {
   /** Forzar modo mock (poner false cuando el backend esté listo). */
-  const FORCE_MOCK = true;
+  const FORCE_MOCK = false;
   if (FORCE_MOCK || isMockMode()) {
     return TIPOS_CONTRATO_STATIC.map((nombre, i) => ({
       id: i + 1,

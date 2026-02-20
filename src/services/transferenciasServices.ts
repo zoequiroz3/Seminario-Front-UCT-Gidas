@@ -3,7 +3,7 @@ import { isMockMode } from "./tiposContratoService";
 import type { Adoptante } from "./adoptantesServices";
 
 /** Forzar modo mock para transferencias (poner false cuando el backend esté listo). */
-const FORCE_MOCK = true;
+const FORCE_MOCK = false;
 const useMock = () => FORCE_MOCK || isMockMode();
 
 // ─── Tipos ───────────────────────────────────────────────────
@@ -18,6 +18,7 @@ interface TransferenciaBackend {
     fecha_fin: string | null;
     tipo_contrato: string | null;
     grupo: string | null;
+    adoptantes?: Adoptante[];
 }
 
 /** Interfaz unificada del frontend (incluye campos mock-only del spec). */
@@ -65,7 +66,7 @@ function fromBackend(raw: TransferenciaBackend): Transferencia {
         fechaFin: raw.fecha_fin ?? undefined,
         tipoContrato: raw.tipo_contrato,
         grupo: raw.grupo,
-        adoptantes: [],  // backend no serializa adoptantes aún (ver backend_gaps.md)
+        adoptantes: raw.adoptantes ?? [],
     };
 }
 

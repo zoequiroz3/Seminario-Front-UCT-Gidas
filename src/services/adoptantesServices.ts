@@ -2,7 +2,7 @@ import { http } from "@/lib/http";
 import { isMockMode } from "./tiposContratoService";
 
 /** Forzar modo mock para adoptantes (poner false cuando el backend esté listo). */
-const FORCE_MOCK = true;
+const FORCE_MOCK = false;
 const useMock = () => FORCE_MOCK || isMockMode();
 
 // ─── Tipos ───────────────────────────────────────────────────

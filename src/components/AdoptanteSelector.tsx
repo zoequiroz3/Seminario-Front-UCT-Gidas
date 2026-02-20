@@ -48,10 +48,15 @@ export default function AdoptanteSelector({ selected, onChange }: Props) {
     const submitNew = async () => {
         if (!formNombre.trim()) return;
         const payload: AdoptantePayload = { nombre: formNombre.trim() };
-        const created = await createMut.mutateAsync(payload);
-        add(created);
-        setFormNombre("");
-        setShowForm(false);
+        try {
+            const created = await createMut.mutateAsync(payload);
+            add(created);
+            setFormNombre("");
+            setShowForm(false);
+        } catch (err: any) {
+            const msg = err?.body?.error ?? err?.message ?? "Error al crear el adoptante";
+            alert(msg);
+        }
     };
 
     return (
