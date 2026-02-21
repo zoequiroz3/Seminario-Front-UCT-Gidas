@@ -7,10 +7,14 @@ import {
   crearVisitante,
   getVisitanteById,
   actualizarVisitante,
+  getGruposUtn,
+  getTiposVisita,
+  getProcedencias,
 } from "@/services/visitantesServices";
-import { getGruposUtn, type GrupoUtn } from "@/services/gruposUtnServices";
-import { getTiposVisita, type TipoVisita } from "@/services/tiposVisitaServices";
-import { getProcedencias, type Procedencia } from "@/services/procedenciasServices";
+
+type GrupoUtn = { id: number; nombre: string };
+type TipoVisita = { id: number; nombre: string };
+type Procedencia = { id: number; nombre: string };
 
 export default function VisitantesForm() {
   const { id } = useParams<{ id: string }>();
