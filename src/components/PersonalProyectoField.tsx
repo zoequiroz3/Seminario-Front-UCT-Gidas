@@ -6,10 +6,14 @@ export type PersonaOption = {
 };
 
 type Props = {
-  value: number[]; // ids seleccionados
-  options: PersonaOption[]; // opciones disponibles
+  value: number[];
+  options: PersonaOption[];
   onChange: (ids: number[]) => void;
   label?: string;
+
+  // 🔥 NUEVO (opcional)
+  isEdit?: boolean;
+  onRemoveConfirm?: (personaId: number) => void;
 };
 
 export default function PersonalProyectoField({
@@ -17,6 +21,8 @@ export default function PersonalProyectoField({
   options,
   onChange,
   label,
+  isEdit = false,
+  onRemoveConfirm,
 }: Props) {
 
   const addField = () => {
@@ -24,6 +30,15 @@ export default function PersonalProyectoField({
   };
 
   const removeField = (index: number) => {
+    const removedId = value[index];
+
+    // 🔴 Si estamos editando y existe handler externo
+    if (isEdit && onRemoveConfirm && removedId) {
+      onRemoveConfirm(removedId);
+      return;
+    }
+
+    // 🔵 Comportamiento normal
     const next = value.filter((_, i) => i !== index);
     onChange(next.length ? next : []);
   };

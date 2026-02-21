@@ -59,6 +59,15 @@ const items: Item[] = [
         }
       ],
     },
+    {
+      label: "Artículos de Divulgación",
+      children: [
+        {
+          label: "Ver todos los artículos de divulgación",
+          to: "/articulos-divulgacion"
+        }
+      ],
+    },
   ],
 },
   {

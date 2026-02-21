@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import Button from "@/components/Button";
 import SuccessToast from "@/components/SuccessToast";
 import { formatFecha } from "@/utils/formatFecha";
-import {
-  getTrabajoReunionById,
-  type TrabajoReunion,
-} from "@/services/trabajosReunionServices";
 
-export default function TrabajoReunionDetalle() {
+import {
+  getTrabajoRevistaById,
+  type TrabajoRevista,
+} from "@/services/trabajosRevistasServices";
+
+export default function TrabajoRevistaDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,31 +19,39 @@ export default function TrabajoReunionDetalle() {
   const [successMessage, setSuccessMessage] = useState("");
 
   const { data, isLoading, isError } =
-    useQuery<TrabajoReunion>({
-      queryKey: ["trabajos-reunion", id],
-      queryFn: () => getTrabajoReunionById(Number(id)),
+    useQuery<TrabajoRevista>({
+      queryKey: ["trabajo-revista", id],
+      queryFn: () =>
+        getTrabajoRevistaById(Number(id)),
       enabled: !!id,
     });
 
   useEffect(() => {
     if (location.state?.successMessage) {
-      setSuccessMessage(location.state.successMessage);
+      setSuccessMessage(
+        location.state.successMessage
+      );
       setShowSuccess(true);
-      window.history.replaceState({}, document.title);
+      window.history.replaceState(
+        {},
+        document.title
+      );
     }
   }, [location.state]);
 
-  if (isLoading) {
-    return <p className="text-slate-500">Cargando…</p>;
-  }
-
-  if (isError || !data) {
+  if (isLoading)
     return (
       <p className="text-slate-500">
-        Trabajo en congreso no encontrado.
+        Cargando…
       </p>
     );
-  }
+
+  if (isError || !data)
+    return (
+      <p className="text-slate-500">
+        Trabajo en revista no encontrado.
+      </p>
+    );
 
   return (
     <>
@@ -52,13 +61,34 @@ export default function TrabajoReunionDetalle() {
         </h2>
 
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <div className="space-y-2 text-sm md:text-base text-slate-500 break-words">
+          <div className="space-y-3 text-sm md:text-base text-slate-600">
 
             <p>
               <span className="font-medium text-slate-700">
-                Reunión:
+                Revista:
               </span>{" "}
-              {data.nombre_reunion}
+              {data.nombre_revista || "—"}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">
+                Editorial:
+              </span>{" "}
+              {data.editorial || "—"}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">
+                ISSN:
+              </span>{" "}
+              {data.issn || "—"}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">
+                País:
+              </span>{" "}
+              {data.pais || "—"}
             </p>
 
             <p>
@@ -70,26 +100,21 @@ export default function TrabajoReunionDetalle() {
 
             <p>
               <span className="font-medium text-slate-700">
-                Procedencia:
-              </span>{" "}
-              {data.procedencia}
-            </p>
-
-            <p>
-              <span className="font-medium text-slate-700">
                 Fecha:
               </span>{" "}
-              {formatFecha(data.fecha_inicio)}
+              {formatFecha(data.fecha)}
             </p>
 
             <p>
               <span className="font-medium text-slate-700">
                 Investigadores:
               </span>{" "}
-              {data.investigadores &&
-              data.investigadores.length > 0
+              {data.investigadores?.length
                 ? data.investigadores
-                    .map((inv) => inv.nombre_apellido)
+                    .map(
+                      (i) =>
+                        i.nombre_apellido
+                    )
                     .join(", ")
                 : "—"}
             </p>
@@ -100,7 +125,11 @@ export default function TrabajoReunionDetalle() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => navigate("/trabajos-reunion")}
+              onClick={() =>
+                navigate(
+                  "/trabajos-revistas"
+                )
+              }
             >
               Volver
             </Button>
@@ -108,7 +137,9 @@ export default function TrabajoReunionDetalle() {
             <Button
               size="sm"
               onClick={() =>
-                navigate(`/trabajos-reunion/${data.id}/editar`)
+                navigate(
+                  `/trabajos-revistas/${data.id}/editar`
+                )
               }
             >
               Editar
@@ -120,7 +151,9 @@ export default function TrabajoReunionDetalle() {
       <SuccessToast
         open={showSuccess}
         message={successMessage}
-        onClose={() => setShowSuccess(false)}
+        onClose={() =>
+          setShowSuccess(false)
+        }
       />
     </>
   );

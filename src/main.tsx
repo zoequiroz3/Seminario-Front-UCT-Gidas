@@ -48,6 +48,12 @@ import PlanificacionGrupoLanding from "./pages/PlanificacionesGrupoHome";
 import PlanificacionesGrupoForm from "./pages/PlanificacionesGrupoForm";
 import PlanificacionGrupoDetalle from "./pages/PlanificacionGrupoDetalle";
 import TrabajosReunionDetalle from "./pages/TrabajosReunionDetalle";
+import TrabajosRevistasHome from "./pages/TrabajosRevistasHome";
+import TrabajosRevistasForm from "./pages/TrabajosRevistasForm";
+import TrabajosRevistasDetalle from "./pages/TrabajosRevistasDetalle";
+import ArticulosDivulgacionLanding from "./pages/ArticulosDivulgacionHome";
+import ArticulosDivulgacionForm from "./pages/ArticulosDivulgacionForm";
+import ArticulosDivulgacionDetalle from "./pages/ArticulosDivulgacionDetalle";
 
 // Definición de rutas
 const router = createBrowserRouter([
@@ -135,9 +141,19 @@ const router = createBrowserRouter([
       { path: "trabajos-reunion/:id", element: <TrabajosReunionDetalle /> },
       { path: "trabajos-reunion/:id/editar", element: <TrabajosReunionForm /> },
       
+      //Trabajos en revistas
+      { path: "trabajos-revistas", element: <TrabajosRevistasHome /> },
+      { path: "trabajos-revistas/nuevo", element: <TrabajosRevistasForm /> },
+      { path: "trabajos-revistas/:id", element: <TrabajosRevistasDetalle /> },
+      { path: "trabajos-revistas/:id/editar", element: <TrabajosRevistasForm /> },  
       
-      
-      
+      //Artículos de divulgación
+      { path: "articulos-divulgacion", element: <ArticulosDivulgacionLanding /> },
+      { path: "articulos-divulgacion/nuevo", element: <ArticulosDivulgacionForm /> },
+      { path: "articulos-divulgacion/:id", element: <ArticulosDivulgacionDetalle /> },
+      { path: "articulos-divulgacion/:id/editar", element: <ArticulosDivulgacionForm /> },
+
+
       // Erogaciones / Compras
       { path: "erogaciones", element: <ErogacionesLanding /> },
       { path: "erogaciones/nuevo", element: <ErogacionesForm /> },

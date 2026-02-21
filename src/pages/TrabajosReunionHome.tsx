@@ -51,6 +51,7 @@ export default function TrabajosReunionLanding() {
     qc.invalidateQueries({ queryKey: ["trabajos-reunion"] });
     cancelSelection();
     setShowSuccess(true);
+    setSuccessMessage("Trabajos eliminados con éxito!");
   };
 
   return (
@@ -109,7 +110,7 @@ export default function TrabajosReunionLanding() {
               item={t}
               title={(x) => x.titulo_trabajo}
               subtitle={(x) =>
-                `${x.nombre_reunion} · ${x.fecha_inicio}`
+                `${x.nombre_reunion}`
               }
               selectable={selectMode}
               selected={selectedIds.includes(t.id)}
