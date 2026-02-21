@@ -30,6 +30,10 @@ export function getFuentesFinanciamiento(): Promise<Option[]> {
     return http("/fuente-financiamiento/");
 }
 
+export function getGruposUtn(): Promise<Option[]> {
+  return http("/grupos/");
+}
+
 export function createTipoProyecto(nombre: string): Promise<Option> {
     return http("/tipos-proyecto/", {
         method: "POST",

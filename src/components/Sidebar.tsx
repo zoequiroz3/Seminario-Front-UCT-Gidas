@@ -30,46 +30,16 @@ const items: Item[] = [
     ],
   },
   {
-  label: "Actividades I+D+I",
-  children: [
-    {
-      label: "Registros de Propiedad",
-      children: [
-        {
-          label: "Ver todos los registros de propiedad",
-          to: "/registros-propiedad"
-        }
-      ],
-    },
-    {
-      label: "Trabajos en Reunión Científica",
-      children: [
-        {
-          label: "Ver todos los trabajos en reunión científica",
-          to: "/trabajos-reunion"
-        }
-      ],
-    },
-    {
-      label: "Trabajos en Revistas",
-      children: [
-        {
-          label: "Ver todos los trabajos en revistas",
-          to: "/trabajos-revistas"
-        }
-      ],
-    },
-    {
-      label: "Artículos de Divulgación",
-      children: [
-        {
-          label: "Ver todos los artículos de divulgación",
-          to: "/articulos-divulgacion"
-        }
-      ],
-    },
-  ],
-},
+    label: "Actividades I+D+I",
+    children: [
+      {label: "Registros de Propiedad",to: "/registros-propiedad"},
+      {label: "Trabajos en Reunión Científica",to: "/trabajos-reunion"},
+      {label: "Trabajos en Revistas",to: "/trabajos-revistas"},
+      { label: "Distinciones Recibidas", to: "/distinciones" },
+      { label: "Participaciones Relevantes", to: "/participaciones" },
+      { label: "Visitantes del país y del extranjero", to: "/visitantes" },
+    ],
+  },
   {
     label: "Objetos y Financiamiento",
     children: [
@@ -88,6 +58,12 @@ const items: Item[] = [
     label: "Programa de Actividades",
     children: [
       { label: "Ver todos los programas de actividades", to: "/planificaciones" }
+    ],
+  },
+  {
+    label: "Vinculación Socio-Productiva",
+    children: [
+      { label: "Transferencias", to: "/transferencias" },
     ],
   },
 ];
@@ -156,8 +132,7 @@ export default function Sidebar() {
                   to={node.to}
                   onClick={close}
                   className={({ isActive }) =>
-                    `flex-1 px-3 py-3 hover:bg-black/5 ${
-                      level === 0 ? "text-slate-900" : "text-slate-700"
+                    `flex-1 px-3 py-3 hover:bg-black/5 ${level === 0 ? "text-slate-900" : "text-slate-700"
                     } ${isActive ? "font-semibold" : ""}`
                   }
                   end
@@ -166,9 +141,8 @@ export default function Sidebar() {
                 </NavLink>
               ) : (
                 <span
-                  className={`flex-1 px-3 py-3 ${
-                    level === 0 ? "text-slate-900" : "text-slate-700"
-                  }`}
+                  className={`flex-1 px-3 py-3 ${level === 0 ? "text-slate-900" : "text-slate-700"
+                    }`}
                 >
                   {node.label}
                 </span>
@@ -186,18 +160,16 @@ export default function Sidebar() {
                   className="px-3 py-3 hover:bg-black/5 text-slate-900"
                 >
                   <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-300 ${
-                      isNodeOpen ? "rotate-180" : ""
-                    }`}
+                    className={`w-4 h-4 transition-transform duration-300 ${isNodeOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
               )}
             </div>
 
             <div
-              className={`transition-all duration-300 overflow-hidden ${
-                isNodeOpen ? "max-h-[500px] opacity-100 py-2" : "max-h-0 opacity-0"
-              }`}
+              className={`transition-all duration-300 overflow-hidden ${isNodeOpen ? "max-h-[500px] opacity-100 py-2" : "max-h-0 opacity-0"
+                }`}
             >
               {hasChildren && (
                 <MenuList nodes={node.children!} parentKey={key} level={level + 1} />
@@ -230,9 +202,9 @@ export default function Sidebar() {
             <button
               aria-label="Cerrar menú"
               onClick={close}
-              className="p-2 rounded-md hover:bg-black/5"
+              className="p-3 rounded-md hover:bg-black/5"
             >
-              <X size={18} />
+              <X size={24} />
             </button>
           </div>
           <nav className="px-4 py-2 text-xs">
@@ -250,9 +222,9 @@ export default function Sidebar() {
       <button
         aria-label="Abrir menú"
         onClick={open}
-        className="p-2 rounded-md hover:bg-slate-100 text-slate-700"
+        className="p-3 rounded-md hover:bg-slate-100 text-slate-700"
       >
-        <Menu size={18} />
+        <Menu size={24} />
       </button>
 
       {isVisible && createPortal(Overlay, document.body)}

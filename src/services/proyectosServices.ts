@@ -15,7 +15,7 @@ export type Proyecto = {
   fuenteFinanciamientoId?: number;
   fuenteFinanciamientoNombre?: string;
   descripcionProyecto?: string;
-   investigadores?: {
+  investigadores?: {
     id: number;
     nombre_apellido: string;
   }[];
@@ -32,43 +32,42 @@ const BASE = import.meta.env.VITE_API_URL;
 export async function getProyectos(): Promise<Proyecto[]> {
   if (!BASE) return [];
   const data = await http<any[]>("/proyectos/");
-  
+
   return data.map((p: any) => ({
-  id: String(p.id),
-  codigoProyecto: String(p.codigo_proyecto),
-  nombreProyecto: p.nombre_proyecto,
-  fechaInicio: p.fecha_inicio,
-  fechaFinalizacion: p.fecha_fin,
+    id: String(p.id),
+    codigoProyecto: String(p.codigo_proyecto),
+    nombreProyecto: p.nombre_proyecto,
+    fechaInicio: p.fecha_inicio,
+    fechaFinalizacion: p.fecha_fin,
 
-  tipoProyectoId: p.tipo_proyecto?.id,
-  tipoProyectoNombre: p.tipo_proyecto?.nombre || "N/A",
+    tipoProyectoId: p.tipo_proyecto?.id,
+    tipoProyectoNombre: p.tipo_proyecto?.nombre || "N/A",
 
-  fuenteFinanciamientoId: p.fuente_financiamiento?.id,
-  fuenteFinanciamientoNombre: p.fuente_financiamiento?.nombre || "N/A",
-  descripcionProyecto: p.descripcion_proyecto || "",
-  investigadores: p.investigadores || [],
-  becarios: p.becarios || [],
-  
-}));
+    fuenteFinanciamientoId: p.fuente_financiamiento?.id,
+    fuenteFinanciamientoNombre: p.fuente_financiamiento?.nombre || "N/A",
+    descripcionProyecto: p.descripcion_proyecto || "",
+    investigadores: p.investigadores || [],
+    becarios: p.becarios || [],
+
+  }));
 
 }
 
-export async function upsertProyectos(payload: any)
- {
+export async function upsertProyectos(payload: any) {
   if (!BASE) throw new Error("Sin Backend");
 
   const body = {
-    codigo_proyecto: parseInt(payload.codigoProyecto, 10) || null,
+    codigo_proyecto: payload.codigoProyecto, // Re-added to payload
     nombre_proyecto: payload.nombreProyecto,
     descripcion_proyecto: payload.descripcionProyecto, // Usamos nombre como descripción por ahora
     fecha_inicio: payload.fechaInicio,
-    fecha_fin: payload.fechaFinalizacion || null,
     tipo_proyecto_id: payload.tipoProyectoId,
+    fecha_fin: payload.fechaFinalizacion || null,
     // Asumiendo que fuente de financiamiento también es un ID si existe
     fuente_financiamiento_id: payload.fuenteFinanciamientoId,
     investigadores_ids: payload.investigadoresIds || [], // 🔵 NUEVO
     becarios_ids: payload.becariosIds || [], // 🔵 NUEVO
-  
+
   };
 
   const url = payload.id ? `/proyectos/${payload.id}` : "/proyectos";

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { data, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Button from "@/components/Button";
@@ -74,38 +74,38 @@ export default function ProyectosForm() {
   }, [initialData]);
 
   const mutation = useMutation({
-  mutationFn: async (payload: any) => {
-    // 1️⃣ Crear / actualizar proyecto
-    const proyecto: any = await upsertProyectos(payload);
+    mutationFn: async (payload: any) => {
+      // 1️⃣ Crear / actualizar proyecto
+      const proyecto: any = await upsertProyectos(payload);
 
-const proyectoId =
-  proyecto?.id ?? payload.id;
+      const proyectoId =
+        proyecto?.id ?? payload.id;
 
 
-    // 2️⃣ Vincular investigadores
-    if (investigadoresIds.length > 0) {
-      await vincularInvestigadores(
-        proyectoId,
-        investigadoresIds
-      );
-    }
+      // 2️⃣ Vincular investigadores
+      if (investigadoresIds.length > 0) {
+        await vincularInvestigadores(
+          proyectoId,
+          investigadoresIds
+        );
+      }
 
-    // 3️⃣ Vincular becarios
-    if (becariosIds.length > 0) {
-      await vincularBecarios(
-        proyectoId,
-        becariosIds
-      );
-    }
+      // 3️⃣ Vincular becarios
+      if (becariosIds.length > 0) {
+        await vincularBecarios(
+          proyectoId,
+          becariosIds
+        );
+      }
 
-    return proyecto;
-  },
+      return proyecto;
+    },
 
-  onSuccess: () => {
-    qc.invalidateQueries({ queryKey: ["proyectos"] });
-    navigate(-1);
-  },
-});
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["proyectos"] });
+      navigate(-1);
+    },
+  });
 
 
   const clearError = (field: string) => {
@@ -165,10 +165,9 @@ const proyectoId =
     return <p>Cargando proyecto…</p>;
 
   const inputClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
+    `input ${errors[field]
+      ? "!border-red-500 !ring-2 !ring-red-500"
+      : ""
     }`;
 
   return (
@@ -220,13 +219,14 @@ const proyectoId =
           </>
         </Field>
 
-        <Field label="Descripción">
+
+        <Field label="Descripción del proyecto">
           <textarea
-            className="input min-h-[80px]"
-            value={descripcionProyecto}
-            onChange={(e) =>
-              setDescripcionProyecto(e.target.value)
-            }
+            className="input min-h-[100px]"
+            value={descripcionProyecto ?? ""}
+            onChange={(e) => setDescripcionProyecto(e.target.value)}
+            placeholder="Describe detalladamente los objetivos, metodología y alcance del proyecto."
+            required
           />
         </Field>
 
@@ -292,6 +292,7 @@ const proyectoId =
           />
         </Field>
 
+
         <Field label="Becarios">
           <PersonalProyectoField
             value={becariosIds}
@@ -345,8 +346,8 @@ const proyectoId =
             {mutation.isPending
               ? "Guardando…"
               : isEdit
-              ? "Actualizar"
-              : "Guardar"}
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>

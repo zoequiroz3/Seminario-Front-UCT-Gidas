@@ -93,9 +93,6 @@ export default function LoginPage() {
                 >
                     {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
-                <Link to="/forgot-password" className="text-xs font-medium text-slate-600 hover:text-slate-900 hover:underline">
-                    ¿Olvidaste tu contraseña?
-                </Link>
             </div>
           </div>
 
