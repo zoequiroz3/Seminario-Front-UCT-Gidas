@@ -1,5 +1,5 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Tarjeta from "@/components/Tarjeta";
@@ -7,9 +7,11 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { usePersonal } from "@/hooks/usePersonal";
 import { eliminarPersonal } from "@/services/personalServices";
 import type { PersonalType } from "@/services/personalServices";
+import SuccessToast from "@/components/SuccessToast";
 
 export default function PersonalLanding() {
   const navigate = useNavigate();
+  const location = useLocation();
   const qc = useQueryClient();
   const [sp] = useSearchParams();
   const tipo = sp.get("tipo") as PersonalType | null;
@@ -22,7 +24,20 @@ export default function PersonalLanding() {
   >([]);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // 🔵 Toggle selección usando clave compuesta rol + id
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // 🔥 LEE EL STATE DEL NAVIGATE (CREADO)
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      setShowSuccess(true);
+
+      // Limpia el state para que no reaparezca
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   const toggleSelect = (
     id: number,
     rol: string,
@@ -50,6 +65,10 @@ export default function PersonalLanding() {
     }
 
     qc.invalidateQueries({ queryKey: ["personal"] });
+
+    setSuccessMessage("Eliminado con éxito!");
+    setShowSuccess(true);
+
     cancelSelection();
   };
 
@@ -150,6 +169,13 @@ export default function PersonalLanding() {
         items={selectedItems.map((x) => x.nombre)}
         onCancel={cancelSelection}
         onConfirm={confirmDelete}
+      />
+
+      {/* Toast */}
+      <SuccessToast
+        open={showSuccess}
+        message={successMessage}
+        onClose={() => setShowSuccess(false)}
       />
     </section>
   );

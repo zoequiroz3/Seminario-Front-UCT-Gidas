@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import { useUct } from "@/hooks/useUct";
 import { useTiposPersonal } from "@/hooks/useTiposPersonal";
@@ -18,6 +19,7 @@ export default function FormPTAAProfesional({
   initialData,
   onCancel,
 }: Props) {
+  const navigate = useNavigate();
   const { uct } = useUct();
   const { data: tiposPersonal = [] } = useTiposPersonal();
 
@@ -27,7 +29,6 @@ export default function FormPTAAProfesional({
   const [horasSemanales, setHoras] = useState<number | "">("");
   const [tipoPersonalId, setTipoPersonalId] = useState<number | "">("");
   const [activo, setActivo] = useState(true);
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -80,11 +81,19 @@ export default function FormPTAAProfesional({
 
     if (isEdit && initialData?.id) {
       await actualizarPersonal(initialData.id, payload, "personal");
-    } else {
-      await upsertPersonal(payload);
+
+      navigate(`/personal/personal/${initialData.id}`, {
+        state: { successMessage: "Actualizado con éxito!" },
+      });
+
+      return;
     }
 
-    onCancel();
+    await upsertPersonal(payload);
+
+    navigate("/personal", {
+      state: { successMessage: "Creado con éxito!" },
+    });
   };
 
   return (
@@ -92,7 +101,6 @@ export default function FormPTAAProfesional({
       onSubmit={submit}
       className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
     >
-      {/* Nombre */}
       <Field label="Nombre y apellido">
         <>
           <input
@@ -113,7 +121,6 @@ export default function FormPTAAProfesional({
         </>
       </Field>
 
-      {/* Horas */}
       <Field label="Horas semanales">
         <>
           <input
@@ -136,16 +143,11 @@ export default function FormPTAAProfesional({
         </>
       </Field>
 
-      {/* Tipo Personal */}
       <Field label="Tipo de personal">
         <>
           <select
             className={`input ${
               errors.tipoPersonal ? "border-red-500 ring-2 ring-red-500" : ""
-            } ${
-              !tipoPersonalId
-                ? "text-slate-400"
-                : "text-slate-900"
             }`}
             value={tipoPersonalId}
             onChange={(e) => {
@@ -158,11 +160,7 @@ export default function FormPTAAProfesional({
               Seleccionar tipo de personal
             </option>
             {tiposPersonal.map((t) => (
-              <option
-                key={t.id}
-                value={t.id}
-                className="text-slate-900"
-              >
+              <option key={t.id} value={t.id}>
                 {t.nombre}
               </option>
             ))}
@@ -175,7 +173,6 @@ export default function FormPTAAProfesional({
         </>
       </Field>
 
-      {/* Botones */}
       <div className="flex justify-between pt-6">
         <Button
           type="button"
@@ -194,9 +191,6 @@ export default function FormPTAAProfesional({
   );
 }
 
-/* =========================
-   FIELD COMPONENT
-   ========================= */
 function Field({
   label,
   children,

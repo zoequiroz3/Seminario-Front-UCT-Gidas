@@ -6,11 +6,13 @@ import AutoresField from "@/components/AutoresField";
 import { useDocumentacionForm } from "@/hooks/useDocumentacionForm";
 import { getDocumentacionById } from "@/services/documentacionServices";
 import { removeAutorFromDocumentacion } from "@/services/documentacionServices";
+import { useUct } from "@/hooks/useUct";
 
 
 export default function DocumentacionForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { uct } = useUct(); // 🔥 TRAEMOS LA UCT
 
   const { data: initial, isLoading } = useQuery({
     queryKey: ["documentacion", id],
@@ -25,7 +27,6 @@ export default function DocumentacionForm() {
     setAutores,
     submit,
     isPending,
-    years,
   } = useDocumentacionForm(initial ?? undefined);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -44,6 +45,7 @@ export default function DocumentacionForm() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
+    const currentYear = new Date().getFullYear();
 
     if (!data.titulo.trim())
       newErrors.titulo = "Debe ingresar título";
@@ -51,12 +53,18 @@ export default function DocumentacionForm() {
     if (!autores || autores.length === 0)
       newErrors.autores = "Debe ingresar al menos un autor";
 
-    if (!data.anio)
-      newErrors.anio = "Debe seleccionar año";
-    
     if (!data.editorial.trim())
       newErrors.editorial = "Debe ingresar editorial";
 
+    if (!data.anio) {
+      newErrors.anio = "Debe ingresar un año";
+    } else if (
+      isNaN(data.anio) ||
+      data.anio < 1800 ||
+      data.anio > currentYear
+    ) {
+      newErrors.anio = `El año debe estar entre 1800 y ${currentYear}`;
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -64,9 +72,7 @@ export default function DocumentacionForm() {
 
   const inputClass = (field: string) =>
     `input text-sm md:text-base ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
+      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
     }`;
 
   return (
@@ -79,8 +85,23 @@ export default function DocumentacionForm() {
         onSubmit={async (e) => {
           e.preventDefault();
           if (!validate()) return;
-          await submit();
-          navigate("/documentacion");
+          if (!uct) return; // 🔥 aseguramos que exista
+
+          await submit(uct.id); // 🔥 pasamos el ID de la UCT al submit
+
+          if (isEdit) {
+            navigate(`/documentacion/${id}`, {
+              state: {
+                successMessage: "Documentación actualizada con éxito!",
+              },
+            });
+          } else {
+            navigate("/documentacion", {
+              state: {
+                successMessage: "Documentación creada con éxito!",
+              },
+            });
+          }
         }}
         className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
       >
@@ -110,30 +131,28 @@ export default function DocumentacionForm() {
         {/* Autores */}
         <div>
           <AutoresField
-  value={autores}
-  onChange={async (updatedAutores) => {
+            value={autores}
+            onChange={async (updatedAutores) => {
+              const removed = autores.filter(
+                (a) => !updatedAutores.some((u) => u.id === a.id)
+              );
 
-    // Detectar autores eliminados
-    const removed = autores.filter(
-      (a) => !updatedAutores.some((u) => u.id === a.id)
-    );
+              if (isEdit && id && removed.length > 0) {
+                for (const autor of removed) {
+                  await removeAutorFromDocumentacion(
+                    Number(id),
+                    autor.id
+                  );
+                }
+              }
 
-    if (isEdit && id && removed.length > 0) {
-      for (const autor of removed) {
-        await removeAutorFromDocumentacion(
-          Number(id),
-          autor.id
-        );
-      }
-    }
+              setAutores(updatedAutores);
 
-    setAutores(updatedAutores);
-
-    if (updatedAutores.length > 0)
-      clearError("autores");
-  }}
-  label="Autores"
-/>
+              if (updatedAutores.length > 0)
+                clearError("autores");
+            }}
+            label="Autores"
+          />
 
           {errors.autores && (
             <p className="text-red-500 text-sm mt-1">
@@ -144,60 +163,52 @@ export default function DocumentacionForm() {
 
         {/* Editorial */}
         <Field label="Editorial">
-  <>
-    <input
-      className={inputClass("editorial")}
-      value={data.editorial}
-      onChange={(e) => {
-        setData((d) => ({
-          ...d,
-          editorial: e.target.value,
-        }));
-        if (e.target.value.trim())
-          clearError("editorial");
-      }}
-    />
-    {errors.editorial && (
-      <p className="text-red-500 text-sm mt-1">
-        {errors.editorial}
-      </p>
-    )}
-  </>
-</Field>
-
+          <>
+            <input
+              className={inputClass("editorial")}
+              value={data.editorial}
+              onChange={(e) => {
+                setData((d) => ({
+                  ...d,
+                  editorial: e.target.value,
+                }));
+                if (e.target.value.trim())
+                  clearError("editorial");
+              }}
+            />
+            {errors.editorial && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.editorial}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Año */}
         <Field label="Año">
           <>
-            <select
-              className={`${inputClass("anio")} ${
-                !data.anio
-                  ? "text-slate-400"
-                  : "text-slate-900"
-              }`}
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              placeholder="Ej: 2024"
+              className={inputClass("anio")}
               value={data.anio ?? ""}
               onChange={(e) => {
-                const value = e.target.value
-                  ? Number(e.target.value)
-                  : undefined;
+                const onlyNumbers = e.target.value.replace(/\D/g, "");
+                const limited = onlyNumbers.slice(0, 4);
 
                 setData((d) => ({
                   ...d,
-                  anio: value,
+                  anio: limited ? Number(limited) : undefined,
                 }));
 
-                if (value) clearError("anio");
+                if (limited.length === 4)
+                  clearError("anio");
               }}
-            >
-              <option value="" disabled>
-                Seleccione un año
-              </option>
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
+            />
+
             {errors.anio && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.anio}
@@ -216,11 +227,7 @@ export default function DocumentacionForm() {
             Volver
           </Button>
 
-          <Button
-            type="submit"
-            size="sm"
-            disabled={isPending}
-          >
+          <Button type="submit" size="sm" disabled={isPending}>
             {isPending
               ? "Guardando…"
               : isEdit

@@ -1,11 +1,13 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Tarjeta from "@/components/Tarjeta";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useErogaciones } from "@/hooks/useErogaciones";
 import { deleteErogaciones } from "@/services/erogacionesServices";
+import SuccessToast from "@/components/SuccessToast";
+
 
 export default function ErogacionesLanding() {
   const navigate = useNavigate();
@@ -15,13 +17,23 @@ export default function ErogacionesLanding() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
-
+const [showSuccess, setShowSuccess] = useState(false);
   const toggleSelect = (id: number, checked: boolean) => {
     setSelectedIds((prev) =>
       checked ? [...prev, id] : prev.filter((x) => x !== id)
     );
   };
+const location = useLocation();
+const [successMessage, setSuccessMessage] = useState("");
 
+useEffect(() => {
+  if (location.state?.successMessage) {
+    setSuccessMessage(location.state.successMessage);
+    setShowSuccess(true);
+    window.history.replaceState({}, document.title);
+  }
+}, [location.state]);
+  
   const cancelSelection = () => {
     setSelectMode(false);
     setSelectedIds([]);
@@ -32,7 +44,7 @@ export default function ErogacionesLanding() {
     .filter((e) => selectedIds.includes(e.id))
     .map(
       (e) =>
-        `Erogación N° ${String(e.numeroErogacion).padStart(6, "0")} — ${
+        `Erogación N° ${String(e.numero_erogacion).padStart(6, "0")} — ${
           e.tipo_erogacion?.nombre ?? "—"
         }`
     );
@@ -44,6 +56,8 @@ export default function ErogacionesLanding() {
     }
     qc.invalidateQueries({ queryKey: ["erogaciones"] });
     cancelSelection();
+    setShowSuccess(true);
+
   };
 
   return (
@@ -111,7 +125,7 @@ export default function ErogacionesLanding() {
                 key={e.id}
                 item={e}
                 title={(x) =>
-                  `Erogación N° ${String(x.numeroErogacion).padStart(6, "0")}`
+                  `Erogación N° ${String(x.numero_erogacion).padStart(6, "0")}`
                 }
                 subtitle={(x) => x.tipo_erogacion?.nombre || "—"}
                 selectable={selectMode}
@@ -137,6 +151,12 @@ export default function ErogacionesLanding() {
         onCancel={cancelSelection}
         onConfirm={confirmDelete}
       />
+      <SuccessToast
+        open={showSuccess}
+        message={successMessage || "Eliminado con éxito!"}
+        onClose={() => setShowSuccess(false)}
+      />
+
     </section>
   );
 }

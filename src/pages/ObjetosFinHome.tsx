@@ -8,6 +8,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 
 import { getErogaciones, deleteErogaciones, type Erogaciones } from "@/services/erogacionesServices";
 import { getEquipamiento, deleteEquipamiento, type Equipamiento } from "@/services/equipamientoServices";
+import SuccessToast from "@/components/SuccessToast";
 
 type Item =
   | (Erogaciones & { tipo: "Erogación" })
@@ -22,7 +23,7 @@ function formatearFecha(fecha?: string) {
 export default function ObjetosLanding() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-
+const [showSuccess, setShowSuccess] = useState(false);
   const { data: erogaciones = [], isLoading: loadingErog } = useQuery({
     queryKey: ["erogaciones"],
     queryFn: getErogaciones,
@@ -57,6 +58,7 @@ export default function ObjetosLanding() {
     setSelectMode(false);
     setSelectedItems([]);
     setShowConfirm(false);
+    setShowSuccess(true);
   };
 
   const confirmDelete = async () => {
@@ -75,7 +77,7 @@ export default function ObjetosLanding() {
 
   const confirmItemsText = selectedItems.map((item) =>
     item.tipo === "Erogación"
-      ? `Erogación N° ${String(item.numeroErogacion).padStart(6, "0")}`
+      ? `Erogación N° ${String(item.numero_erogacion).padStart(6, "0")}`
       : item.denominacion
   );
 
@@ -127,7 +129,7 @@ export default function ObjetosLanding() {
                 item={item}
                 title={() =>
                   item.tipo === "Erogación"
-                    ? `Erogación N° ${String(item.numeroErogacion).padStart(6, "0")}`
+                    ? `Erogación N° ${String(item.numero_erogacion).padStart(6, "0")}`
                     : item.denominacion
                 }
                 subtitle={() =>
@@ -164,6 +166,11 @@ export default function ObjetosLanding() {
         onCancel={cancelSelection}
         onConfirm={confirmDelete}
       />
+            <SuccessToast
+              open={showSuccess}
+              message="Eliminado con éxito!"
+              onClose={() => setShowSuccess(false)}
+            />  
     </section>
   );
 }

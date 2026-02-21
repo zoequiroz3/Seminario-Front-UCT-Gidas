@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Tarjeta from "@/components/Tarjeta";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useEquipamiento } from "@/hooks/useEquipamiento";
+import SuccessToast from "@/components/SuccessToast";
+import { useLocation } from "react-router-dom";
 
 export default function EquipamientoLanding() {
   const navigate = useNavigate();
@@ -14,6 +16,10 @@ export default function EquipamientoLanding() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
+  const location = useLocation();
+  const [successMessage, setSuccessMessage] = useState("");
+
+   const [showSuccess, setShowSuccess] = useState(false);
 
   const toggleSelect = (id: number, checked: boolean) => {
     setSelectedIds((prev) =>
@@ -37,9 +43,18 @@ export default function EquipamientoLanding() {
     }
     qc.invalidateQueries({ queryKey: ["equipamiento"] });
     cancelSelection();
+    setShowSuccess(true);
   };
 
+useEffect(() => {
+  if (location.state?.successMessage) {
+    setSuccessMessage(location.state.successMessage);
+    setShowSuccess(true);
 
+    window.history.replaceState({}, document.title);
+  }
+}, [location.state]);
+  
 
 
   return (
@@ -103,6 +118,12 @@ export default function EquipamientoLanding() {
         onCancel={cancelSelection}
         onConfirm={confirmDelete}
       />
+      <SuccessToast
+  open={showSuccess}
+  message={successMessage || "Eliminado con éxito!"}
+  onClose={() => setShowSuccess(false)}
+/>
+
     </section>
   );
 }

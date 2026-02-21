@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import { useUct } from "@/hooks/useUct";
 import { useTiposFormacion } from "@/hooks/useTiposFormacion";
@@ -17,6 +18,7 @@ export default function FormBecario({
   initialData,
   onCancel,
 }: Props) {
+  const navigate = useNavigate();
   const { uct } = useUct();
   const { data: tiposFormacion = [] } = useTiposFormacion();
   const { fuentes = [] } = useFuentesFinanciamiento();
@@ -28,7 +30,6 @@ export default function FormBecario({
   const [tipoFormacionId, setTipoFormacionId] = useState<number | "">("");
   const [fuenteId, setFuenteId] = useState<number | "">("");
   const [activo, setActivo] = useState(true);
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -45,6 +46,14 @@ export default function FormBecario({
       setFuenteId(initialData.relaciones.fuente_financiamiento.id);
   }, [initialData]);
 
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
+
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
@@ -59,18 +68,11 @@ export default function FormBecario({
         "Debe seleccionar tipo de formación";
 
     if (!fuenteId)
-      newErrors.fuente = "Debe seleccionar fuente";
+      newErrors.fuente =
+        "Debe seleccionar fuente de financiamiento";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const clearError = (field: string) => {
-    setErrors((prev) => {
-      const copy = { ...prev };
-      delete copy[field];
-      return copy;
-    });
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -88,11 +90,19 @@ export default function FormBecario({
 
     if (isEdit && initialData?.id) {
       await actualizarBecario(initialData.id, payload);
-    } else {
-      await crearBecario(payload);
+
+      navigate(`/personal/becario/${initialData.id}`, {
+        state: { successMessage: "Actualizado con éxito!" },
+      });
+
+      return;
     }
 
-    onCancel();
+    await crearBecario(payload);
+
+    navigate("/personal", {
+      state: { successMessage: "Creado con éxito!" },
+    });
   };
 
   return (
@@ -171,19 +181,14 @@ export default function FormBecario({
                 ? +e.target.value
                 : "";
               setTipoFormacionId(value);
-              if (value)
-                clearError("tipoFormacion");
+              if (value) clearError("tipoFormacion");
             }}
           >
             <option value="" disabled>
               Seleccionar tipo de formación
             </option>
             {tiposFormacion.map((t) => (
-              <option
-                key={t.id}
-                value={t.id}
-                className="text-slate-900"
-              >
+              <option key={t.id} value={t.id}>
                 {t.nombre}
               </option>
             ))}
@@ -222,11 +227,7 @@ export default function FormBecario({
               Seleccionar fuente
             </option>
             {fuentes.map((f) => (
-              <option
-                key={f.id}
-                value={f.id}
-                className="text-slate-900"
-              >
+              <option key={f.id} value={f.id}>
                 {f.nombre}
               </option>
             ))}
@@ -238,7 +239,6 @@ export default function FormBecario({
           )}
         </>
       </Field>
-
 
       {/* Botones */}
       <div className="flex justify-between pt-6">
@@ -261,7 +261,7 @@ export default function FormBecario({
 
 /* =========================
    FIELD COMPONENT
-   ========================= */
+========================= */
 function Field({
   label,
   children,

@@ -1,12 +1,15 @@
-// hooks/useTrabajosReunion.ts
 import { useQuery } from "@tanstack/react-query";
-import { getTrabajos, type TrabajoReunion } from "@/services/trabajosReunionServices";
+import { getTrabajosReunion } from "@/services/trabajosReunionServices";
 
-export function useTrabajosReunion(investigadorId?: string) {
-  const { data = [], isLoading, isError, refetch } = useQuery<TrabajoReunion[]>({
-    queryKey: ["trabajos-reunion", investigadorId ?? "all"],
-    queryFn: () => getTrabajos(investigadorId ? { investigadorId } : undefined),
-    staleTime: 60_000,
+export function useTrabajosReunion() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["trabajos-reunion"],
+    queryFn: getTrabajosReunion,
   });
-  return { list: data, isLoading, isError, refetch };
+
+  return {
+    list: data ?? [],
+    isLoading,
+    isError,
+  };
 }

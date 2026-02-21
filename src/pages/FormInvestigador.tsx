@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 import { useUct } from "@/hooks/useUct";
 import { useDedicaciones } from "@/hooks/useDedicaciones";
@@ -18,6 +19,7 @@ export default function FormInvestigador({
   initialData,
   onCancel,
 }: Props) {
+  const navigate = useNavigate();
   const { uct } = useUct();
   const { data: dedicaciones = [] } = useDedicaciones();
   const { data: categorias = [] } = useCategoriasUtn();
@@ -31,7 +33,6 @@ export default function FormInvestigador({
   const [categoriaId, setCategoriaId] = useState<number | "">("");
   const [programaId, setProgramaId] = useState<number | "">("");
   const [activo, setActivo] = useState(true);
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -101,11 +102,19 @@ export default function FormInvestigador({
         payload,
         "investigador"
       );
-    } else {
-      await crearInvestigador(payload);
+
+      navigate(`/personal/investigador/${initialData.id}`, {
+        state: { successMessage: "Actualizado con éxito!" },
+      });
+
+      return;
     }
 
-    onCancel();
+    await crearInvestigador(payload);
+
+    navigate("/personal", {
+      state: { successMessage: "Creado con éxito!" },
+    });
   };
 
   return (
@@ -184,19 +193,14 @@ export default function FormInvestigador({
                 ? +e.target.value
                 : "";
               setDedicacionId(value);
-              if (value)
-                clearError("dedicacion");
+              if (value) clearError("dedicacion");
             }}
           >
             <option value="" disabled>
               Seleccionar dedicación
             </option>
             {dedicaciones.map((d) => (
-              <option
-                key={d.id}
-                value={d.id}
-                className="text-slate-900"
-              >
+              <option key={d.id} value={d.id}>
                 {d.nombre}
               </option>
             ))}
@@ -228,19 +232,14 @@ export default function FormInvestigador({
                 ? +e.target.value
                 : "";
               setCategoriaId(value);
-              if (value)
-                clearError("categoria");
+              if (value) clearError("categoria");
             }}
           >
             <option value="" disabled>
               Seleccionar categoría
             </option>
             {categorias.map((c) => (
-              <option
-                key={c.id}
-                value={c.id}
-                className="text-slate-900"
-              >
+              <option key={c.id} value={c.id}>
                 {c.nombre}
               </option>
             ))}
@@ -272,19 +271,14 @@ export default function FormInvestigador({
                 ? +e.target.value
                 : "";
               setProgramaId(value);
-              if (value)
-                clearError("programa");
+              if (value) clearError("programa");
             }}
           >
             <option value="" disabled>
               Seleccionar programa
             </option>
             {programas.map((p) => (
-              <option
-                key={p.id}
-                value={p.id}
-                className="text-slate-900"
-              >
+              <option key={p.id} value={p.id}>
                 {p.nombre}
               </option>
             ))}
@@ -296,7 +290,6 @@ export default function FormInvestigador({
           )}
         </>
       </Field>
-
 
       {/* Botones */}
       <div className="flex justify-between pt-6">
@@ -319,7 +312,7 @@ export default function FormInvestigador({
 
 /* =========================
    FIELD COMPONENT
-   ========================= */
+========================= */
 function Field({
   label,
   children,

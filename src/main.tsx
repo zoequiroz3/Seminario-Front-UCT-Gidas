@@ -40,6 +40,14 @@ import DocumentacionDetalle from "./pages/DocumentacionDetalle";
 import DocumentacionForm from "./pages/DocumentacionForm";
 import DocumentacionLanding from "./pages/DocumentacionHome";
 import PersonalForm from "@/pages/PersonalForm";
+import ProyectosDetalle from "./pages/ProyectosDetalle";
+import RegistrosPropiedadHome from "./pages/RegistrosPropiedadHome";
+import RegistrosPropiedadForm from "./pages/RegistrosPropiedadForm";
+import RegistrosPropiedadDetalle from "./pages/RegistrosPropiedadDetalle";
+import PlanificacionGrupoLanding from "./pages/PlanificacionesGrupoHome";
+import PlanificacionesGrupoForm from "./pages/PlanificacionesGrupoForm";
+import PlanificacionGrupoDetalle from "./pages/PlanificacionGrupoDetalle";
+import TrabajosReunionDetalle from "./pages/TrabajosReunionDetalle";
 import TransferenciasHome from "./pages/TransferenciasHome";
 import TransferenciasForm from "./pages/TransferenciasForm";
 import TransferenciasDetalle from "./pages/TransferenciasDetalle";
@@ -107,7 +115,8 @@ const router = createBrowserRouter([
       // Proyectos
       { path: "proyectos", element: <ProyectosLanding /> },
       { path: "proyectos/nuevo", element: <ProyectosForm /> },
-
+      { path: "proyectos/:id", element: <ProyectosDetalle /> },
+      { path: "proyectos/editar/:id", element: <ProyectosForm /> },
       // Docencia
       { path: "docenciaInvestigador", element: <DocenciaLanding /> },
       { path: "docenciaInvestigador/nuevo", element: <DocenciaForm /> },
@@ -117,6 +126,28 @@ const router = createBrowserRouter([
       // Trabajos en reuniones científicas
       { path: "trabajosCientInv", element: <TrabajosReunionHome /> },
       { path: "trabajosCientInv/nuevo", element: <TrabajosReunionForm /> },
+
+      //Actividades I+D+I
+      //Registros de propiedad  e industrial
+      { path: "registros-propiedad", element: <RegistrosPropiedadHome /> },
+      { path: "registros-propiedad/nuevo", element: <RegistrosPropiedadForm /> },
+      { path: "registros-propiedad/:id", element: <RegistrosPropiedadDetalle /> },
+      { path: "registros-propiedad/:id/editar", element: <RegistrosPropiedadForm /> },
+
+      // Planificaciones de grupo
+      { path: "planificaciones", element: <PlanificacionGrupoLanding /> },
+      { path: "planificaciones/nuevo", element: <PlanificacionesGrupoForm /> },
+      { path: "planificaciones/:id", element: <PlanificacionGrupoDetalle /> },
+      { path: "planificaciones/:id/editar", element: <PlanificacionesGrupoForm /> },
+
+      //Trabajos en reuniones científicas
+      { path: "trabajos-reunion", element: <TrabajosReunionHome /> },
+      { path: "trabajos-reunion/nuevo", element: <TrabajosReunionForm /> },
+      { path: "trabajos-reunion/:id", element: <TrabajosReunionDetalle /> },
+      { path: "trabajos-reunion/:id/editar", element: <TrabajosReunionForm /> },
+
+
+
 
       // Erogaciones / Compras
       { path: "erogaciones", element: <ErogacionesLanding /> },

@@ -1,7 +1,8 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import Button from "@/components/Button";
+import SuccessToast from "@/components/SuccessToast";
 
 import FormPTAAProfesional from "./FormPTAAProfesional";
 import FormBecario from "./FormBecario";
@@ -14,6 +15,7 @@ type Tipo = "" | "PTAA" | "PROFESIONAL" | "BECARIO" | "INVESTIGADOR";
 export default function PersonalForm() {
   const { rol, id } = useParams<{ rol?: string; id?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const isEdit = Boolean(id && rol);
 
@@ -26,20 +28,34 @@ export default function PersonalForm() {
   const [tipo, setTipo] = useState<Tipo>("");
   const [errorTipo, setErrorTipo] = useState(false);
 
-useEffect(() => {
-  if (!rol) return;
+  // 🔥 TOAST STATE
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const rolMap: Record<string, Tipo> = {
-    personal: "PTAA",
-    profesional: "PROFESIONAL",
-    becario: "BECARIO",
-    investigador: "INVESTIGADOR",
-  };
+  // 🔥 Escuchar mensaje desde navigate(state)
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      setShowSuccess(true);
 
-  const mapped = rolMap[rol.toLowerCase()];
-  if (mapped) setTipo(mapped);
-}, [rol]);
+      // limpiar state
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state]);
 
+  useEffect(() => {
+    if (!rol) return;
+
+    const rolMap: Record<string, Tipo> = {
+      personal: "PTAA",
+      profesional: "PROFESIONAL",
+      becario: "BECARIO",
+      investigador: "INVESTIGADOR",
+    };
+
+    const mapped = rolMap[rol.toLowerCase()];
+    if (mapped) setTipo(mapped);
+  }, [rol]);
 
   if (isLoading) return <p>Cargando…</p>;
 
@@ -89,7 +105,6 @@ useEffect(() => {
           </div>
         )}
 
-        {/* 🔥 SI NO HAY TIPO, SOLO BOTÓN VOLVER */}
         {!tipo && !isEdit && (
           <div className="border-t border-slate-200 pt-6 flex justify-start">
             <Button
@@ -104,7 +119,6 @@ useEffect(() => {
           </div>
         )}
 
-        {/* 🔥 SUBFORMS */}
         {(tipo === "PTAA" || tipo === "PROFESIONAL") && (
           <FormPTAAProfesional
             tipo={tipo}
@@ -127,6 +141,13 @@ useEffect(() => {
           />
         )}
       </div>
+
+      {/* 🔥 SUCCESS TOAST */}
+      <SuccessToast
+        open={showSuccess}
+        message={successMessage}
+        onClose={() => setShowSuccess(false)}
+      />
     </section>
   );
 }

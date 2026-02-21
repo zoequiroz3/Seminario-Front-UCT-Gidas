@@ -1,20 +1,36 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Tarjeta from "@/components/Tarjeta";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import SuccessToast from "@/components/SuccessToast";
 import { useDocumentacion } from "@/hooks/useDocumentacion";
 import { deleteDocumentacion } from "@/services/documentacionServices";
 
 export default function DocumentacionLanding() {
   const navigate = useNavigate();
+  const location = useLocation();
   const qc = useQueryClient();
   const { list = [], isLoading, isError } = useDocumentacion();
 
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // 🔥 LEE EL STATE DEL NAVIGATE (CREADO)
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      setShowSuccess(true);
+
+      // limpia el state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const toggleSelect = (id: number, checked: boolean) => {
     setSelectedIds((prev) =>
@@ -27,7 +43,7 @@ export default function DocumentacionLanding() {
     setSelectedIds([]);
     setShowConfirm(false);
   };
-  
+
   const selectedDocs = list
     .filter((d) => selectedIds.includes(d.id))
     .map((d) => d.titulo);
@@ -36,16 +52,20 @@ export default function DocumentacionLanding() {
     for (const id of selectedIds) {
       await deleteDocumentacion(id);
     }
+
     qc.invalidateQueries({ queryKey: ["documentacion"] });
+
+    setSuccessMessage("Eliminado con éxito!");
+    setShowSuccess(true);
+
     cancelSelection();
   };
 
   return (
-    <section className="w-full min-h-[calc(100vh-80px)] px-4 md:px-3 lg:px-2 py-2 flex flex-col text-sm">
-
+    <section className="w-full min-h-[calc(100vh-80px)] px-4 py-2 flex flex-col text-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+        <h2 className="text-2xl md:text-3xl font-semibold">
           Documentación
         </h2>
 
@@ -60,7 +80,6 @@ export default function DocumentacionLanding() {
             </Button>
 
             <Button
-              variant="primary"
               size="sm"
               onClick={() => navigate("/documentacion/nuevo")}
             >
@@ -72,7 +91,6 @@ export default function DocumentacionLanding() {
             {selectedIds.length > 0 && (
               <Button
                 size="sm"
-                className="px-3 py-1.5 text-xs"
                 onClick={() => setShowConfirm(true)}
               >
                 Eliminar
@@ -82,7 +100,6 @@ export default function DocumentacionLanding() {
             <Button
               variant="secondary"
               size="sm"
-              className="px-3 py-1.5 text-xs"
               onClick={cancelSelection}
             >
               Cancelar
@@ -110,6 +127,7 @@ export default function DocumentacionLanding() {
                   toggleSelect(d.id, checked)
                 }
                 onClick={() =>
+                  !selectMode &&
                   navigate(`/documentacion/${d.id}`)
                 }
               />
@@ -120,14 +138,20 @@ export default function DocumentacionLanding() {
 
       {/* Confirm dialog */}
       <ConfirmDialog
-      open={showConfirm}
-      title="Eliminar documentación"
-      message="¿Estás seguro de eliminar los siguientes documentos?"
-      items={selectedDocs}
-      onCancel={cancelSelection}
-      onConfirm={confirmDelete}
-    />
+        open={showConfirm}
+        title="Eliminar documentación"
+        message="¿Estás seguro de eliminar los siguientes documentos?"
+        items={selectedDocs}
+        onCancel={cancelSelection}
+        onConfirm={confirmDelete}
+      />
 
+      {/* Toast */}
+      <SuccessToast
+        open={showSuccess}
+        message={successMessage}
+        onClose={() => setShowSuccess(false)}
+      />
     </section>
   );
 }

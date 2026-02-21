@@ -1,222 +1,231 @@
-// src/pages/ProyectosForm.tsx
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Button from "@/components/Button";
-import DatePicker from "@/components/Calendar";
-import { upsertProyectos, type Proyecto } from "@/services/proyectosServices";
+import Calendar from "@/components/Calendar";
+import PersonalProyectoField from "@/components/PersonalProyectoField";
+
 import {
-  createTipoProyecto,
-  getFuentesFinanciamiento, // Import getFuentesFinanciamiento
-  getGruposUtn, // Import getGruposUtn
-  type Option,
-} from "@/services/optionsService";
+  upsertProyectos,
+  getProyectoById,
+  type Proyecto,
+  vincularBecarios,
+  vincularInvestigadores,
+} from "@/services/proyectosServices";
 
-// --------------------
-// Constantes
-// --------------------
-
-const initialProjectTypes: Option[] = [
-  { id: 1, nombre: "PICT" },
-  { id: 2, nombre: "PID" },
-  { id: 3, nombre: "PROINNOVA" },
-  { id: 4, nombre: "PDTS" },
-  { id: 5, nombre: "Internos" },
-  { id: 6, nombre: "Institucionales" },
-];
-
-const CREATE_NEW_ID = -1;
-
-// El tipo para el estado del formulario.
-type ProyectoDraft = Partial<Proyecto> & {
-  tipoProyectoId?: number;
-  codigoProyecto?: number; 
-  fuenteFinanciamientoId?: number; // Ensure this is explicitly optional
-  grupoUtnId?: number; // Ensure this is explicitly optional
-};
-
-// --------------------
-// Helpers fechas
-// --------------------
-
-const parseYMD = (s?: string | null): Date | null => {
-  if (!s) return null;
-  const [y, m, d] = s.split("-").map(Number);
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
-};
-
-const toYMD = (date: Date | null): string => {
-  if (!date) return "";
-  return date.toISOString().split("T")[0];
-};
-
-// --------------------
-// Componente
-// --------------------
+import { useTiposProyecto } from "@/hooks/useTiposProyecto";
+import { useFuentesFinanciamiento } from "@/hooks/useFuenteFinanciamiento";
+import { useInvestigadores } from "@/hooks/useInvestigadores";
+import { useBecarios } from "@/hooks/useBecarios";
 
 export default function ProyectosForm() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const isEdit = Boolean(id);
 
-  // --- Opciones de Select ---
-  const { data: fuentesFinanciamientoOpts } = useQuery({
-    queryKey: ["fuentesFinanciamiento"],
-    queryFn: getFuentesFinanciamiento,
-    staleTime: Infinity,
+  const tiposQuery = useTiposProyecto();
+  const fuentesQuery = useFuentesFinanciamiento();
+  const { data: investigadores = [] } = useInvestigadores();
+  const { data: becarios = [] } = useBecarios();
+
+  const tipos = tiposQuery.data || [];
+  const { fuentes = [] } = fuentesQuery;
+
+  const { data: initialData, isLoading } = useQuery<Proyecto | null>({
+    queryKey: ["proyecto", id],
+    queryFn: () =>
+      id ? getProyectoById(Number(id)) : Promise.resolve(null),
+    enabled: isEdit,
   });
 
-  const { data: gruposUtnOpts } = useQuery({
-    queryKey: ["gruposUtn"],
-    queryFn: getGruposUtn,
-    staleTime: Infinity,
-  });
+  const [nombreProyecto, setNombreProyecto] = useState("");
+  const [codigoProyecto, setCodigoProyecto] = useState("");
+  const [descripcionProyecto, setDescripcionProyecto] = useState("");
+  const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
+  const [fechaFin, setFechaFin] = useState<Date | null>(null);
+  const [tipoProyectoId, setTipoProyectoId] = useState<number | null>(null);
+  const [fuenteId, setFuenteId] = useState<number | null>(null);
 
-  // --- Estado ---
-  const [data, setData] = useState<ProyectoDraft>({
-    id: "",
-    codigoProyecto: 0, // Re-added
-    fechaInicio: "",
-    fechaFinalizacion: "",
-    nombreProyecto: "",
-    descripcionProyecto: "", // New required field
-    dificultadesProyecto: "", // New optional field
-    fuenteFinanciamientoId: undefined, // Initialize as undefined
-    grupoUtnId: undefined, // Initialize as undefined
-    // planificacionId: undefined, // Not adding to form for now as it's optional and not in backend payload
-  });
+  // 🔵 NUEVO
+  const [investigadoresIds, setInvestigadoresIds] = useState<number[]>([]);
+  const [becariosIds, setBecariosIds] = useState<number[]>([]);
 
-  const [tiposProyectoOpts, setTiposProyectoOpts] = useState<Option[]>(
-    initialProjectTypes
-  );
-  const [isCreating, setIsCreating] = useState(false);
-  const [newTypeName, setNewTypeName] = useState("");
+  const [errors, setErrors] =
+    useState<Record<string, string>>({});
 
-  // --------------------
-  // Mutaciones
-  // --------------------
+  useEffect(() => {
+    if (!initialData) return;
 
-  const { mutateAsync: mutateUpsertProject, isPending } = useMutation({
-    mutationFn: (payload: Proyecto) => upsertProyectos(payload),
+    setNombreProyecto(initialData.nombreProyecto ?? "");
+    setCodigoProyecto(initialData.codigoProyecto ?? "");
+    setDescripcionProyecto(initialData.descripcionProyecto ?? "");
+
+    if (initialData.fechaInicio)
+      setFechaInicio(new Date(initialData.fechaInicio));
+
+    if (initialData.fechaFinalizacion)
+      setFechaFin(new Date(initialData.fechaFinalizacion));
+
+    setTipoProyectoId(initialData.tipoProyectoId ?? null);
+    setFuenteId(initialData.fuenteFinanciamientoId ?? null);
+
+  }, [initialData]);
+
+  const mutation = useMutation({
+    mutationFn: async (payload: any) => {
+      // 1️⃣ Crear / actualizar proyecto
+      const proyecto: any = await upsertProyectos(payload);
+
+      const proyectoId =
+        proyecto?.id ?? payload.id;
+
+
+      // 2️⃣ Vincular investigadores
+      if (investigadoresIds.length > 0) {
+        await vincularInvestigadores(
+          proyectoId,
+          investigadoresIds
+        );
+      }
+
+      // 3️⃣ Vincular becarios
+      if (becariosIds.length > 0) {
+        await vincularBecarios(
+          proyectoId,
+          becariosIds
+        );
+      }
+
+      return proyecto;
+    },
+
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["proyectos"] });
+      navigate(-1);
     },
   });
 
-  const { mutate: mutateCreateType, isPending: isCreatingType } = useMutation({
-    mutationFn: (name: string) => createTipoProyecto(name),
-    onSuccess: (newType) => {
-      setTiposProyectoOpts((prev) => [...prev, newType]);
-      setData((d) => ({ ...d, tipoProyectoId: newType.id }));
-      setIsCreating(false);
-      setNewTypeName("");
-    },
-    onError: (err: any) => {
-      alert(err?.message ?? "No se pudo crear el tipo de proyecto.");
-    },
-  });
 
-  // --------------------
-  // Handlers
-  // --------------------
-
-
-
-
-
-  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedId = Number(e.target.value);
-    if (selectedId === CREATE_NEW_ID) {
-      setIsCreating(true);
-    } else {
-      setData((d) => ({ ...d, tipoProyectoId: selectedId }));
-    }
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
   };
 
-  const change =
-    (k: keyof ProyectoDraft) => (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> // Include HTMLTextAreaElement and HTMLSelectElement
-    ) => {
-      let value: string | number = e.target.value;
-      if (e.target.dataset.type === "number") {
-        value = parseInt(e.target.value, 10);
-        if (isNaN(value)) value = undefined as any; // Handle invalid number input
-      }
-      setData((d) => ({ ...d, [k]: value }));
-    };
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
 
-  const setFecha = (k: "fechaInicio" | "fechaFinalizacion") => (
-    dt: Date | null
-  ) => setData((d) => ({ ...d, [k]: toYMD(dt) }));
+    if (!codigoProyecto.trim())
+      newErrors.codigoProyecto =
+        "Debe ingresar código de proyecto";
 
-  const handleSaveNewType = () => {
-    if (!newTypeName.trim())
-      return alert("El nombre del nuevo tipo no puede estar vacío.");
-    mutateCreateType(newTypeName);
+    if (!nombreProyecto.trim())
+      newErrors.nombreProyecto =
+        "Debe ingresar nombre del proyecto";
+
+    if (!tipoProyectoId)
+      newErrors.tipoProyectoId =
+        "Debe seleccionar tipo de proyecto";
+
+    if (!fechaInicio)
+      newErrors.fechaInicio =
+        "Debe seleccionar fecha de inicio";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-
-  function buildPayload(): Proyecto {
-    if (!data.nombreProyecto?.trim())
-      throw new Error("El nombre del proyecto es obligatorio.");
-    if (!data.descripcionProyecto?.trim())
-      throw new Error("La descripción del proyecto es obligatoria."); // New validation
-        if (!data.tipoProyectoId)
-          throw new Error("El tipo de proyecto es obligatorio.");
-        if (!data.codigoProyecto || isNaN(data.codigoProyecto))
-          throw new Error("El código del proyecto es obligatorio y debe ser un número."); // Validation for code
-        if (!data.fechaInicio)
-          throw new Error("La fecha de inicio es obligatoria.");
-    
-        return {
-          id: data.id || undefined,
-          nombreProyecto: data.nombreProyecto,
-          descripcionProyecto: data.descripcionProyecto,
-          tipoProyectoId: data.tipoProyectoId,
-          codigoProyecto: data.codigoProyecto, // Re-added to payload
-          fechaInicio: data.fechaInicio,
-          fechaFinalizacion: data.fechaFinalizacion || undefined,
-      dificultadesProyecto: data.dificultadesProyecto || undefined,
-      grupoUtnId: data.grupoUtnId || undefined,
-      fuenteFinanciamientoId: data.fuenteFinanciamientoId || undefined,
-      planificacionId: data.planificacionId || undefined,
-    };
-  }
-
-  const onSubmit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await mutateUpsertProject(buildPayload());
-      navigate("/proyectos", { replace: true });
-    } catch (err: any) {
-      alert(err?.message ?? "No se pudo guardar el proyecto.");
-    }
+    if (!validate()) return;
+
+    mutation.mutate({
+      id: id ?? undefined,
+      nombreProyecto,
+      codigoProyecto,
+      descripcionProyecto,
+      fechaInicio: fechaInicio!.toISOString().split("T")[0],
+      fechaFinalizacion: fechaFin
+        ? fechaFin.toISOString().split("T")[0]
+        : undefined,
+      tipoProyectoId: tipoProyectoId!,
+      fuenteFinanciamientoId: fuenteId ?? undefined,
+
+      // 🔵 NUEVO
+      investigadoresIds,
+      becariosIds,
+    });
   };
 
-  // Opciones para el select, incluyendo "Crear nuevo..."
-  const finalTypeOptions = [
-    ...tiposProyectoOpts,
-    { id: CREATE_NEW_ID, nombre: "Crear nuevo tipo..." },
-  ];
+  if (isEdit && isLoading)
+    return <p>Cargando proyecto…</p>;
+
+  const inputClass = (field: string) =>
+    `input ${errors[field]
+      ? "!border-red-500 !ring-2 !ring-red-500"
+      : ""
+    }`;
 
   return (
-    <section className="px-4 py-3 w-full text-sm">
-      <h2 className="text-2xl md:text-3xl font-semibold mb-6">
-        Carga de Proyectos
+    <section className="w-full">
+      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+        {isEdit ? "Editar proyecto" : "Nuevo proyecto"}
       </h2>
 
       <form
-        onSubmit={onSubmit}
-        className="rounded-xl border border-slate-200 bg-white/70 p-5 shadow-sm space-y-5"
+        onSubmit={submit}
+        className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
+
+        <Field label="Código del proyecto">
+          <>
+            <input
+              className={inputClass("codigoProyecto")}
+              value={codigoProyecto}
+              onChange={(e) => {
+                setCodigoProyecto(e.target.value);
+                if (e.target.value.trim())
+                  clearError("codigoProyecto");
+              }}
+            />
+            {errors.codigoProyecto && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.codigoProyecto}
+              </p>
+            )}
+          </>
+        </Field>
+
         <Field label="Nombre del proyecto">
-          <input
-            className="input"
-            value={data.nombreProyecto ?? ""}
-            onChange={change("nombreProyecto")}
-            placeholder="Ej. Plataforma BI para GIDAS"
-            required
+          <>
+            <input
+              className={inputClass("nombreProyecto")}
+              value={nombreProyecto}
+              onChange={(e) => {
+                setNombreProyecto(e.target.value);
+                if (e.target.value.trim())
+                  clearError("nombreProyecto");
+              }}
+            />
+            {errors.nombreProyecto && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.nombreProyecto}
+              </p>
+            )}
+          </>
+        </Field>
+
+        <Field label="Descripción">
+          <textarea
+            className="input min-h-[80px]"
+            value={descripcionProyecto}
+            onChange={(e) =>
+              setDescripcionProyecto(e.target.value)
+            }
           />
         </Field>
 
@@ -231,193 +240,123 @@ export default function ProyectosForm() {
         </Field>
 
         <Field label="Tipo de proyecto">
-          <Select
-            options={finalTypeOptions}
-            value={isCreating ? "" : data.tipoProyectoId || ""}
-            onChange={handleTypeChange}
-            placeholder="Seleccione un tipo de proyecto"
-            disabled={isCreating}
-            required
+          <>
+            <select
+              className={inputClass("tipoProyectoId")}
+              value={tipoProyectoId ?? ""}
+              onChange={(e) => {
+                const value = e.target.value
+                  ? Number(e.target.value)
+                  : null;
+                setTipoProyectoId(value);
+                if (value)
+                  clearError("tipoProyectoId");
+              }}
+            >
+              <option value="" disabled>
+                Seleccionar tipo
+              </option>
+              {tipos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.tipoProyectoId && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.tipoProyectoId}
+              </p>
+            )}
+          </>
+        </Field>
+
+        <Field label="Fuente de financiamiento">
+          <select
+            className="input"
+            value={fuenteId ?? ""}
+            onChange={(e) =>
+              setFuenteId(
+                e.target.value
+                  ? Number(e.target.value)
+                  : null
+              )
+            }
+          >
+            <option value="">Sin fuente</option>
+            {fuentes.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.nombre}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {/* 🔵 NUEVO BLOQUE */}
+
+        <Field label="Investigadores">
+          <PersonalProyectoField
+            value={investigadoresIds}
+            options={investigadores}
+            onChange={setInvestigadoresIds}
           />
         </Field>
 
 
-                {isCreating && (
-
-
-                  <div className="p-4 bg-slate-50 rounded-lg space-y-3">
-
-
-                    <label className="font-medium text-sm">
-
-
-                      Nombre del nuevo tipo
-
-
-                    </label>
-
-
-                    <input
-
-
-                      className="input"
-
-
-                      value={newTypeName}
-
-
-                      onChange={(e) => setNewTypeName(e.target.value)}
-
-
-                      placeholder="Escriba el nombre y presione Guardar"
-
-
-                      autoFocus
-
-
-                    />
-
-
-                    <div className="flex items-center gap-2">
-
-
-                      <Button
-
-
-                        type="button"
-
-
-                        onClick={handleSaveNewType}
-
-
-                        disabled={isCreatingType}
-
-
-                      >
-
-
-                        {isCreatingType ? "Guardando..." : "Guardar Tipo"}
-
-
-                      </Button>
-
-
-                      <Button
-
-
-                        type="button"
-
-
-                        variant="secondary"
-
-
-                        onClick={() => setIsCreating(false)}
-
-
-                      >
-
-
-                        Cancelar
-
-
-                      </Button>
-
-
-                    </div>
-
-
-                  </div>
-
-
-                )}
-
-
-        
-
-
-                
-
-
-        
-
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-
-                  <Field label="Fecha de inicio">
-
-
-                    <DatePicker
-
-
-                      value={parseYMD(data.fechaInicio)}
-
-
-                      onChange={setFecha("fechaInicio")}
-
-
-                      label=""
-
-
-                      className="input"
-
-
-                      required
-
-
-                    />
-
-
-                  </Field>
-
-          <Field label="Fecha de finalización">
-            <DatePicker
-              value={parseYMD(data.fechaFinalizacion)}
-              onChange={setFecha("fechaFinalizacion")}
-              label=""
-              minDate={parseYMD(data.fechaInicio) || undefined}
+        <Field label="Becarios">
+          <PersonalProyectoField
+            value={becariosIds}
+            options={becarios}
+            onChange={setBecariosIds}
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Field label="Fecha inicio">
+            <>
+              <Calendar
+                value={fechaInicio}
+                onChange={(date) => {
+                  setFechaInicio(date);
+                  if (date)
+                    clearError("fechaInicio");
+                }}
+                className={inputClass("fechaInicio")}
+                helperText={
+                  errors.fechaInicio ?? "DD/MM/AAAA"
+                }
+              />
+            </>
+          </Field>
+
+          <Field label="Fecha fin">
+            <Calendar
+              value={fechaFin}
+              onChange={setFechaFin}
               className="input"
             />
           </Field>
         </div>
 
-        <Field label="Dificultades del proyecto (opcional)">
-          <textarea
-            className="input min-h-[100px]"
-            value={data.dificultadesProyecto ?? ""}
-            onChange={change("dificultadesProyecto")}
-            placeholder="Describa las dificultades encontradas durante el desarrollo del proyecto."
-          />
-        </Field>
-
-        <Field label="Fuente de financiamiento (opcional)">
-          <Select
-            options={fuentesFinanciamientoOpts || []}
-            value={data.fuenteFinanciamientoId || ""}
-            onChange={change("fuenteFinanciamientoId")}
-            placeholder="Seleccione la fuente de financiamiento"
-          />
-        </Field>
-
-        <Field label="Grupo UTN (opcional)">
-          <Select
-            options={gruposUtnOpts || []}
-            value={data.grupoUtnId || ""}
-            onChange={change("grupoUtnId")}
-            placeholder="Seleccione el grupo UTN asociado"
-          />
-        </Field>
-
-        <div className="mt-8 flex items-center justify-between">
+        <div className="flex justify-between pt-6">
           <Button
             type="button"
             variant="secondary"
+            size="sm"
             onClick={() => navigate(-1)}
           >
             Volver
           </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Guardando…" : "Cargar"}
+
+          <Button
+            type="submit"
+            size="sm"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending
+              ? "Guardando…"
+              : isEdit
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>
@@ -434,28 +373,10 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block font-medium mb-2">{label}</label>
+      <label className="block text-sm font-medium mb-2">
+        {label}
+      </label>
       {children}
     </div>
-  );
-}
-
-type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
-  options: Option[];
-  placeholder?: string;
-};
-
-function Select({ options, placeholder, ...props }: SelectProps) {
-  return (
-    <select className="input" data-type="number" {...props}>
-      <option value="" disabled>
-        {placeholder ?? "Seleccione"}
-      </option>
-      {options.map((o) => (
-        <option key={o.id} value={o.id}>
-          {o.nombre}
-        </option>
-      ))}
-    </select>
   );
 }

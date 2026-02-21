@@ -1,15 +1,28 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useUct } from "@/hooks/useUct";
 import { useAuth } from "@/context/AuthContext";
 import Button from "@/components/Button";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import SuccessToast from "@/components/SuccessToast";
 
 export default function Home() {
   const { uct, isLoading, isError, remove } = useUct();
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      setShowSuccess(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   if (isLoading) {
     return (
@@ -34,8 +47,6 @@ export default function Home() {
 
   return (
     <section className="space-y-10">
-
-      {/* HEADER */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">
@@ -67,10 +78,8 @@ export default function Home() {
         )}
       </div>
 
-      {/* CONTENIDO */}
       {uct ? (
         <article className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
-
           <dl className="grid md:grid-cols-2 gap-y-8 gap-x-12 text-sm">
             <Field label="Facultad Regional" value={uct.facultadRegional} />
             <Field label="Nombre y Sigla" value={uct.nombreSigla} />
@@ -83,7 +92,6 @@ export default function Home() {
               className="md:col-span-2"
             />
           </dl>
-
         </article>
       ) : (
         <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white/60 p-12 text-center space-y-4">
@@ -96,9 +104,6 @@ export default function Home() {
         </div>
       )}
 
-      
-
-      {/* CONFIRM DIALOG */}
       <ConfirmDialog
         open={showConfirm}
         title="Eliminar Unidad Científico Tecnológica"
@@ -112,7 +117,15 @@ export default function Home() {
         onConfirm={async () => {
           await remove();
           setShowConfirm(false);
+          setSuccessMessage("Eliminado con éxito!");
+          setShowSuccess(true);
         }}
+      />
+
+      <SuccessToast
+        open={showSuccess}
+        message={successMessage}
+        onClose={() => setShowSuccess(false)}
       />
     </section>
   );
