@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useAuth } from "@/context/AuthContext";
+import { User } from "lucide-react";
 
 export default function AppLayout() {
   const { logout } = useAuth();
@@ -43,7 +44,7 @@ export default function AppLayout() {
             onClick={() => setOpen(!open)}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition"
           >
-            👤
+            <User className="w-6 h-6 text-slate-600" />
           </button>
 
           {open && (

@@ -24,14 +24,6 @@ const items: Item[] = [
     ],
   },
   {
-    label: "Actividades I+D+i",
-    children: [
-      { label: "Distinciones Recibidas", to: "/distinciones" },
-      { label: "Participaciones Relevantes", to: "/participaciones" },
-      { label: "Visitantes del país y del extranjero", to: "/visitantes" },
-    ],
-  },
-  {
     label: "Proyectos",
     children: [
       { label: "Ver todos los proyectos", to: "/proyectos" },
@@ -67,6 +59,9 @@ const items: Item[] = [
           }
         ],
       },
+      { label: "Distinciones Recibidas", to: "/distinciones" },
+      { label: "Participaciones Relevantes", to: "/participaciones" },
+      { label: "Visitantes del país y del extranjero", to: "/visitantes" },
     ],
   },
   {
