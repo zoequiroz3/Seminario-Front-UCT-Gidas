@@ -64,7 +64,7 @@ export default function VisitantesForm() {
         ? actualizarVisitante(Number(id), payload)
         : crearVisitante(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["visitantes"] });
+      qc.invalidateQueries({ queryKey: ["visitantes", "all"] });
       navigate(-1);
     },
   });

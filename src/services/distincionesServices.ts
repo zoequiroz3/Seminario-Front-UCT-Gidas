@@ -27,7 +27,7 @@ export const getDistinciones = async (
   params.append("orden", orden);
   
   const query = params.toString() ? `?${params.toString()}` : "";
-  return http<Distincion[]>(`/distinciones${query}`, {
+  return http<Distincion[]>(`/distinciones/${query}`, {
     method: "GET",
   });
 };

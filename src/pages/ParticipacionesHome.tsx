@@ -106,16 +106,7 @@ export default function ParticipacionesHome() {
         {isError && <p>Error al cargar.</p>}
 
         {!isLoading && !isError && list.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-slate-500 mb-4">No hay participaciones registradas.</p>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate("/participaciones/nuevo")}
-            >
-              Agregar primera participación
-            </Button>
-          </div>
+          <p className="text-slate-500 text-center py-12">No hay participaciones registradas.</p>
         )}
 
         {!isLoading && !isError && list.length > 0 && (
@@ -125,7 +116,7 @@ export default function ParticipacionesHome() {
                 key={p.id}
                 item={p}
                 title={(x) => x.nombre_evento}
-                subtitle={(x) => `${x.forma_participacion} - ${formatDate(x.fecha)}${x.investigador ? ` - ${x.investigador}` : ''}`}
+                subtitle={(x) => x.investigador || "—"}
                 selectable={selectMode}
                 selected={selectedIds.includes(p.id)}
                 onSelectChange={(checked) =>

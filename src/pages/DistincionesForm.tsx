@@ -48,7 +48,7 @@ export default function DistincionesForm() {
         ? actualizarDistincion(Number(id), payload)
         : crearDistincion(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["distinciones"] });
+      qc.invalidateQueries({ queryKey: ["distinciones", "all"] });
       navigate(-1);
     },
   });

@@ -106,16 +106,7 @@ export default function VisitantesHome() {
         {isError && <p>Error al cargar.</p>}
 
         {!isLoading && !isError && list.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-slate-500 mb-4">No hay visitantes registrados.</p>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate("/visitantes/nuevo")}
-            >
-              Agregar primer visitante
-            </Button>
-          </div>
+          <p className="text-slate-500 text-center py-12">No hay visitantes registrados.</p>
         )}
 
         {!isLoading && !isError && list.length > 0 && (
@@ -125,12 +116,7 @@ export default function VisitantesHome() {
                 key={v.id}
                 item={v}
                 title={(x) => x.razon}
-                subtitle={(x) => {
-                  const fecha = formatDate(x.fecha);
-                  const procedencia = x.visita_procedencia?.nombre || '';
-                  const tipo = x.tipo_visita?.nombre || '';
-                  return `${fecha} - ${tipo} - ${procedencia}`;
-                }}
+                subtitle={(x) => x.visita_procedencia?.nombre || "—"}
                 selectable={selectMode}
                 selected={selectedIds.includes(v.id)}
                 onSelectChange={(checked) =>

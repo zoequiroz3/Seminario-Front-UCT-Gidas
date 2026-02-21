@@ -7,7 +7,7 @@ export interface Proyecto {
 }
 
 export const getProyectos = async (): Promise<Proyecto[]> => {
-  return http<Proyecto[]>("/proyecto-investigacion", {
+  return http<Proyecto[]>("/proyecto-investigacion/", {
     method: "GET",
   });
 };

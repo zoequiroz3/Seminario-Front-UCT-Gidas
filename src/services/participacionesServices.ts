@@ -25,7 +25,7 @@ export const getParticipaciones = async (
   params.append("orden", orden);
   
   const query = params.toString() ? `?${params.toString()}` : "";
-  return http<Participacion[]>(`/participaciones-relevantes${query}`, {
+  return http<Participacion[]>(`/participaciones-relevantes/${query}`, {
     method: "GET",
   });
 };

@@ -106,16 +106,7 @@ export default function DistincionesHome() {
         {isError && <p>Error al cargar.</p>}
 
         {!isLoading && !isError && list.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-slate-500 mb-4">No hay distinciones registradas.</p>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate("/distinciones/nuevo")}
-            >
-              Agregar primera distinción
-            </Button>
-          </div>
+          <p className="text-slate-500 text-center py-12">No hay distinciones registradas.</p>
         )}
 
         {!isLoading && !isError && list.length > 0 && (
@@ -125,11 +116,7 @@ export default function DistincionesHome() {
                 key={d.id}
                 item={d}
                 title={(x) => x.descripcion}
-                subtitle={(x) => {
-                  const fecha = formatDate(x.fecha);
-                  const proyecto = x.proyecto?.nombre ? ` - ${x.proyecto.nombre}` : '';
-                  return `${fecha}${proyecto}`;
-                }}
+                subtitle={(x) => x.proyecto?.nombre || "—"}
                 selectable={selectMode}
                 selected={selectedIds.includes(d.id)}
                 onSelectChange={(checked) =>

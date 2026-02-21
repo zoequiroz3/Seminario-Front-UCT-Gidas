@@ -55,10 +55,13 @@ import TransferenciasDetalle from "./pages/TransferenciasDetalle";
 // Actividades I+D+i
 import DistincionesHome from "./pages/DistincionesHome";
 import DistincionesForm from "./pages/DistincionesForm";
+import DistincionesDetalle from "./pages/DistincionesDetalle";
 import ParticipacionesHome from "./pages/ParticipacionesHome";
 import ParticipacionesForm from "./pages/ParticipacionesForm";
+import ParticipacionesDetalle from "./pages/ParticipacionesDetalle";
 import VisitantesHome from "./pages/VisitantesHome";
 import VisitantesForm from "./pages/VisitantesForm";
+import VisitantesDetalle from "./pages/VisitantesDetalle";
 
 // Definición de rutas
 const router = createBrowserRouter([
@@ -179,17 +182,17 @@ const router = createBrowserRouter([
       // Actividades I+D+i
       { path: "distinciones", element: <DistincionesHome /> },
       { path: "distinciones/nuevo", element: <DistincionesForm /> },
-      { path: "distinciones/:id", element: <DistincionesForm /> },
+      { path: "distinciones/:id", element: <DistincionesDetalle /> },
       { path: "distinciones/:id/editar", element: <DistincionesForm /> },
 
       { path: "participaciones", element: <ParticipacionesHome /> },
       { path: "participaciones/nuevo", element: <ParticipacionesForm /> },
-      { path: "participaciones/:id", element: <ParticipacionesForm /> },
+      { path: "participaciones/:id", element: <ParticipacionesDetalle /> },
       { path: "participaciones/:id/editar", element: <ParticipacionesForm /> },
 
       { path: "visitantes", element: <VisitantesHome /> },
       { path: "visitantes/nuevo", element: <VisitantesForm /> },
-      { path: "visitantes/:id", element: <VisitantesForm /> },
+      { path: "visitantes/:id", element: <VisitantesDetalle /> },
       { path: "visitantes/:id/editar", element: <VisitantesForm /> },
 
       { path: "*", element: <NotFound /> },

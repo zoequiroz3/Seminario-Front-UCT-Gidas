@@ -6,7 +6,7 @@ export interface TipoVisita {
 }
 
 export const getTiposVisita = async (): Promise<TipoVisita[]> => {
-  return http<TipoVisita[]>("/tipos-visita", {
+  return http<TipoVisita[]>("/tipos-visita/", {
     method: "GET",
   });
 };

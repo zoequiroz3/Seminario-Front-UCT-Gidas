@@ -54,7 +54,7 @@ export default function ParticipacionesForm() {
         ? actualizarParticipacion(Number(id), payload)
         : crearParticipacion(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["participaciones"] });
+      qc.invalidateQueries({ queryKey: ["participaciones", "all"] });
       navigate(-1);
     },
   });

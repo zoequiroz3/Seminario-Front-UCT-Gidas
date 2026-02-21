@@ -6,7 +6,7 @@ export interface Procedencia {
 }
 
 export const getProcedencias = async (): Promise<Procedencia[]> => {
-  return http<Procedencia[]>("/procedencias", {
+  return http<Procedencia[]>("/procedencias/", {
     method: "GET",
   });
 };
