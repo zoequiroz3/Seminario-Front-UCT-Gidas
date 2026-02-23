@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import Button from "@/components/Button";
 import AutoresField from "@/components/AutoresField";
+import Field from "@/components/Field";
 import { useDocumentacionForm } from "@/hooks/useDocumentacionForm";
 import { getDocumentacionById } from "@/services/documentacionServices";
 import { removeAutorFromDocumentacion } from "@/services/documentacionServices";
@@ -71,8 +72,7 @@ export default function DocumentacionForm() {
   };
 
   const inputClass = (field: string) =>
-    `input text-sm md:text-base ${
-      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
     }`;
 
   return (
@@ -103,7 +103,7 @@ export default function DocumentacionForm() {
             });
           }
         }}
-        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
+        className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
         {/* Título */}
         <Field label="Título">
@@ -231,8 +231,8 @@ export default function DocumentacionForm() {
             {isPending
               ? "Guardando…"
               : isEdit
-              ? "Actualizar"
-              : "Guardar"}
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>
@@ -240,19 +240,3 @@ export default function DocumentacionForm() {
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}

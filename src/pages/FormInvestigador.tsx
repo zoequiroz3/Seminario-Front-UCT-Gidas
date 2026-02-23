@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
+import Field from "@/components/Field";
 import { useUct } from "@/hooks/useUct";
 import { useDedicaciones } from "@/hooks/useDedicaciones";
 import { useCategoriasUtn } from "@/hooks/useCategoriasUtn";
@@ -126,11 +127,10 @@ export default function FormInvestigador({
       <Field label="Nombre y apellido">
         <>
           <input
-            className={`input ${
-              errors.nombre
-                ? "border-red-500 ring-2 ring-red-500"
+            className={`input ${errors.nombre
+                ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-            }`}
+              }`}
             value={nombreApellido}
             onChange={(e) => {
               setNombre(e.target.value);
@@ -151,11 +151,10 @@ export default function FormInvestigador({
         <>
           <input
             type="number"
-            className={`input ${
-              errors.horas
-                ? "border-red-500 ring-2 ring-red-500"
+            className={`input ${errors.horas
+                ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-            }`}
+              }`}
             value={horasSemanales}
             onChange={(e) => {
               const value =
@@ -178,15 +177,13 @@ export default function FormInvestigador({
       <Field label="Dedicación">
         <>
           <select
-            className={`input ${
-              errors.dedicacion
-                ? "border-red-500 ring-2 ring-red-500"
+            className={`input ${errors.dedicacion
+                ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-            } ${
-              !dedicacionId
+              } ${!dedicacionId
                 ? "text-slate-400"
                 : "text-slate-900"
-            }`}
+              }`}
             value={dedicacionId}
             onChange={(e) => {
               const value = e.target.value
@@ -217,15 +214,13 @@ export default function FormInvestigador({
       <Field label="Categoría UTN">
         <>
           <select
-            className={`input ${
-              errors.categoria
-                ? "border-red-500 ring-2 ring-red-500"
+            className={`input ${errors.categoria
+                ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-            } ${
-              !categoriaId
+              } ${!categoriaId
                 ? "text-slate-400"
                 : "text-slate-900"
-            }`}
+              }`}
             value={categoriaId}
             onChange={(e) => {
               const value = e.target.value
@@ -256,15 +251,13 @@ export default function FormInvestigador({
       <Field label="Programa de incentivos">
         <>
           <select
-            className={`input ${
-              errors.programa
-                ? "border-red-500 ring-2 ring-red-500"
+            className={`input ${errors.programa
+                ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-            } ${
-              !programaId
+              } ${!programaId
                 ? "text-slate-400"
                 : "text-slate-900"
-            }`}
+              }`}
             value={programaId}
             onChange={(e) => {
               const value = e.target.value
@@ -307,25 +300,5 @@ export default function FormInvestigador({
         </Button>
       </div>
     </form>
-  );
-}
-
-/* =========================
-   FIELD COMPONENT
-========================= */
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }

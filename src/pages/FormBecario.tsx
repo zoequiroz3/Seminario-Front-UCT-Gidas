@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
+import Field from "@/components/Field";
 import { useUct } from "@/hooks/useUct";
 import { useTiposFormacion } from "@/hooks/useTiposFormacion";
 import { useFuentesFinanciamiento } from "@/hooks/useFuenteFinanciamiento";
@@ -114,11 +115,10 @@ export default function FormBecario({
       <Field label="Nombre y apellido">
         <>
           <input
-            className={`input ${
-              errors.nombre
-                ? "border-red-500 ring-2 ring-red-500"
+            className={`input ${errors.nombre
+                ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-            }`}
+              }`}
             value={nombreApellido}
             onChange={(e) => {
               setNombre(e.target.value);
@@ -139,11 +139,10 @@ export default function FormBecario({
         <>
           <input
             type="number"
-            className={`input ${
-              errors.horas
-                ? "border-red-500 ring-2 ring-red-500"
+            className={`input ${errors.horas
+                ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-            }`}
+              }`}
             value={horasSemanales}
             onChange={(e) => {
               const value =
@@ -166,15 +165,13 @@ export default function FormBecario({
       <Field label="Tipo de formación">
         <>
           <select
-            className={`input ${
-              errors.tipoFormacion
-                ? "border-red-500 ring-2 ring-red-500"
+            className={`input ${errors.tipoFormacion
+                ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-            } ${
-              !tipoFormacionId
+              } ${!tipoFormacionId
                 ? "text-slate-400"
                 : "text-slate-900"
-            }`}
+              }`}
             value={tipoFormacionId}
             onChange={(e) => {
               const value = e.target.value
@@ -205,15 +202,13 @@ export default function FormBecario({
       <Field label="Fuente de financiamiento">
         <>
           <select
-            className={`input ${
-              errors.fuente
+            className={`input ${errors.fuente
                 ? "border-red-500 ring-2 ring-red-500"
                 : ""
-            } ${
-              !fuenteId
+              } ${!fuenteId
                 ? "text-slate-400"
                 : "text-slate-900"
-            }`}
+              }`}
             value={fuenteId}
             onChange={(e) => {
               const value = e.target.value
@@ -259,22 +254,3 @@ export default function FormBecario({
   );
 }
 
-/* =========================
-   FIELD COMPONENT
-========================= */
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}

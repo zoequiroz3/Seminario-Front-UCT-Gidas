@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
+import Field from "@/components/Field";
 import {
   createErogacion,
   getErogacionById,
@@ -123,10 +124,9 @@ export default function ErogacionesForm() {
     return <p className="text-slate-500">Cargando erogación…</p>;
 
   const inputClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
+    `input ${errors[field]
+      ? "!border-red-500 !ring-2 !ring-red-500"
+      : ""
     }`;
 
   return (
@@ -140,106 +140,98 @@ export default function ErogacionesForm() {
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
         {/* Número */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Número de erogación
-          </label>
-          <input
-            type="number"
-            className={inputClass("numero")}
-            value={data.numeroErogacion}
-            onChange={(e) => {
-              setData({ ...data, numeroErogacion: e.target.value });
-              if (e.target.value) clearError("numero");
-            }}
-          />
-          {errors.numero && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.numero}
-            </p>
-          )}
-        </div>
+        <Field label="Número de erogación">
+          <>
+            <input
+              type="number"
+              className={inputClass("numero")}
+              value={data.numeroErogacion}
+              onChange={(e) => {
+                setData({ ...data, numeroErogacion: e.target.value });
+                if (e.target.value) clearError("numero");
+              }}
+            />
+            {errors.numero && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.numero}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Tipo */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Tipo de erogación
-          </label>
-          <select
-            className={`${inputClass("tipo")} ${
-              !data.tipoErogacionId
-                ? "text-slate-400"
-                : "text-slate-900"
-            }`}
-            value={data.tipoErogacionId}
-            onChange={(e) => {
-              setData({ ...data, tipoErogacionId: e.target.value });
-              if (e.target.value) clearError("tipo");
-            }}
-          >
-            <option value="" disabled>
-              Seleccionar tipo
-            </option>
-            {tipos.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nombre}
+        <Field label="Tipo de erogación">
+          <>
+            <select
+              className={`${inputClass("tipo")} ${!data.tipoErogacionId
+                  ? "text-slate-400"
+                  : "text-slate-900"
+                }`}
+              value={data.tipoErogacionId}
+              onChange={(e) => {
+                setData({ ...data, tipoErogacionId: e.target.value });
+                if (e.target.value) clearError("tipo");
+              }}
+            >
+              <option value="" disabled>
+                Seleccionar tipo
               </option>
-            ))}
-          </select>
-          {errors.tipo && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.tipo}
-            </p>
-          )}
-        </div>
+              {tipos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.tipo && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.tipo}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Ingresos */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Ingresos
-          </label>
-          <input
-            type="number"
-            className={inputClass("ingresos")}
-            value={data.ingresos}
-            onChange={(e) => {
-              setData({ ...data, ingresos: e.target.value });
-              clearError("ingresos");
-            }}
-          />
-          {errors.ingresos && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.ingresos}
-            </p>
-          )}
-        </div>
+        <Field label="Ingresos">
+          <>
+            <input
+              type="number"
+              className={inputClass("ingresos")}
+              value={data.ingresos}
+              onChange={(e) => {
+                setData({ ...data, ingresos: e.target.value });
+                clearError("ingresos");
+              }}
+            />
+            {errors.ingresos && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.ingresos}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Egresos */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Egresos
-          </label>
-          <input
-            type="number"
-            className={inputClass("egresos")}
-            value={data.egresos}
-            onChange={(e) => {
-              setData({ ...data, egresos: e.target.value });
-              clearError("egresos");
-            }}
-          />
-          {errors.egresos && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.egresos}
-            </p>
-          )}
-        </div>
+        <Field label="Egresos">
+          <>
+            <input
+              type="number"
+              className={inputClass("egresos")}
+              value={data.egresos}
+              onChange={(e) => {
+                setData({ ...data, egresos: e.target.value });
+                clearError("egresos");
+              }}
+            />
+            {errors.egresos && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.egresos}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Fuente */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Fuente de financiamiento
-          </label>
+        <Field label="Fuente de financiamiento">
           <select
             className="input"
             value={data.fuenteFinanciamientoId}
@@ -259,7 +251,7 @@ export default function ErogacionesForm() {
               </option>
             ))}
           </select>
-        </div>
+        </Field>
 
         <div className="flex justify-between pt-6">
           <Button
@@ -279,8 +271,8 @@ export default function ErogacionesForm() {
             {isPending
               ? "Guardando…"
               : isEdit
-              ? "Actualizar"
-              : "Guardar"}
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>

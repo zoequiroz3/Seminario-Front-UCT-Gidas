@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Calendar from "@/components/Calendar";
 import PersonalProyectoField from "@/components/PersonalProyectoField";
+import Field from "@/components/Field";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import SuccessToast from "@/components/SuccessToast";
 
@@ -189,10 +190,9 @@ export default function TrabajosRevistasForm() {
     return <p>Cargando…</p>;
 
   const inputClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
+    `input ${errors[field]
+      ? "!border-red-500 !ring-2 !ring-red-500"
+      : ""
     }`;
 
   return (
@@ -388,8 +388,8 @@ export default function TrabajosRevistasForm() {
             {mutation.isPending
               ? "Guardando…"
               : isEdit
-              ? "Actualizar"
-              : "Guardar"}
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>
@@ -417,22 +417,5 @@ export default function TrabajosRevistasForm() {
         }
       />
     </section>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }

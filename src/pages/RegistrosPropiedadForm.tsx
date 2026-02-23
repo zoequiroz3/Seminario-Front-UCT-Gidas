@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
+import Field from "@/components/Field";
 import DatePicker from "@/components/Calendar";
 import { useUct } from "@/hooks/useUct";
 import { useTiposRegistroPropiedad } from "@/hooks/useTipoRegistroPropiedad";
@@ -107,10 +108,9 @@ export default function RegistrosPropiedadForm() {
   };
 
   const inputClass = (field: string) =>
-    `input text-sm md:text-base ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
+    `input ${errors[field]
+      ? "!border-red-500 !ring-2 !ring-red-500"
+      : ""
     }`;
 
   if (isEdit && isLoading)
@@ -124,7 +124,7 @@ export default function RegistrosPropiedadForm() {
 
       <form
         onSubmit={submit}
-        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
+        className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
         {/* Nombre del artículo */}
         <Field label="Nombre del artículo">
@@ -198,11 +198,10 @@ export default function RegistrosPropiedadForm() {
         <Field label="Tipo de registro">
           <>
             <select
-              className={`${inputClass("tipo_registro_id")} ${
-                !data.tipo_registro_id
+              className={`${inputClass("tipo_registro_id")} ${!data.tipo_registro_id
                   ? "text-slate-400"
                   : "text-slate-900"
-              }`}
+                }`}
               value={data.tipo_registro_id}
               onChange={(e) => {
                 setData({
@@ -249,8 +248,8 @@ export default function RegistrosPropiedadForm() {
             {isPending
               ? "Guardando…"
               : isEdit
-              ? "Actualizar"
-              : "Guardar"}
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>
@@ -258,19 +257,3 @@ export default function RegistrosPropiedadForm() {
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}

@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
+import Field from "@/components/Field";
 import React, { useState, useEffect } from "react";
 import {
   getEquipamientoById,
@@ -35,8 +36,8 @@ export default function EquipamientoForm() {
     if (initial) {
       const formattedDate = initial.fecha_incorporacion
         ? new Date(initial.fecha_incorporacion)
-            .toISOString()
-            .split("T")[0]
+          .toISOString()
+          .split("T")[0]
         : "";
 
       setData({
@@ -88,8 +89,7 @@ export default function EquipamientoForm() {
   if (isLoading) return <p>Cargando…</p>;
 
   const inputClass = (field: string) =>
-    `input text-sm md:text-base ${
-      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
     }`;
 
   return (
@@ -124,7 +124,7 @@ export default function EquipamientoForm() {
             });
           }
         }}
-        className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
+        className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
         <Field label="Denominación">
           <>
@@ -240,8 +240,8 @@ export default function EquipamientoForm() {
             {isPending
               ? "Guardando…"
               : isEdit
-              ? "Actualizar"
-              : "Guardar"}
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>
@@ -249,19 +249,3 @@ export default function EquipamientoForm() {
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}

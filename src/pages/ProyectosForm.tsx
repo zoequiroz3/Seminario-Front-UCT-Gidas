@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import Button from "@/components/Button";
 import Calendar from "@/components/Calendar";
+import Field from "@/components/Field";
 import PersonalProyectoField from "@/components/PersonalProyectoField";
 
 import {
@@ -355,19 +356,3 @@ export default function ProyectosForm() {
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}

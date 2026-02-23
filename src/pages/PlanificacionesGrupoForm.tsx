@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
+import Field from "@/components/Field";
 import {
   createPlanificacion,
   getPlanificacionById,
@@ -96,8 +97,7 @@ export default function PlanificacionGrupoForm() {
   };
 
   const inputClass = (field: string) =>
-    `input ${
-      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
     }`;
 
   if (isEdit && isLoading)
@@ -113,47 +113,45 @@ export default function PlanificacionGrupoForm() {
         onSubmit={submit}
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Año
-          </label>
-          <input
-            type="number"
-            className={inputClass("anio")}
-            value={data.anio}
-            onChange={(e) => {
-              if (e.target.value.length <= 4) {
-                setData({ ...data, anio: e.target.value });
-                clearError("anio");
-              }
-            }}
-          />
-          {errors.anio && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.anio}
-            </p>
-          )}
-        </div>
+        <Field label="Año">
+          <>
+            <input
+              type="number"
+              className={inputClass("anio")}
+              value={data.anio}
+              onChange={(e) => {
+                if (e.target.value.length <= 4) {
+                  setData({ ...data, anio: e.target.value });
+                  clearError("anio");
+                }
+              }}
+            />
+            {errors.anio && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.anio}
+              </p>
+            )}
+          </>
+        </Field>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Descripción
-          </label>
-          <textarea
-            rows={8}
-            className={inputClass("descripcion")}
-            value={data.descripcion}
-            onChange={(e) => {
-              setData({ ...data, descripcion: e.target.value });
-              clearError("descripcion");
-            }}
-          />
-          {errors.descripcion && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.descripcion}
-            </p>
-          )}
-        </div>
+        <Field label="Descripción">
+          <>
+            <textarea
+              rows={8}
+              className={inputClass("descripcion")}
+              value={data.descripcion}
+              onChange={(e) => {
+                setData({ ...data, descripcion: e.target.value });
+                clearError("descripcion");
+              }}
+            />
+            {errors.descripcion && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.descripcion}
+              </p>
+            )}
+          </>
+        </Field>
 
         <div className="flex justify-between pt-6">
           <Button
@@ -169,8 +167,8 @@ export default function PlanificacionGrupoForm() {
             {isPending
               ? "Guardando…"
               : isEdit
-              ? "Actualizar"
-              : "Guardar"}
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>

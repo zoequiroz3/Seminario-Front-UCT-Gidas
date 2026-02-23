@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Calendar from "@/components/Calendar";
 import PersonalProyectoField from "@/components/PersonalProyectoField";
+import Field from "@/components/Field";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import SuccessToast from "@/components/SuccessToast";
 
@@ -174,164 +175,148 @@ export default function TrabajoReunionForm() {
   if (isEdit && isLoading)
     return <p>Cargando trabajo…</p>;
 
-return (
-  <section className="w-full">
-    <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-      {isEdit ? "Editar trabajo" : "Nuevo trabajo"}
-    </h2>
-
-    <form
-      onSubmit={submit}
-      className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
-    >
-      {/* TÍTULO */}
-      <Field label="Título del trabajo">
-        <input
-          className="input"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-        />
-      </Field>
-
-      {/* NOMBRE REUNIÓN */}
-      <Field label="Nombre de la reunión">
-        <input
-          className="input"
-          value={nombreReunion}
-          onChange={(e) =>
-            setNombreReunion(e.target.value)
-          }
-        />
-      </Field>
-
-      {/* PROCEDENCIA */}
-      <Field label="Procedencia">
-        <input
-          className="input"
-          value={procedencia}
-          onChange={(e) =>
-            setProcedencia(e.target.value)
-          }
-        />
-      </Field>
-
-      {/* TIPO */}
-      <Field label="Tipo de reunión">
-        <select
-          className="input"
-          value={tipoId ?? ""}
-          onChange={(e) =>
-            setTipoId(
-              e.target.value
-                ? Number(e.target.value)
-                : null
-            )
-          }
-        >
-          <option value="" disabled>
-            Seleccionar tipo
-          </option>
-          {tipos.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nombre}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      {/* INVESTIGADORES */}
-      <Field label="Investigadores">
-        <PersonalProyectoField
-          value={investigadoresIds}
-          options={investigadores}
-          onChange={setInvestigadoresIds}
-          isEdit={isEdit}
-          onRemoveConfirm={(personaId) => {
-            const inv = investigadores.find(
-              (i) => i.id === personaId
-            );
-
-            if (inv) {
-              setInvestigadorAEliminar({
-                id: inv.id,
-                nombre: inv.nombre_apellido,
-              });
-            }
-          }}
-        />
-      </Field>
-
-      {/* FECHA */}
-      <Field label="Fecha de inicio">
-        <Calendar
-          value={fechaInicio}
-          onChange={setFechaInicio}
-        />
-      </Field>
-
-      {/* BOTONES */}
-      <div className="flex justify-between pt-6">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={() => navigate(-1)}
-        >
-          Volver
-        </Button>
-
-        <Button
-          type="submit"
-          size="sm"
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending
-            ? "Guardando…"
-            : isEdit
-            ? "Actualizar"
-            : "Guardar"}
-        </Button>
-      </div>
-    </form>
-
-    {/* POPUP DESVINCULAR */}
-    <ConfirmDialog
-      open={!!investigadorAEliminar}
-      title="Desvincular investigador"
-      message={`¿Desea desvincular a ${investigadorAEliminar?.nombre}?`}
-      items={[]}
-      onCancel={() =>
-        setInvestigadorAEliminar(null)
-      }
-      onConfirm={() =>
-        desvincularMutation.mutate(
-          investigadorAEliminar!.id
-        )
-      }
-    />
-
-    {/* TOAST */}
-    <SuccessToast
-      open={showSuccess}
-      message={successMessage}
-      onClose={() => setShowSuccess(false)}
-    />
-  </section>
-);
-}
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
   return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
+    <section className="w-full">
+      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+        {isEdit ? "Editar trabajo" : "Nuevo trabajo"}
+      </h2>
+
+      <form
+        onSubmit={submit}
+        className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
+      >
+        {/* TÍTULO */}
+        <Field label="Título del trabajo">
+          <input
+            className="input"
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+          />
+        </Field>
+
+        {/* NOMBRE REUNIÓN */}
+        <Field label="Nombre de la reunión">
+          <input
+            className="input"
+            value={nombreReunion}
+            onChange={(e) =>
+              setNombreReunion(e.target.value)
+            }
+          />
+        </Field>
+
+        {/* PROCEDENCIA */}
+        <Field label="Procedencia">
+          <input
+            className="input"
+            value={procedencia}
+            onChange={(e) =>
+              setProcedencia(e.target.value)
+            }
+          />
+        </Field>
+
+        {/* TIPO */}
+        <Field label="Tipo de reunión">
+          <select
+            className="input"
+            value={tipoId ?? ""}
+            onChange={(e) =>
+              setTipoId(
+                e.target.value
+                  ? Number(e.target.value)
+                  : null
+              )
+            }
+          >
+            <option value="" disabled>
+              Seleccionar tipo
+            </option>
+            {tipos.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nombre}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {/* INVESTIGADORES */}
+        <Field label="Investigadores">
+          <PersonalProyectoField
+            value={investigadoresIds}
+            options={investigadores}
+            onChange={setInvestigadoresIds}
+            isEdit={isEdit}
+            onRemoveConfirm={(personaId) => {
+              const inv = investigadores.find(
+                (i) => i.id === personaId
+              );
+
+              if (inv) {
+                setInvestigadorAEliminar({
+                  id: inv.id,
+                  nombre: inv.nombre_apellido,
+                });
+              }
+            }}
+          />
+        </Field>
+
+        {/* FECHA */}
+        <Field label="Fecha de inicio">
+          <Calendar
+            value={fechaInicio}
+            onChange={setFechaInicio}
+          />
+        </Field>
+
+        {/* BOTONES */}
+        <div className="flex justify-between pt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate(-1)}
+          >
+            Volver
+          </Button>
+
+          <Button
+            type="submit"
+            size="sm"
+            disabled={mutation.isPending}
+          >
+            {mutation.isPending
+              ? "Guardando…"
+              : isEdit
+                ? "Actualizar"
+                : "Guardar"}
+          </Button>
+        </div>
+      </form>
+
+      {/* POPUP DESVINCULAR */}
+      <ConfirmDialog
+        open={!!investigadorAEliminar}
+        title="Desvincular investigador"
+        message={`¿Desea desvincular a ${investigadorAEliminar?.nombre}?`}
+        items={[]}
+        onCancel={() =>
+          setInvestigadorAEliminar(null)
+        }
+        onConfirm={() =>
+          desvincularMutation.mutate(
+            investigadorAEliminar!.id
+          )
+        }
+      />
+
+      {/* TOAST */}
+      <SuccessToast
+        open={showSuccess}
+        message={successMessage}
+        onClose={() => setShowSuccess(false)}
+      />
+    </section>
   );
 }

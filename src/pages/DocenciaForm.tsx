@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Calendar from "@/components/Calendar";
+import Field from "@/components/Field";
 import { useInvestigadores } from "@/hooks/useInvestigadores";
 import { useGradosAcademicos } from "@/hooks/useGradoAcademico";
 import { useRolesActividadDocencia } from "@/hooks/useActividadDocenciaRol";
@@ -120,8 +121,7 @@ export default function FormDocenciaInvestigador() {
   if (isEdit && isLoading) return <p>Cargando actividad…</p>;
 
   const inputClass = (field: string) =>
-    `input ${
-      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
     }`;
 
   return (
@@ -138,184 +138,177 @@ export default function FormDocenciaInvestigador() {
       >
 
         {/* Investigador */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Investigador
-          </label>
-          <select
-            className={inputClass("investigador")}
-            value={investigadorId ?? ""}
-            onChange={(e) => {
-              const value = e.target.value
-                ? Number(e.target.value)
-                : null;
-              setInvestigadorId(value);
-              if (value) clearError("investigador");
-            }}
-          >
-            <option value="" disabled>
-              Seleccionar investigador
-            </option>
-            {investigadores.map((inv) => (
-              <option key={inv.id} value={inv.id}>
-                {inv.nombre_apellido}
+        <Field label="Investigador">
+          <>
+            <select
+              className={inputClass("investigador")}
+              value={investigadorId ?? ""}
+              onChange={(e) => {
+                const value = e.target.value
+                  ? Number(e.target.value)
+                  : null;
+                setInvestigadorId(value);
+                if (value) clearError("investigador");
+              }}
+            >
+              <option value="" disabled>
+                Seleccionar investigador
               </option>
-            ))}
-          </select>
-          {errors.investigador && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.investigador}
-            </p>
-          )}
-        </div>
+              {investigadores.map((inv) => (
+                <option key={inv.id} value={inv.id}>
+                  {inv.nombre_apellido}
+                </option>
+              ))}
+            </select>
+            {errors.investigador && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.investigador}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Curso */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Curso
-          </label>
-          <input
-            className={inputClass("curso")}
-            value={curso}
-            onChange={(e) => {
-              setCurso(e.target.value);
-              if (e.target.value.trim()) clearError("curso");
-            }}
-          />
-          {errors.curso && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.curso}
-            </p>
-          )}
-        </div>
+        <Field label="Curso">
+          <>
+            <input
+              className={inputClass("curso")}
+              value={curso}
+              onChange={(e) => {
+                setCurso(e.target.value);
+                if (e.target.value.trim()) clearError("curso");
+              }}
+            />
+            {errors.curso && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.curso}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Institución */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Institución
-          </label>
-          <input
-            className={inputClass("institucion")}
-            value={institucion}
-            onChange={(e) => {
-              setInstitucion(e.target.value);
-              if (e.target.value.trim())
-                clearError("institucion");
-            }}
-          />
-          {errors.institucion && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.institucion}
-            </p>
-          )}
-        </div>
+        <Field label="Institución">
+          <>
+            <input
+              className={inputClass("institucion")}
+              value={institucion}
+              onChange={(e) => {
+                setInstitucion(e.target.value);
+                if (e.target.value.trim())
+                  clearError("institucion");
+              }}
+            />
+            {errors.institucion && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.institucion}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Fechas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Fecha inicio
-            </label>
-            <Calendar
-              value={fechaInicio}
-              onChange={(date) => {
-                setFechaInicio(date);
-                if (date) clearError("fechaInicio");
-              }}
-              className={inputClass("fechaInicio")}
-              helperText={errors.fechaInicio ?? "DD/MM/AAAA"}
-            />
-            {errors.fechaInicio && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.fechaInicio}
-              </p>
-            )}
-          </div>
+          <Field label="Fecha inicio">
+            <>
+              <Calendar
+                value={fechaInicio}
+                onChange={(date) => {
+                  setFechaInicio(date);
+                  if (date) clearError("fechaInicio");
+                }}
+                className={inputClass("fechaInicio")}
+                helperText={errors.fechaInicio ?? "DD/MM/AAAA"}
+              />
+              {errors.fechaInicio && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.fechaInicio}
+                </p>
+              )}
+            </>
+          </Field>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Fecha fin
-            </label>
-            <Calendar
-              value={fechaFin}
-              onChange={(date) => {
-                setFechaFin(date);
-                if (date) clearError("fechaFin");
-              }}
-              className={inputClass("fechaFin")}
-              helperText={errors.fechaFin ?? "DD/MM/AAAA"}
-            />
-            {errors.fechaFin && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.fechaFin}
-              </p>
-            )}
-          </div>
+          <Field label="Fecha fin">
+            <>
+              <Calendar
+                value={fechaFin}
+                onChange={(date) => {
+                  setFechaFin(date);
+                  if (date) clearError("fechaFin");
+                }}
+                className={inputClass("fechaFin")}
+                helperText={errors.fechaFin ?? "DD/MM/AAAA"}
+              />
+              {errors.fechaFin && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.fechaFin}
+                </p>
+              )}
+            </>
+          </Field>
         </div>
 
         {/* Grado académico */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Grado académico
-          </label>
-          <select
-            className={inputClass("gradoAcademico")}
-            value={gradoAcademicoId ?? ""}
-            onChange={(e) => {
-              const value = e.target.value
-                ? Number(e.target.value)
-                : null;
-              setGradoAcademicoId(value);
-              if (value) clearError("gradoAcademico");
-            }}
-          >
-            <option value="" disabled>
-              Seleccionar grado académico
-            </option>
-            {gradosAcademicos.map((grado) => (
-              <option key={grado.id} value={grado.id}>
-                {grado.nombre}
+        <Field label="Grado académico">
+          <>
+            <select
+              className={inputClass("gradoAcademico")}
+              value={gradoAcademicoId ?? ""}
+              onChange={(e) => {
+                const value = e.target.value
+                  ? Number(e.target.value)
+                  : null;
+                setGradoAcademicoId(value);
+                if (value) clearError("gradoAcademico");
+              }}
+            >
+              <option value="" disabled>
+                Seleccionar grado académico
               </option>
-            ))}
-          </select>
-          {errors.gradoAcademico && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.gradoAcademico}
-            </p>
-          )}
-        </div>
+              {gradosAcademicos.map((grado) => (
+                <option key={grado.id} value={grado.id}>
+                  {grado.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.gradoAcademico && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.gradoAcademico}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Rol actividad */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Rol en la actividad
-          </label>
-          <select
-            className={inputClass("rolActividad")}
-            value={rolActividadId ?? ""}
-            onChange={(e) => {
-              const value = e.target.value
-                ? Number(e.target.value)
-                : null;
-              setRolActividadId(value);
-              if (value) clearError("rolActividad");
-            }}
-          >
-            <option value="" disabled>
-              Seleccionar rol
-            </option>
-            {rolesActividad.map((rol) => (
-              <option key={rol.id} value={rol.id}>
-                {rol.nombre}
+        <Field label="Rol en la actividad">
+          <>
+            <select
+              className={inputClass("rolActividad")}
+              value={rolActividadId ?? ""}
+              onChange={(e) => {
+                const value = e.target.value
+                  ? Number(e.target.value)
+                  : null;
+                setRolActividadId(value);
+                if (value) clearError("rolActividad");
+              }}
+            >
+              <option value="" disabled>
+                Seleccionar rol
               </option>
-            ))}
-          </select>
-          {errors.rolActividad && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.rolActividad}
-            </p>
-          )}
-        </div>
+              {rolesActividad.map((rol) => (
+                <option key={rol.id} value={rol.id}>
+                  {rol.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.rolActividad && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.rolActividad}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Botones */}
         <div className="flex justify-between pt-6">

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
+import Field from "@/components/Field";
 import { useUct } from "@/hooks/useUct";
 import {
   createArticulo,
@@ -114,10 +115,9 @@ export default function ArticulosDivulgacionForm() {
   };
 
   const inputClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
+    `input ${errors[field]
+      ? "!border-red-500 !ring-2 !ring-red-500"
+      : ""
     }`;
 
   if (isEdit && isLoading)
@@ -140,82 +140,76 @@ export default function ArticulosDivulgacionForm() {
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
         {/* Título */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Título
-          </label>
+        <Field label="Título">
+          <>
+            <input
+              className={inputClass("titulo")}
+              value={data.titulo}
+              onChange={(e) => {
+                const value = e.target.value;
+                setData({ ...data, titulo: value });
 
-          <input
-            className={inputClass("titulo")}
-            value={data.titulo}
-            onChange={(e) => {
-              const value = e.target.value;
-              setData({ ...data, titulo: value });
+                if (value.trim().length >= 5) {
+                  clearError("titulo");
+                }
+              }}
+            />
 
-              if (value.trim().length >= 5) {
-                clearError("titulo");
-              }
-            }}
-          />
+            {errors.titulo && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.titulo}
+              </p>
+            )}
+          </>
+        </Field>
 
-          {errors.titulo && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.titulo}
-            </p>
-          )}
-        </div>
+        <Field label="Descripción">
+          <>
+            <textarea
+              rows={4}
+              className={inputClass("descripcion")}
+              value={data.descripcion}
+              onChange={(e) => {
+                const value = e.target.value;
+                setData({ ...data, descripcion: value });
 
-        {/* Descripción */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Descripción
-          </label>
+                if (value.trim().length >= 10) {
+                  clearError("descripcion");
+                }
+              }}
+            />
 
-          <textarea
-            rows={4}
-            className={inputClass("descripcion")}
-            value={data.descripcion}
-            onChange={(e) => {
-              const value = e.target.value;
-              setData({ ...data, descripcion: value });
+            {errors.descripcion && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.descripcion}
+              </p>
+            )}
+          </>
+        </Field>
 
-              if (value.trim().length >= 10) {
-                clearError("descripcion");
-              }
-            }}
-          />
+        <Field label="Fecha de publicación">
+          <>
+            <DatePicker
+              value={data.fecha_publicacion}
+              onChange={(date) => {
+                setData({
+                  ...data,
+                  fecha_publicacion: date,
+                });
 
-          {errors.descripcion && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.descripcion}
-            </p>
-          )}
-        </div>
+                if (date) clearError("fecha");
+              }}
+              className={inputClass("fecha")}
+              helperText={errors.fecha ?? "DD/MM/AAAA"}
+            />
 
-        {/* Fecha */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Fecha de publicación
-          </label>
-
-          <DatePicker
-            value={data.fecha_publicacion}
-            onChange={(date) => {
-              setData({
-                ...data,
-                fecha_publicacion: date,
-              });
-
-              if (date) clearError("fecha");
-            }}
-          />
-
-          {errors.fecha && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.fecha}
-            </p>
-          )}
-        </div>
+            {errors.fecha && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.fecha}
+              </p>
+            )}
+          </>
+        </Field>
 
         {/* Botones */}
         <div className="flex justify-between pt-6">
@@ -236,8 +230,8 @@ export default function ArticulosDivulgacionForm() {
             {isPending
               ? "Guardando…"
               : isEdit
-              ? "Actualizar"
-              : "Guardar"}
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>

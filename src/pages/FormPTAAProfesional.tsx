@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
+import Field from "@/components/Field";
 import { useUct } from "@/hooks/useUct";
 import { useTiposPersonal } from "@/hooks/useTiposPersonal";
 import {
@@ -104,9 +105,8 @@ export default function FormPTAAProfesional({
       <Field label="Nombre y apellido">
         <>
           <input
-            className={`input ${
-              errors.nombre ? "border-red-500 ring-2 ring-red-500" : ""
-            }`}
+            className={`input ${errors.nombre ? "!border-red-500 !ring-2 !ring-red-500" : ""
+              }`}
             value={nombreApellido}
             onChange={(e) => {
               setNombre(e.target.value);
@@ -125,9 +125,8 @@ export default function FormPTAAProfesional({
         <>
           <input
             type="number"
-            className={`input ${
-              errors.horas ? "border-red-500 ring-2 ring-red-500" : ""
-            }`}
+            className={`input ${errors.horas ? "!border-red-500 !ring-2 !ring-red-500" : ""
+              }`}
             value={horasSemanales}
             onChange={(e) => {
               const value = e.target.value === "" ? "" : +e.target.value;
@@ -146,9 +145,8 @@ export default function FormPTAAProfesional({
       <Field label="Tipo de personal">
         <>
           <select
-            className={`input ${
-              errors.tipoPersonal ? "border-red-500 ring-2 ring-red-500" : ""
-            }`}
+            className={`input ${errors.tipoPersonal ? "!border-red-500 !ring-2 !ring-red-500" : ""
+              }`}
             value={tipoPersonalId}
             onChange={(e) => {
               const value = e.target.value ? +e.target.value : "";
@@ -188,22 +186,5 @@ export default function FormPTAAProfesional({
         </Button>
       </div>
     </form>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
-import MockIndicator from "@/components/MockIndicator";
+import Field from "@/components/Field";
 import AdoptanteSelector from "@/components/AdoptanteSelector";
 import {
     createTransferencia,
@@ -208,16 +208,14 @@ export default function TransferenciasForm() {
         `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`;
 
     return (
-        <section className="px-4 py-3 w-full text-sm">
-            <MockIndicator />
-
-            <h2 className="text-2xl md:text-3xl font-semibold mb-6">
+        <section className="w-full">
+            <h2 className="text-2xl md:text-3xl font-semibold leading-none">
                 {isEdit ? "Editar transferencia" : "Nueva transferencia"}
             </h2>
 
             <form
                 onSubmit={onSubmit}
-                className="rounded-xl border border-slate-200 bg-white/70 p-5 shadow-sm space-y-5"
+                className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
             >
                 {/* Denominación (mock-only) */}
                 <Field label="Denominación">
@@ -292,7 +290,7 @@ export default function TransferenciasForm() {
                 </Field>
 
                 {/* Row: Monto + Nro Erogación */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Field label="Monto ($)">
                         <>
                             <input
@@ -321,13 +319,14 @@ export default function TransferenciasForm() {
                 </div>
 
                 {/* Row: Fechas (usando DatePicker como Proyectos) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Field label="Fecha de inicio">
                         <>
                             <DatePicker
                                 value={parseYMD(data.fechaInicio)}
                                 onChange={setFecha("fechaInicio")}
                                 className={inputClass("fechaInicio")}
+                                helperText={errors.fechaInicio ?? "DD/MM/AAAA"}
                             />
                             {errors.fechaInicio && (
                                 <p className="text-red-500 text-sm mt-1">{errors.fechaInicio}</p>
@@ -342,6 +341,7 @@ export default function TransferenciasForm() {
                                 onChange={setFecha("fechaFin")}
                                 minDate={parseYMD(data.fechaInicio) || undefined}
                                 className={inputClass("fechaFin")}
+                                helperText={errors.fechaFin ?? "DD/MM/AAAA"}
                             />
                             {errors.fechaFin && (
                                 <p className="text-red-500 text-sm mt-1">{errors.fechaFin}</p>
@@ -359,16 +359,17 @@ export default function TransferenciasForm() {
                 </div>
 
                 {/* Acciones */}
-                <div className="mt-8 flex items-center justify-between">
+                <div className="flex justify-between pt-6">
                     <Button
                         type="button"
                         variant="secondary"
+                        size="sm"
                         onClick={() => navigate(-1)}
                     >
                         Volver
                     </Button>
 
-                    <Button type="submit" disabled={isPending}>
+                    <Button type="submit" size="sm" disabled={isPending}>
                         {isPending
                             ? "Guardando…"
                             : isEdit
@@ -378,22 +379,5 @@ export default function TransferenciasForm() {
                 </div>
             </form>
         </section>
-    );
-}
-
-// ── Componente auxiliar (misma firma que ProyectosForm) ──
-
-function Field({
-    label,
-    children,
-}: {
-    label: string;
-    children: React.ReactNode;
-}) {
-    return (
-        <div>
-            <label className="block font-medium mb-2">{label}</label>
-            {children}
-        </div>
     );
 }

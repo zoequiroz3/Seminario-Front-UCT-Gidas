@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
+import Field from "@/components/Field";
+import ErrorText from "@/components/ErrorText";
 import { useUct } from "@/hooks/useUct";
 import type { Uct } from "@/services/uctServices";
 
@@ -45,11 +47,11 @@ export default function UctForm() {
 
   const change =
     (k: keyof UctPayload) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = e.target.value;
-      setData((d) => ({ ...d, [k]: value }));
-      if (value.trim()) clearError(k);
-    };
+      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const value = e.target.value;
+        setData((d) => ({ ...d, [k]: value }));
+        if (value.trim()) clearError(k);
+      };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -102,21 +104,20 @@ export default function UctForm() {
   };
 
   const inputClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
+    `input ${errors[field]
+      ? "!border-red-500 !ring-2 !ring-red-500"
+      : ""
     }`;
 
   return (
-    <section>
+    <section className="w-full">
       <h2 className="text-3xl font-semibold mb-6">
         Configuración de la UCT
       </h2>
 
       <form
         onSubmit={onSubmit}
-        className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6"
+        className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
         <Field label="Facultad Regional">
           <input
@@ -202,30 +203,5 @@ export default function UctForm() {
         </div>
       </form>
     </section>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="block text-sm font-medium mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function ErrorText({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-red-500 text-sm mt-1">
-      {children}
-    </p>
   );
 }

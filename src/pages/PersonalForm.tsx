@@ -70,7 +70,7 @@ export default function PersonalForm() {
         {isEdit ? "Editar personal" : "Nuevo personal"}
       </h2>
 
-      <div className="mt-8 rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm space-y-6">
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6">
 
         {!isEdit && (
           <div>
@@ -79,9 +79,8 @@ export default function PersonalForm() {
             </label>
 
             <select
-              className={`input ${
-                errorTipo ? "border-red-500 ring-2 ring-red-500 bg-red-50" : ""
-              }`}
+              className={`input ${errorTipo ? "border-red-500 ring-2 ring-red-500 bg-red-50" : ""
+                }`}
               value={tipo}
               onChange={(e) => handleTipoChange(e.target.value as Tipo)}
               onBlur={() => {
