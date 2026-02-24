@@ -6,6 +6,7 @@ import { useState } from "react";
 import Button from "@/components/Button";
 import Calendar from "@/components/Calendar";
 import Field from "@/components/Field";
+import type { SearchResult } from "@/services/searchService";
 
 export default function SearchPage() {
   const nav = useNavigate();
@@ -45,6 +46,232 @@ export default function SearchPage() {
     setOrden(val);
     executeSearch(q, val);
   };
+
+  // Función para generar resumen del campo extra según el tipo de entidad
+  const renderExtraSummary = (result: SearchResult): string | null => {
+    if (!result.extra) return null;
+
+    const { tipo, extra } = result;
+
+    switch (tipo) {
+      case "Autor":
+        if (extra.cantidad_documentos) {
+          return `${extra.cantidad_documentos} documento${extra.cantidad_documentos !== 1 ? "s" : ""}`;
+        }
+        return null;
+
+      case "Proyecto de Investigación":
+        const invCount = Array.isArray(extra.investigadores) ? extra.investigadores.length : 0;
+        const becCount = Array.isArray(extra.becarios) ? extra.becarios.length : 0;
+        if (invCount > 0 || becCount > 0) {
+          const parts = [];
+          if (invCount > 0) parts.push(`${invCount} investigador${invCount !== 1 ? "es" : ""}`);
+          if (becCount > 0) parts.push(`${becCount} becario${becCount !== 1 ? "s" : ""}`);
+          return parts.join(", ");
+        }
+        return null;
+
+      case "Becario":
+        if (extra.fuente_financiamiento) {
+          return `Fuente: ${extra.fuente_financiamiento}`;
+        }
+        return null;
+
+      case "Investigador":
+        const projCount = Array.isArray(extra.proyectos) ? extra.proyectos.length : 0;
+        const partCount = Array.isArray(extra.participaciones_relevantes) ? extra.participaciones_relevantes.length : 0;
+        const trabCount = Array.isArray(extra.trabajos_reunion) ? extra.trabajos_reunion.length : 0;
+        if (projCount > 0 || partCount > 0 || trabCount > 0) {
+          const parts = [];
+          if (projCount > 0) parts.push(`${projCount} proyecto${projCount !== 1 ? "s" : ""}`);
+          if (partCount > 0) parts.push(`${partCount} participación${partCount !== 1 ? "es" : ""}`);
+          if (trabCount > 0) parts.push(`${trabCount} trabajo${trabCount !== 1 ? "s" : ""}`);
+          return parts.join(", ");
+        }
+        return null;
+
+      case "Tipo de Proyecto":
+      case "Tipo de Erogación":
+      case "Tipo Registro Propiedad":
+      case "Tipo de Contrato":
+      case "Tipo Personal":
+        const cantidad = extra.cantidad_proyectos || extra.cantidad_erogaciones || 
+                        extra.cantidad_registros || extra.cantidad_transferencias || 
+                        extra.cantidad_personal;
+        if (cantidad) {
+          const itemType = tipo.replace("Tipo de ", "").replace("Tipo ", "").toLowerCase();
+          return `${cantidad} ${itemType}${cantidad !== 1 ? "s" : ""} asociado${cantidad !== 1 ? "s" : ""}`;
+        }
+        return null;
+
+      case "Fuente de Financiamiento":
+        if (extra.cantidad_proyectos) {
+          return `Financia ${extra.cantidad_proyectos} proyecto${extra.cantidad_proyectos !== 1 ? "s" : ""}`;
+        }
+        return null;
+
+      case "Documentación":
+        const autCount = Array.isArray(extra.autores) ? extra.autores.length : 0;
+        if (autCount > 0) {
+          return `${autCount} autor${autCount !== 1 ? "es" : ""}`;
+        }
+        return null;
+
+      case "Directivo":
+        if (extra.cargo && extra.grupo_utn) {
+          return `${extra.cargo} en ${extra.grupo_utn}`;
+        }
+        return null;
+
+      case "Transferencia Socio Productiva":
+        if (extra.monto) {
+          return `Monto: $${Number(extra.monto).toLocaleString("es-AR")}`;
+        }
+        return null;
+
+      case "Actividad de Docencia":
+        if (extra.investigador) {
+          return `Dictado por: ${extra.investigador}`;
+        }
+        return null;
+
+      case "Equipamiento":
+        if (extra.grupo) {
+          return `Grupo: ${extra.grupo}`;
+        }
+        return null;
+
+      case "Trabajo en Reunión Científica":
+      case "Trabajo en Revista con Referato":
+        const investigadoresCount = Array.isArray(extra.investigadores) ? extra.investigadores.length : 0;
+        if (investigadoresCount > 0) {
+          return `${investigadoresCount} investigador${investigadoresCount !== 1 ? "es" : ""}`;
+        }
+        return null;
+
+      default:
+        return null;
+    }
+  };
+
+  // Función para extraer items relacionados con URLs del campo extra
+  const extractRelatedItems = (result: SearchResult): Array<{ id: number; nombre: string; url: string }> => {
+    if (!result.extra) return [];
+
+    const items: Array<{ id: number; nombre: string; url: string }> = [];
+    const extra = result.extra;
+
+    // Buscar arrays que contengan objetos con id, nombre/título y url
+    const possibleArrays = [
+      extra.documentos,
+      extra.proyectos,
+      extra.becarios,
+      extra.investigadores,
+      extra.autores,
+      extra.participaciones_relevantes,
+      extra.trabajos_reunion,
+      extra.erogaciones_recientes,
+      extra.transferencias,
+      extra.registros,
+      extra.personal,
+    ];
+
+    possibleArrays.forEach((arr) => {
+      if (Array.isArray(arr)) {
+        arr.forEach((item: any) => {
+          if (item && typeof item === "object" && item.id && item.url) {
+            const nombre = item.nombre || item.titulo || item.nombre_apellido || item.articulo || item.descripcion || "Item";
+            items.push({
+              id: item.id,
+              nombre: String(nombre).substring(0, 30), // Limitar longitud
+              url: item.url,
+            });
+          }
+        });
+      }
+    });
+
+    // Eliminar duplicados por ID
+    const uniqueItems = items.filter((item, index, self) =>
+      index === self.findIndex((t) => t.id === item.id)
+    );
+
+    return uniqueItems.slice(0, 3); // Mostrar máximo 3 items
+  };
+
+  // Función para navegar a la URL mapeada del frontend
+  const navigateToItem = (backendUrl: string) => {
+    // Aplicar el mismo mapeo de URLs que se usa en searchService
+    const urlMap: [RegExp, string][] = [
+      [/^\/personal\/(\d+)$/, "/personal/personal/$1"],
+      [/^\/actividades-docencia\/(\d+)$/, "/docenciaInvestigador/$1"],
+      [/^\/documentacion-bibliografica\/(\d+)$/, "/documentacion/$1"],
+      [/^\/participaciones-relevantes\/(\d+)$/, "/participaciones/$1"],
+      [/^\/articulos-divulgacion\/(\d+)$/, "/articulos-divulgacion/$1"],
+      [/^\/visitas-academicas\/(\d+)$/, "/visitantes/$1"],
+      [/^\/tipos-proyecto\/.+$/, "/proyectos"],
+      [/^\/tipos-erogacion\/.+$/, "/erogaciones"],
+      [/^\/tipos-registro\/.+$/, "/registros-propiedad"],
+      [/^\/tipos-contrato\/.+$/, "/transferencias"],
+      [/^\/tipos-personal\/.+$/, "/personal"],
+      [/^\/fuentes-financiamiento\/.+$/, "/proyectos"],
+      [/^\/autores\/.+$/, "/documentacion"],
+      [/^\/directivos\/.+$/, "/personal"],
+    ];
+
+    for (const [pattern, replacement] of urlMap) {
+      if (pattern.test(backendUrl)) {
+        const frontendUrl = backendUrl.replace(pattern, replacement);
+        nav(frontendUrl);
+        return;
+      }
+    }
+
+    // Si no hay mapeo específico, usar la URL tal cual (probablemente ya coincida)
+    nav(backendUrl);
+  };
+
+  // Tipo para items expandidos
+  type ExpandedItem = {
+    id: string; // ID único compuesto
+    origin: SearchResult; // Resultado original (autor/investigador/etc)
+    relatedItem: { id: number; nombre: string; url: string } | null; // Item relacionado o null si no hay
+    fecha: string | null;
+  };
+
+  // Expandir resultados: cada resultado con relaciones se convierte en N items
+  const expandResults = (searchResults: SearchResult[]): ExpandedItem[] => {
+    const expanded: ExpandedItem[] = [];
+
+    searchResults.forEach((result) => {
+      const relatedItems = extractRelatedItems(result);
+
+      if (relatedItems.length === 0) {
+        // Sin relaciones: mostrar 1 tarjeta normal
+        expanded.push({
+          id: `${result.tipo}-${result.id}-main`,
+          origin: result,
+          relatedItem: null,
+          fecha: result.fecha,
+        });
+      } else {
+        // Con relaciones: mostrar N tarjetas (una por cada relación)
+        relatedItems.forEach((item) => {
+          expanded.push({
+            id: `${result.tipo}-${result.id}-rel-${item.id}`,
+            origin: result,
+            relatedItem: item,
+            fecha: result.fecha,
+          });
+        });
+      }
+    });
+
+    return expanded;
+  };
+
+  // Expandir los resultados actuales
+  const expandedResults = expandResults(results);
 
   return (
     <section className="w-full">
@@ -207,44 +434,58 @@ export default function SearchPage() {
           </div>
         )}
 
-        {!loading && !error && hasSearched && results.length > 0 && (
+        {!loading && !error && hasSearched && expandedResults.length > 0 && (
           <>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-50">
               <span className="text-sm font-medium text-slate-500">
-                {results.length} resultado{results.length !== 1 ? "s" : ""} encontrados
+                {expandedResults.length} resultado{expandedResults.length !== 1 ? "s" : ""} encontrados
               </span>
               {totalRaw > results.length && (
                 <span className="text-xs text-slate-400 italic">
-                  Mostrando {results.length} de {totalRaw} totales
+                  Mostrando {results.length} entidades ({expandedResults.length} items)
                 </span>
               )}
             </div>
 
-            <ul className="divide-y divide-slate-50">
-              {results.map((r) => (
+            <ul className="divide-y divide-slate-100">
+              {expandedResults.map((item) => (
                 <li
-                  key={`${r.tipo}-${r.id}`}
+                  key={item.id}
                   className="group py-5 px-4 -mx-4 cursor-pointer hover:bg-slate-50 rounded-xl transition-all"
-                  onClick={() => nav(r.href)}
+                  onClick={() => item.relatedItem ? navigateToItem(item.relatedItem.url) : nav(item.origin.href)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="space-y-1.5 flex-1">
-                      <span className="inline-block text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded group-hover:bg-white transition-colors">
-                        {r.tipo}
-                      </span>
-                      <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors leading-tight">
-                        {highlight(r.titulo, q)}
-                      </h3>
-                      {r.subtitulo && (
-                        <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
-                          {highlight(r.subtitulo, q)}
-                        </p>
+                    <div className="space-y-2 flex-1">
+                      {/* ORIGEN - Resultado principal (DESTACADO) */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded group-hover:bg-white transition-colors">
+                            {item.origin.tipo}
+                          </span>
+                        </div>
+                        <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors leading-tight text-base">
+                          {highlight(item.origin.titulo, q)}
+                        </h3>
+                        {item.origin.subtitulo && (
+                          <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
+                            {highlight(item.origin.subtitulo, q)}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* ITEM RELACIONADO - Como chip visual NO clickeable */}
+                      {item.relatedItem && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 rounded-full">
+                            {highlight(item.relatedItem.nombre, q)}
+                          </span>
+                        </div>
                       )}
                     </div>
 
-                    {r.fecha && (
+                    {item.fecha && (
                       <div className="text-xs font-medium text-slate-400 whitespace-nowrap pt-1">
-                        {new Date(r.fecha + "T12:00:00").toLocaleDateString("es-AR", {
+                        {new Date(item.fecha + "T12:00:00").toLocaleDateString("es-AR", {
                           day: "2-digit",
                           month: "short",
                           year: "numeric"
