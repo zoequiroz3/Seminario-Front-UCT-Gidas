@@ -124,6 +124,95 @@ export default function SearchPage() {
     return uniqueItems;
   };
 
+  // Función para generar preview del equipo/relaciones
+  const renderEquipoPreview = (result: SearchResult): { texto: string; count: number } | null => {
+    if (!result.extra) return null;
+
+    const extra = result.extra;
+    let items: string[] = [];
+    let label = "Equipo";
+
+    switch (result.tipo) {
+      case "Proyecto de Investigación":
+        const invProy = (extra.investigadores || []).map((i: any) => i.nombre_apellido || i.nombre);
+        const becProy = (extra.becarios || []).map((b: any) => b.nombre_apellido || b.nombre);
+        items = [...invProy, ...becProy];
+        break;
+
+      case "Trabajo en Reunión Científica":
+      case "Trabajo en Revista con Referato":
+        items = (extra.investigadores || []).map((i: any) => i.nombre_apellido || i.nombre);
+        break;
+
+      case "Investigador":
+        items = (extra.proyectos || []).map((p: any) => p.nombre || p.titulo);
+        label = "Proyectos";
+        break;
+
+      case "Becario":
+        items = (extra.proyectos || []).map((p: any) => p.nombre || p.titulo);
+        label = "Proyectos";
+        break;
+
+      case "Autor":
+        items = (extra.documentos || []).map((d: any) => d.titulo || d.nombre);
+        label = "Documentos";
+        break;
+
+      case "Documentación":
+        items = (extra.autores || []).map((a: any) => a.nombre_apellido || a.nombre);
+        label = "Autores";
+        break;
+
+      case "Tipo de Proyecto":
+        items = (extra.proyectos || []).map((p: any) => p.nombre || p.titulo);
+        label = "Proyectos";
+        break;
+
+      case "Fuente de Financiamiento":
+        items = (extra.proyectos || []).map((p: any) => p.nombre || p.titulo);
+        label = "Proyectos";
+        break;
+
+      case "Tipo de Erogación":
+        items = (extra.erogaciones_recientes || []).map((e: any) => e.descripcion || e.nombre);
+        label = "Erogaciones";
+        break;
+
+      case "Tipo de Contrato":
+        items = (extra.transferencias || []).map((t: any) => t.descripcion || t.nombre);
+        label = "Transferencias";
+        break;
+
+      case "Tipo Personal":
+        items = (extra.personal || []).map((p: any) => p.nombre_apellido || p.nombre);
+        label = "Personal";
+        break;
+
+      case "Tipo Registro Propiedad":
+        items = (extra.registros || []).map((r: any) => r.articulo || r.nombre);
+        label = "Registros";
+        break;
+
+      case "Actividad de Docencia":
+        if (extra.investigador) {
+          items = [extra.investigador];
+        }
+        label = "Docente";
+        break;
+
+      default:
+        return null;
+    }
+
+    if (items.length === 0) return null;
+
+    return {
+      texto: `${label}: ${items.join(", ")}`,
+      count: items.length
+    };
+  };
+
   // Función para navegar a la URL mapeada del frontend
   const navigateToItem = (backendUrl: string) => {
     const urlMap: [RegExp, string][] = [
@@ -133,6 +222,7 @@ export default function SearchPage() {
       [/^\/participaciones-relevantes\/(\d+)$/, "/participaciones/$1"],
       [/^\/articulos-divulgacion\/(\d+)$/, "/articulos-divulgacion/$1"],
       [/^\/visitas-academicas\/(\d+)$/, "/visitantes/$1"],
+      [/^\/proyectos\/(\d+)$/, "/proyectos/$1"],
       [/^\/tipos-proyecto\/.+$/, "/proyectos"],
       [/^\/tipos-erogacion\/.+$/, "/erogaciones"],
       [/^\/tipos-registro\/.+$/, "/registros-propiedad"],
@@ -168,6 +258,18 @@ export default function SearchPage() {
 
     searchResults.forEach((result) => {
       const relatedItems = extractRelatedItems(result);
+
+      // NO expandir Personal/Becario/Investigador - mostrar como cards únicas
+      const tiposNoExpandir = ["Persona", "Becario", "Investigador", "Directivo"];
+      if (tiposNoExpandir.includes(result.tipo)) {
+        expanded.push({
+          id: `${result.tipo}-${result.id}-main`,
+          origin: result,
+          relatedItem: null,
+          fecha: result.fecha,
+        });
+        return;
+      }
 
       if (relatedItems.length === 0) {
         expanded.push({
@@ -484,6 +586,78 @@ export default function SearchPage() {
                                   </p>
                                 )}
                               </div>
+
+                              {/* PREVIEW DEL EQUIPO/RELACIONES */}
+                              {(() => {
+                                // Caso especial: Becario/Investigador con proyectos - mostrar como chips clickeables
+                                if ((item.origin.tipo === "Becario" || item.origin.tipo === "Investigador") && item.origin.extra?.proyectos) {
+                                  const proyectos = item.origin.extra.proyectos;
+                                  if (!Array.isArray(proyectos) || proyectos.length === 0) return null;
+                                  
+                                   return (
+                                    <div className="mt-2">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="text-xs text-slate-500 font-medium">Proyectos:</span>
+                                        {proyectos.map((proy: any) => {
+                                          // Construir URL del proyecto si no viene del backend
+                                          const proyectoUrl = proy.url || `/proyectos/${proy.id}`;
+                                          return (
+                                            <button
+                                              key={proy.id}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                console.log('Navegando a:', proyectoUrl);
+                                                navigateToItem(proyectoUrl);
+                                              }}
+                                              className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 transition-colors"
+                                            >
+                                              {proy.nombre || proy.titulo}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                                
+                                // Resto de tipos - mostrar como preview de equipo
+                                const preview = renderEquipoPreview(item.origin);
+                                if (!preview) return null;
+                                
+                                // Separar el label de los items
+                                const [label, ...itemsPart] = preview.texto.split(': ');
+                                const items = itemsPart.join(': ').split(', ');
+                                
+                                return (
+                                  <div className="mt-1.5 text-xs text-slate-500">
+                                    <div className="flex items-start gap-1.5">
+                                      <Users className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                      <span className="flex flex-wrap gap-1">
+                                        <span className="font-medium">{label}:</span>
+                                        {items.map((nombre, idx) => {
+                                          // Verificar si este nombre coincide con la búsqueda
+                                          const searchTerms = q.toLowerCase().split(' ').filter(t => t.length > 0);
+                                          const nombreLower = nombre.toLowerCase();
+                                          const isMatch = searchTerms.some(term => nombreLower.includes(term));
+                                          
+                                          return (
+                                            <span key={idx}>
+                                              {isMatch ? (
+                                                <span className="bg-yellow-200 px-1 rounded font-medium text-slate-700">
+                                                  {nombre.trim()}
+                                                </span>
+                                              ) : (
+                                                nombre.trim()
+                                              )}
+                                              {idx < items.length - 1 && ','}
+                                            </span>
+                                          );
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
 
                               {/* ITEM RELACIONADO - Chip simple */}
                               {item.relatedItem && (
