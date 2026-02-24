@@ -32,9 +32,9 @@ const items: Item[] = [
   {
     label: "Actividades I+D+I",
     children: [
-      {label: "Registros de Propiedad",to: "/registros-propiedad"},
-      {label: "Trabajos en Reunión Científica",to: "/trabajos-reunion"},
-      {label: "Trabajos en Revistas",to: "/trabajos-revistas"},
+      { label: "Registros de Propiedad", to: "/registros-propiedad" },
+      { label: "Trabajos en Reunión Científica", to: "/trabajos-reunion" },
+      { label: "Trabajos en Revistas", to: "/trabajos-revistas" },
       { label: "Distinciones Recibidas", to: "/distinciones" },
       { label: "Participaciones Relevantes", to: "/participaciones" },
       { label: "Visitantes del país y del extranjero", to: "/visitantes" },
@@ -66,6 +66,7 @@ const items: Item[] = [
       { label: "Transferencias", to: "/transferencias" },
     ],
   },
+  { label: "Búsqueda", to: "/busqueda" },
 ];
 
 export default function Sidebar() {

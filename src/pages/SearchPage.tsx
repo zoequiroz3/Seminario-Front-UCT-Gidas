@@ -1,81 +1,262 @@
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "@/hooks/useSearch";
 import { highlight } from "@/utils/highlight";
-import { Filter, X } from "lucide-react";
+import { Search, X, Filter } from "lucide-react";
 import { useState } from "react";
-
-const typeOptions = [
-  { value: "persona", label: "Persona" },
-  { value: "proyecto", label: "Proyecto" },
-  { value: "publicacion", label: "Publicación" },
-  { value: "compra", label: "Compra" },
-] as const;
+import Button from "@/components/Button";
+import Calendar from "@/components/Calendar";
+import Field from "@/components/Field";
 
 export default function SearchPage() {
   const nav = useNavigate();
   const {
     q, setQ,
-    types, setTypes,
+    orden, setOrden,
+    selectedTypes,
+    toggleType,
     dateFrom, setDateFrom,
     dateTo, setDateTo,
-    sort, setSort,
-    loading, results, error,
+    availableTypes,
+    loading,
+    results,
+    totalRaw,
+    error,
     clearAll,
+    executeSearch,
+    hasSearched,
   } = useSearch();
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const toggleType = (t: string) => {
-    setTypes((prev) => prev.includes(t as any) ? prev.filter(x => x !== t) : [...prev, t as any]);
+  const ORDEN_OPTIONS = [
+    { value: "alf_asc", label: "Alfabético A → Z" },
+    { value: "alf_desc", label: "Alfabético Z → A" },
+    { value: "fecha_desc", label: "Más recientes primero" },
+    { value: "fecha_asc", label: "Más antiguos primero" },
+  ];
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    executeSearch();
+  };
+
+  const handleOrdenChange = (newOrden: string) => {
+    const val = newOrden as any;
+    setOrden(val);
+    executeSearch(q, val);
   };
 
   return (
-    <section className="space-y-6">
-      <h1 className="text-3xl font-semibold">Búsqueda</h1>
+    <section className="w-full">
+      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+        Búsqueda
+      </h2>
 
-      {/* caja de búsqueda principal */}
-      <div className="card">
-        <div className="flex items-center gap-2">
-          <input
-            className="input"
-            placeholder='Buscar en todos los módulos (ej. "nanomateriales")'
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          <button
-            type="button"
-            className="px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-100"
-            onClick={clearAll}
-            title="Limpiar búsqueda"
+      {/* ─── BARRA DE BÚSQUEDA ─── */}
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6">
+        <form onSubmit={handleSearchSubmit} className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <Search className="w-5 h-5 text-slate-400" />
+            </div>
+            <input
+              className="input !pl-11 pr-10"
+              placeholder='Buscar en todos los módulos y presiona Enter'
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              autoFocus
+            />
+            {q && (
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                onClick={clearAll}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            className="hidden sm:flex items-center gap-2"
+            disabled={loading}
           >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+            <Search className="w-4 h-4" />
+            Buscar
+          </Button>
+
+          <Button
+            type="button"
+            variant={showAdvanced ? "primary" : "secondary"}
+            size="md"
+            className="flex items-center gap-2"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+          >
+            <Filter className="w-4 h-4" />
+            <span className="hidden sm:inline">Filtros</span>
+          </Button>
+        </form>
+
+        {/* ─── FILTROS AVANZADOS ─── */}
+        {showAdvanced && (
+          <div className="pt-6 border-t border-slate-100 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            {/* Ordenamiento */}
+            <Field label="Ordenar por">
+              <select
+                className="input"
+                value={orden}
+                onChange={(e) => handleOrdenChange(e.target.value)}
+              >
+                {ORDEN_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
+            {/* Fecha Desde */}
+            <Calendar
+              label="Desde"
+              value={dateFrom ? new Date(dateFrom + "T12:00:00") : null}
+              onChange={(d) => setDateFrom(d ? d.toISOString().split("T")[0] : undefined)}
+              placeholder="Fecha desde"
+            />
+
+            {/* Fecha Hasta */}
+            <Calendar
+              label="Hasta"
+              value={dateTo ? new Date(dateTo + "T12:00:00") : null}
+              onChange={(d) => setDateTo(d ? d.toISOString().split("T")[0] : undefined)}
+              placeholder="Fecha hasta"
+            />
+
+            {/* Filtro por tipo (pills) */}
+            {availableTypes.length > 0 && (
+              <div className="sm:col-span-2 lg:col-span-3">
+                <Field label="Filtrar por tipo">
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {availableTypes.map((tipo) => {
+                      const isActive = selectedTypes.includes(tipo);
+                      return (
+                        <button
+                          key={tipo}
+                          type="button"
+                          onClick={() => toggleType(tipo)}
+                          className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${isActive
+                            ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                            : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
+                            }`}
+                        >
+                          {tipo}
+                        </button>
+                      );
+                    })}
+                    {selectedTypes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={clearAll}
+                        className="px-3 py-1.5 text-xs font-medium text-red-600 hover:underline"
+                      >
+                        Limpiar filtros
+                      </button>
+                    )}
+                  </div>
+                </Field>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* resultados */}
-      <div className="card">
-        {error && <p className="text-rose-600">Error: {error}</p>}
-        {!error && (loading ? (
-          <p className="text-slate-600">Buscando…</p>
-        ) : results.length === 0 ? (
-          <p className="text-slate-600">Sin resultados para la consulta actual.</p>
-        ) : (
-          <ul className="divide-y divide-slate-200">
-            {results.map((r) => (
-              <li
-                key={`${r.type}-${r.id}`}
-                className="py-3 cursor-pointer hover:bg-slate-50 rounded-lg px-2 -mx-2"
-                onClick={() => nav(r.href)}
-              >
-                <div className="text-xs uppercase tracking-wide text-slate-500">{r.type}</div>
-                <div className="font-medium">{highlight(r.title, q)}</div>
-                <div className="text-sm text-slate-600">{highlight(r.snippet, q)}</div>
-                {r.date && <div className="text-xs text-slate-400 mt-1">Fecha: {new Date(r.date).toLocaleDateString()}</div>}
-              </li>
+      {/* ─── RESULTADOS ─── */}
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        {loading && (
+          <div className="space-y-4 animate-pulse">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-4 w-24 bg-slate-200 rounded" />
+                <div className="h-5 w-3/4 bg-slate-200 rounded" />
+                <div className="h-4 w-1/2 bg-slate-100 rounded" />
+              </div>
             ))}
-          </ul>
-        ))}
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="p-4 rounded-xl bg-red-50 text-red-600 text-sm border border-red-100">
+            Error al buscar: {error}
+          </div>
+        )}
+
+        {!loading && !error && !hasSearched && (
+          <div className="text-center py-10">
+            <Search className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+            <p className="text-slate-500 font-medium">Comienza tu búsqueda</p>
+            <p className="text-slate-400 text-sm">Ingresa al menos 2 caracteres y presiona Enter para ver resultados.</p>
+          </div>
+        )}
+
+        {!loading && !error && hasSearched && results.length === 0 && (
+          <div className="text-center py-10">
+            <p className="text-slate-500 font-medium">Sin resultados para "{q}"</p>
+            <p className="text-slate-400 text-sm">Prueba ajustando los filtros o usando otras palabras clave.</p>
+          </div>
+        )}
+
+        {!loading && !error && hasSearched && results.length > 0 && (
+          <>
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-50">
+              <span className="text-sm font-medium text-slate-500">
+                {results.length} resultado{results.length !== 1 ? "s" : ""} encontrados
+              </span>
+              {totalRaw > results.length && (
+                <span className="text-xs text-slate-400 italic">
+                  Mostrando {results.length} de {totalRaw} totales
+                </span>
+              )}
+            </div>
+
+            <ul className="divide-y divide-slate-50">
+              {results.map((r) => (
+                <li
+                  key={`${r.tipo}-${r.id}`}
+                  className="group py-5 px-4 -mx-4 cursor-pointer hover:bg-slate-50 rounded-xl transition-all"
+                  onClick={() => nav(r.href)}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div className="space-y-1.5 flex-1">
+                      <span className="inline-block text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded group-hover:bg-white transition-colors">
+                        {r.tipo}
+                      </span>
+                      <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors leading-tight">
+                        {highlight(r.titulo, q)}
+                      </h3>
+                      {r.subtitulo && (
+                        <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
+                          {highlight(r.subtitulo, q)}
+                        </p>
+                      )}
+                    </div>
+
+                    {r.fecha && (
+                      <div className="text-xs font-medium text-slate-400 whitespace-nowrap pt-1">
+                        {new Date(r.fecha + "T12:00:00").toLocaleDateString("es-AR", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </section>
   );

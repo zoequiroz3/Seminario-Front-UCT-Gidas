@@ -1,62 +1,90 @@
 import { http } from "@/lib/http";
 
-// Tipos del frontend (lo que la UI espera)
-export type RecordType = "persona" | "proyecto" | "publicacion" | "compra" | "section";
+/* ───────────────────────────────────────────
+   Tipos que devuelve el BACKEND
+   GET /search?q=...&orden=...
+   ─────────────────────────────────────────── */
 
-export type SearchParams = {
-  q: string;
-  types?: RecordType[];
-  dateFrom?: string;
-  dateTo?: string;
-  sort?: "date_desc" | "date_asc" | "alpha_asc" | "alpha_desc";
-};
+export type Orden = "alf_asc" | "alf_desc" | "fecha_asc" | "fecha_desc";
 
-export type SearchResult = {
-  id?: string;
-  type: RecordType;
-  title: string;
-  snippet: string;
-  date?: string;
-  href: string;
-};
-
-// Tipo del backend (lo que la API devuelve)
-type ApiSearchResult = {
-  type: RecordType;
-  subtype?: string;
-  id?: number;
-  title: string;
-  description: string;
-  extra?: Record<string, any>;
+/** Cada resultado que devuelve la API */
+export type BackendResult = {
+  tipo: string;
+  id: number;
+  titulo: string;
+  subtitulo?: string | null;
+  fecha?: string | null;
   url: string;
+  extra?: Record<string, unknown>;
+  activo?: boolean;
 };
 
-export async function searchAll(params: SearchParams): Promise<SearchResult[]> {
-  const { q } = params;
+/** Wrapper de la respuesta completa */
+type SearchResponse = {
+  query: string;
+  orden: Orden;
+  total_resultados: number;
+  resultados: BackendResult[];
+};
 
-  // El backend ignora búsquedas de menos de 2 caracteres.
-  // Hacemos la validación aquí para evitar una llamada innecesaria.
-  if (q.trim().length < 2) {
-    return [];
+/* ───────────────────────────────────────────
+   Tipo normalizado que usa la UI
+   ─────────────────────────────────────────── */
+export type SearchResult = {
+  id: number;
+  tipo: string;          // "Persona", "Proyecto de Investigación", etc.
+  titulo: string;
+  subtitulo: string;
+  fecha: string | null;
+  href: string;          // ruta de frontend
+  extra?: Record<string, unknown>;
+};
+
+/* ───────────────────────────────────────────
+   Mapeo de URLs backend → frontend
+   ─────────────────────────────────────────── */
+const URL_MAP: [RegExp, string][] = [
+  [/^\/personal\/(\d+)$/, "/personal/personal/$1"],
+  [/^\/actividades-docencia\/(\d+)$/, "/docenciaInvestigador/$1"],
+  [/^\/documentacion-bibliografica\/(\d+)$/, "/documentacion/$1"],
+  [/^\/participaciones-relevantes\/(\d+)$/, "/participaciones/$1"],
+  [/^\/articulos-divulgacion\/(\d+)$/, "/articulos-divulgacion/$1"],
+];
+
+function mapUrl(backendUrl: string): string {
+  for (const [re, replacement] of URL_MAP) {
+    if (re.test(backendUrl)) {
+      return backendUrl.replace(re, replacement);
+    }
   }
+  // Para el resto (proyectos, becarios, investigadores, equipamiento,
+  // erogaciones, registros-propiedad, transferencias, trabajos-reunion,
+  // trabajos-revistas) la URL ya coincide con el front.
+  return backendUrl;
+}
 
-  // Construimos la URL para el endpoint GET /search
-  const url = `/search?q=${encodeURIComponent(q)}`;
+/* ───────────────────────────────────────────
+   Función principal
+   ─────────────────────────────────────────── */
+export async function searchAll(
+  q: string,
+  orden: Orden = "alf_asc",
+): Promise<SearchResult[]> {
+  // El backend rechaza queries < 2 caracteres
+  if (q.trim().length < 2) return [];
 
-  // Llamamos a la API
-  const results = await http<ApiSearchResult[]>(url);
+  const qs = new URLSearchParams({ q, orden }).toString();
+  const data = await http<SearchResponse>(`/search/?${qs}`);
 
-  if (!results) {
-    return [];
-  }
+  if (!data?.resultados) return [];
 
-  // Mapeamos la respuesta del backend al formato que la UI necesita
-  return results.map((res) => ({
-    id: res.id?.toString(),
-    type: res.type,
-    title: res.title,
-    snippet: res.description, // Mapeo de description -> snippet
-    href: res.url,            // Mapeo de url -> href
-    // El campo 'date' no viene en la respuesta global, se deja undefined
+  return data.resultados.map((r) => ({
+    id: r.id,
+    tipo: r.tipo,
+    titulo: r.titulo,
+    subtitulo: r.subtitulo ?? "",
+    fecha: r.fecha ? String(r.fecha) : null,
+    href: mapUrl(r.url),
+    extra: r.extra,
   }));
 }
