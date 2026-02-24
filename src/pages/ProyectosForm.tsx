@@ -87,7 +87,8 @@ export default function ProyectosForm() {
       if (investigadoresIds.length > 0) {
         await vincularInvestigadores(
           proyectoId,
-          investigadoresIds
+          investigadoresIds,
+          payload.fechaInicio
         );
       }
 
@@ -95,7 +96,8 @@ export default function ProyectosForm() {
       if (becariosIds.length > 0) {
         await vincularBecarios(
           proyectoId,
-          becariosIds
+          becariosIds,
+          payload.fechaInicio
         );
       }
 
@@ -104,7 +106,7 @@ export default function ProyectosForm() {
 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["proyectos"] });
-      navigate(-1);
+      navigate("/proyectos");
     },
   });
 
@@ -147,7 +149,7 @@ export default function ProyectosForm() {
     mutation.mutate({
       id: id ?? undefined,
       nombreProyecto,
-      codigoProyecto,
+      codigoProyecto: Number(codigoProyecto),
       descripcionProyecto,
       fechaInicio: fechaInicio!.toISOString().split("T")[0],
       fechaFinalizacion: fechaFin
@@ -324,6 +326,7 @@ export default function ProyectosForm() {
             <Calendar
               value={fechaFin}
               onChange={setFechaFin}
+              minDate={fechaInicio ?? undefined}
               className="input"
             />
           </Field>

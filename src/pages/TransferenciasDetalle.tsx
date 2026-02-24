@@ -4,6 +4,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import MockIndicator from "@/components/MockIndicator";
+import SuccessToast from "@/components/SuccessToast";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import {
     useTransferencia,
     useDeleteTransferencia,
@@ -62,11 +65,25 @@ export default function TransferenciasDetalle() {
 
     const [showConfirm, setShowConfirm] = useState(false);
 
+    const location = useLocation();
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
+
+    useEffect(() => {
+        if (location.state?.successMessage) {
+            setSuccessMessage(location.state.successMessage);
+            setShowSuccess(true);
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
+
     const doDelete = async () => {
         if (!numericId) return;
         await deleteMut.mutateAsync(numericId);
+        // Remove active item query so it doesn't fetch on unmount/invalidate
+        qc.removeQueries({ queryKey: ["transferencias", numericId] });
         qc.invalidateQueries({ queryKey: ["transferencias"] });
-        navigate("/transferencias");
+        navigate("/transferencias", { state: { successMessage: "Transferencia eliminada." } });
     };
 
     if (isLoading) return <p className="text-slate-500 p-4">Cargando…</p>;
@@ -144,6 +161,12 @@ export default function TransferenciasDetalle() {
                 message={`¿Estás seguro de eliminar "${displayName}"?`}
                 onCancel={() => setShowConfirm(false)}
                 onConfirm={doDelete}
+            />
+
+            <SuccessToast
+                open={showSuccess}
+                message={successMessage || "Operación exitosa"}
+                onClose={() => setShowSuccess(false)}
             />
         </section>
     );

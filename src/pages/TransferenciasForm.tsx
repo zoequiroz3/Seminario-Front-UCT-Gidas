@@ -50,11 +50,11 @@ export default function TransferenciasForm() {
         monto: "",
         fechaInicio: "",
         fechaFin: "",
-        // Campos mock-only del spec (no en backend):
         denominacion: "",
-        numeroErogacion: "",
+        numeroTransferencia: "",
     });
 
+    const [submitError, setSubmitError] = useState<string | null>(null);
     const [adoptantes, setAdoptantes] = useState<Adoptante[]>([]);
     const [originalAdoptantes, setOriginalAdoptantes] = useState<Adoptante[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -85,7 +85,7 @@ export default function TransferenciasForm() {
                 fechaInicio: existing.fechaInicio ?? "",
                 fechaFin: existing.fechaFin ?? "",
                 denominacion: existing.denominacion ?? "",
-                numeroErogacion: existing.numeroErogacion ?? "",
+                numeroTransferencia: existing.numeroTransferencia?.toString() ?? "",
             });
             setAdoptantes(existing.adoptantes ?? []);
             setOriginalAdoptantes(existing.adoptantes ?? []);
@@ -134,6 +134,14 @@ export default function TransferenciasForm() {
         if (data.fechaInicio && data.fechaFin && data.fechaFin < data.fechaInicio)
             e.fechaFin = "La fecha fin debe ser posterior a la fecha inicio";
 
+        if (!data.numeroTransferencia)
+            e.numeroTransferencia = "El número de transferencia es obligatorio";
+        else if (Number(data.numeroTransferencia) <= 0)
+            e.numeroTransferencia = "El número de transferencia debe ser positivo";
+
+        if (!data.denominacion.trim())
+            e.denominacion = "La denominación es obligatoria";
+
         setErrors(e);
         return Object.keys(e).length === 0;
     };
@@ -165,19 +173,19 @@ export default function TransferenciasForm() {
         },
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["transferencias"] });
-            navigate("/transferencias");
+            navigate(isEdit ? `/transferencias/${numericId}` : "/transferencias", {
+                state: { successMessage: isEdit ? "Transferencia actualizada con éxito!" : "Transferencia cargada con éxito!" }
+            });
         },
     });
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setSubmitError(null);
         if (!validate()) return;
 
         if (!uct) {
-            alert(
-                "No se encontró un grupo UTN configurado. " +
-                "Debe crear uno en la sección UCT antes de cargar transferencias."
-            );
+            setSubmitError("No se encontró un grupo UTN configurado. Debe crear uno en la sección UCT antes de cargar transferencias.");
             return;
         }
 
@@ -190,13 +198,13 @@ export default function TransferenciasForm() {
                 fechaFin: data.fechaFin || undefined,
                 tipoContratoId: Number(data.tipoContratoId),
                 grupoUtnId: uct.id,
-                denominacion: data.denominacion.trim() || undefined,
-                numeroErogacion: data.numeroErogacion.trim() || undefined,
+                denominacion: data.denominacion.trim(),
+                numeroTransferencia: Number(data.numeroTransferencia),
             });
         } catch (err: any) {
             const msg =
                 err?.body?.error ?? err?.message ?? "Error al guardar la transferencia";
-            alert(msg);
+            setSubmitError(msg);
         }
     };
 
@@ -217,6 +225,13 @@ export default function TransferenciasForm() {
                 onSubmit={onSubmit}
                 className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
             >
+                {/* Banner de Errores Generales */}
+                {submitError && (
+                    <div className="p-3 mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
+                        {submitError}
+                    </div>
+                )}
+
                 {/* Denominación (mock-only) */}
                 <Field label="Denominación">
                     <input
@@ -308,13 +323,19 @@ export default function TransferenciasForm() {
                         </>
                     </Field>
 
-                    <Field label="Nro. de erogación">
+                    <Field label="Número de transferencia *">
                         <input
-                            className="input"
-                            value={data.numeroErogacion}
-                            onChange={change("numeroErogacion")}
-                            placeholder="Opcional"
+                            type="number"
+                            min="1"
+                            className={inputClass("numeroTransferencia")}
+                            value={data.numeroTransferencia}
+                            onChange={change("numeroTransferencia")}
+                            placeholder="Ej. 2024001"
+                            required
                         />
+                        {errors.numeroTransferencia && (
+                            <p className="text-red-500 text-sm mt-1">{errors.numeroTransferencia}</p>
+                        )}
                     </Field>
                 </div>
 

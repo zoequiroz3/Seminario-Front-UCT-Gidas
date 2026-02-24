@@ -1,4 +1,4 @@
-import {http} from "@/lib/http";
+import { http } from "@/lib/http";
 import { MOCK_PARTICIPACIONES, MOCK_INVESTIGADORES, type Participacion } from "./mockData";
 
 const STORAGE_KEY = "gidas_participaciones";
@@ -36,7 +36,7 @@ export const getParticipaciones = async (
     if (investigadorId) params.append("investigador_id", String(investigadorId));
     params.append("orden", orden);
     const query = params.toString() ? `?${params.toString()}` : "";
-    return await http<Participacion[]>(`/participaciones-relevantes${query}`, { method: "GET" });
+    return await http<Participacion[]>(`/participaciones-relevantes/${query}`, { method: "GET" });
   } catch (error) {
     console.warn("Error fetching participaciones, using local data:", error);
     let data = getLocalStorageData();
@@ -66,7 +66,7 @@ export const getParticipacionById = async (id: number): Promise<Participacion> =
 
 export const crearParticipacion = async (payload: ParticipacionPayload): Promise<Participacion> => {
   try {
-    return await http<Participacion>("/participaciones-relevantes", {
+    return await http<Participacion>("/participaciones-relevantes/", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -102,11 +102,11 @@ export const actualizarParticipacion = async (
     const data = getLocalStorageData();
     const index = data.findIndex(p => p.id === id);
     if (index === -1) throw new Error("Participación no encontrada");
-    
+
     const investigador = payload.investigador_id
       ? (MOCK_INVESTIGADORES.find(i => i.id === payload.investigador_id)?.nombre_apellido || data[index].investigador)
       : data[index].investigador;
-    
+
     const updated: Participacion = {
       ...data[index],
       ...payload,

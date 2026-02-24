@@ -6,7 +6,7 @@ export interface TipoReunion {
 }
 
 export const getTiposReunion = async (): Promise<TipoReunion[]> => {
-  return http("/tipos-reunion-cientifica", {
+  return http("/tipos-reunion-cientifica/", {
     method: "GET",
   });
 };

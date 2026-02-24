@@ -1,4 +1,4 @@
-import {http} from "@/lib/http";
+import { http } from "@/lib/http";
 import { MOCK_VISITANTES, MOCK_GRUPOS_UTN, MOCK_TIPOS_VISITA, MOCK_PROCEDENCIAS, type Visitante } from "./mockData";
 
 const STORAGE_KEY = "gidas_visitantes";
@@ -33,7 +33,8 @@ export interface VisitantePayload {
 
 export const getVisitantes = async (): Promise<Visitante[]> => {
   try {
-    return await http<Visitante[]>("/visitas-academicas", { method: "GET" });
+    const data = await http<Visitante[]>("/visitas-academicas/", { method: "GET" });
+    return data ?? getLocalStorageData();
   } catch (error) {
     console.warn("Error fetching visitantes, using local data:", error);
     return getLocalStorageData();
@@ -54,7 +55,7 @@ export const getVisitanteById = async (id: number): Promise<Visitante> => {
 
 export const crearVisitante = async (payload: VisitantePayload): Promise<Visitante> => {
   try {
-    return await http<Visitante>("/visitas-academicas", {
+    return await http<Visitante>("/visitas-academicas/", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -64,7 +65,7 @@ export const crearVisitante = async (payload: VisitantePayload): Promise<Visitan
     const procedencia = MOCK_PROCEDENCIAS.find(p => p.id === payload.procedencia_visita_id);
     const tipo = MOCK_TIPOS_VISITA.find(t => t.id === payload.tipo_visita_id);
     const grupo = MOCK_GRUPOS_UTN.find(g => g.id === payload.grupo_utn_id);
-    
+
     const newItem: Visitante = {
       id: generateLocalId(),
       razon: payload.razon,
@@ -96,7 +97,7 @@ export const actualizarVisitante = async (
     const data = getLocalStorageData();
     const index = data.findIndex(v => v.id === id);
     if (index === -1) throw new Error("Visitante no encontrado");
-    
+
     const procedencia = payload.procedencia_visita_id
       ? MOCK_PROCEDENCIAS.find(p => p.id === payload.procedencia_visita_id)
       : undefined;
@@ -106,7 +107,7 @@ export const actualizarVisitante = async (
     const grupo = payload.grupo_utn_id
       ? MOCK_GRUPOS_UTN.find(g => g.id === payload.grupo_utn_id)?.nombre
       : data[index].grupo;
-    
+
     const updated: Visitante = {
       ...data[index],
       ...payload,
@@ -134,7 +135,12 @@ export const eliminarVisitante = async (id: number): Promise<{ message: string }
 
 export const getGruposUtn = async () => {
   try {
-    return await http<typeof MOCK_GRUPOS_UTN>("/grupos-utn", { method: "GET" });
+    const data = await http<any>("/grupo-utn/", { method: "GET" });
+    const arrayData = Array.isArray(data) ? data : [data];
+    return arrayData.map((g) => ({
+      id: g.id,
+      nombre: g.nombre_sigla_grupo || g.nombre,
+    }));
   } catch (error) {
     console.warn("Error fetching grupos utn, using local data:", error);
     localStorage.setItem(GRUPOS_KEY, JSON.stringify(MOCK_GRUPOS_UTN));
@@ -144,7 +150,8 @@ export const getGruposUtn = async () => {
 
 export const getTiposVisita = async () => {
   try {
-    return await http<typeof MOCK_TIPOS_VISITA>("/tipos-visita", { method: "GET" });
+    const data = await http<typeof MOCK_TIPOS_VISITA>("/tipos-visita/", { method: "GET" });
+    return data ?? MOCK_TIPOS_VISITA;
   } catch (error) {
     console.warn("Error fetching tipos visita, using local data:", error);
     localStorage.setItem(TIPOS_KEY, JSON.stringify(MOCK_TIPOS_VISITA));
@@ -154,7 +161,8 @@ export const getTiposVisita = async () => {
 
 export const getProcedencias = async () => {
   try {
-    return await http<typeof MOCK_PROCEDENCIAS>("/procedencias", { method: "GET" });
+    const data = await http<typeof MOCK_PROCEDENCIAS>("/procedencias/", { method: "GET" });
+    return data ?? MOCK_PROCEDENCIAS;
   } catch (error) {
     console.warn("Error fetching procedencias, using local data:", error);
     localStorage.setItem(PROCEDENCIAS_KEY, JSON.stringify(MOCK_PROCEDENCIAS));

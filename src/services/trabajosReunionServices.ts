@@ -31,7 +31,7 @@ export interface TrabajoReunionPayload {
 }
 
 export const getTrabajosReunion = async (): Promise<TrabajoReunion[]> => {
-  return http("/trabajos-reunion-cientifica", {
+  return http("/trabajos-reunion-cientifica/", {
     method: "GET",
   });
 };
@@ -47,7 +47,7 @@ export const getTrabajoReunionById = async (
 export const createTrabajoReunion = async (
   data: TrabajoReunionPayload
 ) => {
-  return http("/trabajos-reunion-cientifica", {
+  return http("/trabajos-reunion-cientifica/", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -74,7 +74,7 @@ export const vincularInvestigadoresTrabajo = async (
   investigadoresIds: number[]
 ) => {
   return http(
-    `/trabajos-reunion-cientifica/${trabajoId}/investigadores`,
+    `/trabajos-reunion-cientifica/${trabajoId}/investigadores/`,
     {
       method: "POST",
       body: JSON.stringify({
@@ -89,7 +89,7 @@ export const desvincularInvestigadoresTrabajo = async (
   investigadoresIds: number[]
 ) => {
   return http(
-    `/trabajos-reunion-cientifica/${trabajoId}/investigadores`,
+    `/trabajos-reunion-cientifica/${trabajoId}/investigadores/`,
     {
       method: "DELETE",
       body: JSON.stringify({

@@ -5,6 +5,9 @@ import Button from "@/components/Button";
 import Tarjeta from "@/components/Tarjeta";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import MockIndicator from "@/components/MockIndicator";
+import SuccessToast from "@/components/SuccessToast";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { useTransferencias } from "@/hooks/useTransferencias";
 import { deleteTransferencia } from "@/services/transferenciasServices";
 
@@ -16,6 +19,18 @@ export default function TransferenciasHome() {
     const [selectMode, setSelectMode] = useState(false);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
+
+    const location = useLocation();
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [successMessage, setSuccessMessage] = useState("");
+
+    useEffect(() => {
+        if (location.state?.successMessage) {
+            setSuccessMessage(location.state.successMessage);
+            setShowSuccess(true);
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     const toggleSelect = (id: number, checked: boolean) => {
         setSelectedIds((prev) =>
@@ -39,6 +54,7 @@ export default function TransferenciasHome() {
         }
         qc.invalidateQueries({ queryKey: ["transferencias"] });
         cancelSelection();
+        setShowSuccess(true);
     };
 
     return (
@@ -131,6 +147,12 @@ export default function TransferenciasHome() {
                 items={selectedItems}
                 onCancel={cancelSelection}
                 onConfirm={confirmDelete}
+            />
+
+            <SuccessToast
+                open={showSuccess}
+                message={successMessage || "Eliminado con éxito!"}
+                onClose={() => setShowSuccess(false)}
             />
         </section>
     );

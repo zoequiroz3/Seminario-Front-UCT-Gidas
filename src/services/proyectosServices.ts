@@ -15,6 +15,13 @@ export type Proyecto = {
   fuenteFinanciamientoId?: number;
   fuenteFinanciamientoNombre?: string;
   descripcionProyecto?: string;
+
+  grupoUtnId?: number;
+  grupoUtnNombre?: string;
+
+  planificacionId?: number;
+  planificacionDescripcion?: string;
+
   investigadores?: {
     id: number;
     nombre_apellido: string;
@@ -65,12 +72,9 @@ export async function upsertProyectos(payload: any) {
     fecha_fin: payload.fechaFinalizacion || null,
     // Asumiendo que fuente de financiamiento también es un ID si existe
     fuente_financiamiento_id: payload.fuenteFinanciamientoId,
-    investigadores_ids: payload.investigadoresIds || [], // 🔵 NUEVO
-    becarios_ids: payload.becariosIds || [], // 🔵 NUEVO
-
   };
 
-  const url = payload.id ? `/proyectos/${payload.id}` : "/proyectos";
+  const url = payload.id ? `/proyectos/${payload.id}` : "/proyectos/";
   const method = payload.id ? "PUT" : "POST";
 
   return http(url, { method, body: JSON.stringify(body) });
@@ -123,25 +127,33 @@ export async function cerrarProyecto(
 
 export function vincularInvestigadores(
   proyectoId: number,
-  investigadoresIds: number[]
+  investigadoresIds: number[],
+  fechaInicio: string
 ) {
-  return http(`/proyectos/${proyectoId}/investigadores`, {
+  return http(`/proyectos/${proyectoId}/investigadores/`, {
     method: "POST",
-    body: JSON.stringify({
-      investigadores_ids: investigadoresIds,
-    }),
+    body: JSON.stringify(
+      investigadoresIds.map((id) => ({
+        id_investigador: id,
+        fecha_inicio: fechaInicio,
+      }))
+    ),
   });
 }
 
 export function vincularBecarios(
   proyectoId: number,
-  becariosIds: number[]
+  becariosIds: number[],
+  fechaInicio: string
 ) {
-  return http(`/proyectos/${proyectoId}/becarios`, {
+  return http(`/proyectos/${proyectoId}/becarios/`, {
     method: "POST",
-    body: JSON.stringify({
-      becarios_ids: becariosIds,
-    }),
+    body: JSON.stringify(
+      becariosIds.map((id) => ({
+        id_becario: id,
+        fecha_inicio: fechaInicio,
+      }))
+    ),
   });
 }
 

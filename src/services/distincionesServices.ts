@@ -1,4 +1,4 @@
-import {http} from "@/lib/http";
+import { http } from "@/lib/http";
 import { MOCK_DISTINCIONES, MOCK_PROYECTOS, type Distincion } from "./mockData";
 
 const STORAGE_KEY = "gidas_distinciones_v3";
@@ -36,7 +36,7 @@ export const getDistinciones = async (
     if (proyectoId) params.append("proyecto_id", String(proyectoId));
     params.append("orden", orden);
     const query = params.toString() ? `?${params.toString()}` : "";
-    return await http<Distincion[]>(`/distinciones${query}`, { method: "GET" });
+    return await http<Distincion[]>(`/distinciones/${query}`, { method: "GET" });
   } catch (error) {
     console.warn("Error fetching distinciones, using local data:", error);
     let data = getLocalStorageData();
@@ -66,14 +66,14 @@ export const getDistincionById = async (id: number): Promise<Distincion> => {
 
 export const crearDistincion = async (payload: DistincionPayload): Promise<Distincion> => {
   try {
-    return await http<Distincion>("/distinciones", {
+    return await http<Distincion>("/distinciones/", {
       method: "POST",
       body: JSON.stringify(payload),
     });
   } catch (error) {
     console.warn("Error creating distincion, saving locally:", error);
     const data = getLocalStorageData();
-    const proyecto = payload.proyecto_investigacion_id 
+    const proyecto = payload.proyecto_investigacion_id
       ? MOCK_PROYECTOS.find(p => p.id === payload.proyecto_investigacion_id)
       : undefined;
     const newItem: Distincion = {
@@ -103,12 +103,12 @@ export const actualizarDistincion = async (
     const data = getLocalStorageData();
     const index = data.findIndex(d => d.id === id);
     if (index === -1) throw new Error("Distinción no encontrada");
-    
+
     const updated: Distincion = {
       ...data[index],
       ...payload,
       proyecto: payload.proyecto_investigacion_id
-        ? (MOCK_PROYECTOS.find(p => p.id === payload.proyecto_investigacion_id) 
+        ? (MOCK_PROYECTOS.find(p => p.id === payload.proyecto_investigacion_id)
           ? { id: payload.proyecto_investigacion_id, codigo: MOCK_PROYECTOS.find(p => p.id === payload.proyecto_investigacion_id)!.codigo, nombre: MOCK_PROYECTOS.find(p => p.id === payload.proyecto_investigacion_id)!.nombre }
           : data[index].proyecto)
         : undefined,

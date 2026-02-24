@@ -19,6 +19,8 @@ interface TransferenciaBackend {
     tipo_contrato: string | null;
     grupo: string | null;
     adoptantes?: Adoptante[];
+    numero_transferencia: number;
+    denominacion: string;
 }
 
 /** Interfaz unificada del frontend (incluye campos mock-only del spec). */
@@ -34,9 +36,9 @@ export interface Transferencia {
     grupo: string | null;
     grupoUtnId?: number;
     adoptantes: Adoptante[];
-    // Campos del spec que NO existen en el backend (mock-only)
-    denominacion?: string;
-    numeroErogacion?: string;
+    // Campos completos que mapean al backend
+    denominacion: string;
+    numeroTransferencia: number;
 }
 
 /** Payload para crear/editar en el frontend. */
@@ -49,9 +51,9 @@ export interface TransferenciaPayload {
     tipoContratoId: number;
     grupoUtnId: number;
     adoptantesIds?: number[];
-    // Mock-only
-    denominacion?: string;
-    numeroErogacion?: string;
+    // Mapas correctos al back
+    denominacion: string;
+    numeroTransferencia: number;
 }
 
 // ─── Mappers ─────────────────────────────────────────────────
@@ -67,6 +69,8 @@ function fromBackend(raw: TransferenciaBackend): Transferencia {
         tipoContrato: raw.tipo_contrato,
         grupo: raw.grupo,
         adoptantes: raw.adoptantes ?? [],
+        denominacion: raw.denominacion || "",
+        numeroTransferencia: (raw as any).numero_transferencia || 0,
     };
 }
 
@@ -79,6 +83,8 @@ function toBackend(data: TransferenciaPayload): Record<string, unknown> {
         fecha_fin: data.fechaFin || null,
         tipo_contrato_id: data.tipoContratoId,
         grupo_utn_id: data.grupoUtnId,
+        denominacion: data.denominacion,
+        numero_transferencia: data.numeroTransferencia,
     };
 }
 
@@ -115,7 +121,7 @@ function ensureSeed() {
             monto: 150000,
             fechaInicio: "2024-03-01",
             fechaFin: "2024-12-31",
-            numeroErogacion: "ERO-2024-001",
+            numeroTransferencia: 2024001,
             adoptantes: [{ id: 1, nombre: "Empresa Tech SA" }],
         },
         {
@@ -129,6 +135,7 @@ function ensureSeed() {
             grupo: "GIDAS",
             grupoUtnId: 1,
             monto: 80000,
+            numeroTransferencia: 2024002,
             fechaInicio: "2024-06-15",
             adoptantes: [{ id: 2, nombre: "Municipalidad de Resistencia" }],
         },
@@ -146,7 +153,7 @@ function ensureSeed() {
             monto: null,
             fechaInicio: "2024-01-10",
             fechaFin: "2024-04-30",
-            numeroErogacion: "ERO-2024-005",
+            numeroTransferencia: 2024005,
             adoptantes: [{ id: 3, nombre: "Fundación Educativa del Norte" }],
         },
     ];
@@ -197,8 +204,8 @@ export async function createTransferencia(
             grupo: null,
             grupoUtnId: data.grupoUtnId,
             adoptantes: [],
-            denominacion: data.denominacion,
-            numeroErogacion: data.numeroErogacion,
+            denominacion: data.denominacion || "Sin Denominación",
+            numeroTransferencia: data.numeroTransferencia,
         };
         const list = readMock();
         list.push(item);
@@ -251,6 +258,10 @@ export async function updateTransferencia(
         backendPayload.tipo_contrato_id = data.tipoContratoId;
     if (data.grupoUtnId !== undefined)
         backendPayload.grupo_utn_id = data.grupoUtnId;
+    if (data.denominacion !== undefined)
+        backendPayload.denominacion = data.denominacion;
+    if (data.numeroTransferencia !== undefined)
+        backendPayload.numero_transferencia = data.numeroTransferencia;
 
     const raw = await http<TransferenciaBackend>(`/transferencias/${id}`, {
         method: "PUT",

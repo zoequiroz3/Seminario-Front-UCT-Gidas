@@ -236,6 +236,7 @@ export default function FormDocenciaInvestigador() {
                   setFechaFin(date);
                   if (date) clearError("fechaFin");
                 }}
+                minDate={fechaInicio ?? undefined}
                 className={inputClass("fechaFin")}
                 helperText={errors.fechaFin ?? "DD/MM/AAAA"}
               />

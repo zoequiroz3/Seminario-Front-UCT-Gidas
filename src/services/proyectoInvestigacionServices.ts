@@ -1,4 +1,4 @@
-import {http} from "@/lib/http";
+import { http } from "@/lib/http";
 import { MOCK_PROYECTOS } from "./mockData";
 
 export interface Proyecto {
@@ -9,10 +9,14 @@ export interface Proyecto {
 
 export const getProyectos = async (): Promise<Proyecto[]> => {
   try {
-    return await http<Proyecto[]>("/proyecto-investigacion", { method: "GET" });
+    const data = await http<any[]>("/proyectos/");
+    return data.map((p) => ({
+      id: p.id,
+      codigo: String(p.codigo_proyecto),
+      nombre: p.nombre_proyecto,
+    }));
   } catch (error) {
-    console.warn("Error fetching proyectos, using local data:", error);
-    localStorage.setItem("gidas_proyectos_v3", JSON.stringify(MOCK_PROYECTOS));
+    console.warn("Error fetching proyectos, using mock data:", error);
     return MOCK_PROYECTOS;
   }
 };
