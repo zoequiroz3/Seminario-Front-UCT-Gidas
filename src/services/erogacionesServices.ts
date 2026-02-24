@@ -5,6 +5,7 @@ export type Erogaciones = {
   egresos: number;
   ingresos: number;
   numero_erogacion: number;
+  fecha: string;
 
   tipo_erogacion?: {
     id: number;
