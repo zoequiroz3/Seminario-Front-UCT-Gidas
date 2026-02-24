@@ -25,11 +25,7 @@ export interface Visitante {
   fecha: string;
   grupo_utn_id: number;
   grupo?: string;
-  procedencia_visita_id: number;
-  visita_procedencia?: {
-    id: number;
-    nombre: string;
-  };
+  procedencia: string;
   tipo_visita_id: number;
   tipo_visita?: {
     id: number;
@@ -125,10 +121,9 @@ export const MOCK_VISITANTES: Visitante[] = [
     fecha: "2024-08-10",
     grupo_utn_id: 1,
     grupo: "GIDAS",
-    procedencia_visita_id: 1,
-    visita_procedencia: { id: 1, nombre: "Universidad Nacional de La Plata" },
-    tipo_visita_id: 1,
-    tipo_visita: { id: 1, nombre: "Nacional" }
+    procedencia: "Universidad Nacional de La Plata",
+    tipo_visita_id: 2,
+    tipo_visita: { id: 2, nombre: "Del país" }
   },
   {
     id: 2,
@@ -136,10 +131,9 @@ export const MOCK_VISITANTES: Visitante[] = [
     fecha: "2024-09-15",
     grupo_utn_id: 1,
     grupo: "GIDAS",
-    procedencia_visita_id: 2,
-    visita_procedencia: { id: 2, nombre: "Universidad de Chile" },
-    tipo_visita_id: 2,
-    tipo_visita: { id: 2, nombre: "Internacional" }
+    procedencia: "Universidad de Chile",
+    tipo_visita_id: 3,
+    tipo_visita: { id: 3, nombre: "Del extranjero" }
   },
   {
     id: 3,
@@ -147,10 +141,9 @@ export const MOCK_VISITANTES: Visitante[] = [
     fecha: "2024-11-20",
     grupo_utn_id: 1,
     grupo: "GIDAS",
-    procedencia_visita_id: 3,
-    visita_procedencia: { id: 3, nombre: "CONICET" },
-    tipo_visita_id: 1,
-    tipo_visita: { id: 1, nombre: "Nacional" }
+    procedencia: "CONICET",
+    tipo_visita_id: 2,
+    tipo_visita: { id: 2, nombre: "Del país" }
   },
   {
     id: 4,
@@ -158,10 +151,9 @@ export const MOCK_VISITANTES: Visitante[] = [
     fecha: "2025-01-10",
     grupo_utn_id: 1,
     grupo: "GIDAS",
-    procedencia_visita_id: 4,
-    visita_procedencia: { id: 4, nombre: "Universidad de São Paulo" },
-    tipo_visita_id: 2,
-    tipo_visita: { id: 2, nombre: "Internacional" }
+    procedencia: "Universidad de São Paulo",
+    tipo_visita_id: 3,
+    tipo_visita: { id: 3, nombre: "Del extranjero" }
   },
   {
     id: 5,
@@ -169,10 +161,9 @@ export const MOCK_VISITANTES: Visitante[] = [
     fecha: "2025-02-05",
     grupo_utn_id: 1,
     grupo: "GIDAS",
-    procedencia_visita_id: 5,
-    visita_procedencia: { id: 5, nombre: "Universidad de Buenos Aires" },
-    tipo_visita_id: 1,
-    tipo_visita: { id: 1, nombre: "Nacional" }
+    procedencia: "Universidad de Buenos Aires",
+    tipo_visita_id: 2,
+    tipo_visita: { id: 2, nombre: "Del país" }
   },
 ];
 
@@ -197,8 +188,8 @@ export const MOCK_GRUPOS_UTN = [
 ];
 
 export const MOCK_TIPOS_VISITA = [
-  { id: 1, nombre: "Nacional" },
-  { id: 2, nombre: "Internacional" },
+  { id: 2, nombre: "Del país" },
+  { id: 3, nombre: "Del extranjero" },
 ];
 
 export const MOCK_PROCEDENCIAS = [

@@ -1,10 +1,9 @@
 import { http } from "@/lib/http";
-import { MOCK_VISITANTES, MOCK_GRUPOS_UTN, MOCK_TIPOS_VISITA, MOCK_PROCEDENCIAS, type Visitante } from "./mockData";
+import { MOCK_VISITANTES, MOCK_GRUPOS_UTN, MOCK_TIPOS_VISITA, type Visitante } from "./mockData";
 
 const STORAGE_KEY = "gidas_visitantes";
 const GRUPOS_KEY = "gidas_grupos_utn";
 const TIPOS_KEY = "gidas_tipos_visita";
-const PROCEDENCIAS_KEY = "gidas_procedencias";
 
 const getLocalStorageData = (): Visitante[] => {
   const data = localStorage.getItem(STORAGE_KEY);
@@ -26,7 +25,7 @@ const generateLocalId = (): number => {
 export interface VisitantePayload {
   razon: string;
   fecha: string;
-  procedencia_visita_id: number;
+  procedencia: string;
   tipo_visita_id: number;
   grupo_utn_id: number;
 }
@@ -62,7 +61,6 @@ export const crearVisitante = async (payload: VisitantePayload): Promise<Visitan
   } catch (error) {
     console.warn("Error creating visitante, saving locally:", error);
     const data = getLocalStorageData();
-    const procedencia = MOCK_PROCEDENCIAS.find(p => p.id === payload.procedencia_visita_id);
     const tipo = MOCK_TIPOS_VISITA.find(t => t.id === payload.tipo_visita_id);
     const grupo = MOCK_GRUPOS_UTN.find(g => g.id === payload.grupo_utn_id);
 
@@ -70,8 +68,7 @@ export const crearVisitante = async (payload: VisitantePayload): Promise<Visitan
       id: generateLocalId(),
       razon: payload.razon,
       fecha: payload.fecha,
-      procedencia_visita_id: payload.procedencia_visita_id,
-      visita_procedencia: procedencia ? { id: procedencia.id, nombre: procedencia.nombre } : undefined,
+      procedencia: payload.procedencia,
       tipo_visita_id: payload.tipo_visita_id,
       tipo_visita: tipo ? { id: tipo.id, nombre: tipo.nombre } : undefined,
       grupo_utn_id: payload.grupo_utn_id,
@@ -98,9 +95,6 @@ export const actualizarVisitante = async (
     const index = data.findIndex(v => v.id === id);
     if (index === -1) throw new Error("Visitante no encontrado");
 
-    const procedencia = payload.procedencia_visita_id
-      ? MOCK_PROCEDENCIAS.find(p => p.id === payload.procedencia_visita_id)
-      : undefined;
     const tipo = payload.tipo_visita_id
       ? MOCK_TIPOS_VISITA.find(t => t.id === payload.tipo_visita_id)
       : undefined;
@@ -111,7 +105,7 @@ export const actualizarVisitante = async (
     const updated: Visitante = {
       ...data[index],
       ...payload,
-      visita_procedencia: procedencia ? { id: procedencia.id, nombre: procedencia.nombre } : data[index].visita_procedencia,
+      procedencia: payload.procedencia ?? data[index].procedencia,
       tipo_visita: tipo ? { id: tipo.id, nombre: tipo.nombre } : data[index].tipo_visita,
       grupo: grupo,
     };
@@ -150,22 +144,11 @@ export const getGruposUtn = async () => {
 
 export const getTiposVisita = async () => {
   try {
-    const data = await http<typeof MOCK_TIPOS_VISITA>("/tipos-visita/", { method: "GET" });
+    const data = await http<typeof MOCK_TIPOS_VISITA>("/tipos-reunion-cientifica/", { method: "GET" });
     return data ?? MOCK_TIPOS_VISITA;
   } catch (error) {
     console.warn("Error fetching tipos visita, using local data:", error);
     localStorage.setItem(TIPOS_KEY, JSON.stringify(MOCK_TIPOS_VISITA));
     return MOCK_TIPOS_VISITA;
-  }
-};
-
-export const getProcedencias = async () => {
-  try {
-    const data = await http<typeof MOCK_PROCEDENCIAS>("/procedencias/", { method: "GET" });
-    return data ?? MOCK_PROCEDENCIAS;
-  } catch (error) {
-    console.warn("Error fetching procedencias, using local data:", error);
-    localStorage.setItem(PROCEDENCIAS_KEY, JSON.stringify(MOCK_PROCEDENCIAS));
-    return MOCK_PROCEDENCIAS;
   }
 };

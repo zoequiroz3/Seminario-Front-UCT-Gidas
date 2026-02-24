@@ -10,12 +10,10 @@ import {
   actualizarVisitante,
   getGruposUtn,
   getTiposVisita,
-  getProcedencias,
 } from "@/services/visitantesServices";
 
 type GrupoUtn = { id: number; nombre: string };
 type TipoVisita = { id: number; nombre: string };
-type Procedencia = { id: number; nombre: string };
 
 export default function VisitantesForm() {
   const { id } = useParams<{ id: string }>();
@@ -34,11 +32,6 @@ export default function VisitantesForm() {
     queryFn: getTiposVisita,
   });
 
-  const { data: procedencias = [] } = useQuery({
-    queryKey: ["procedencias"],
-    queryFn: getProcedencias,
-  });
-
   const { data: initialData, isLoading } = useQuery({
     queryKey: ["visitante", id],
     queryFn: () => (id ? getVisitanteById(Number(id)) : null),
@@ -47,7 +40,7 @@ export default function VisitantesForm() {
 
   const [razon, setRazon] = useState("");
   const [fecha, setFecha] = useState<Date | null>(null);
-  const [procedenciaId, setProcedenciaId] = useState<number | null>(null);
+  const [procedencia, setProcedencia] = useState<string>("");
   const [tipoVisitaId, setTipoVisitaId] = useState<number | null>(null);
   const [grupoUtnId, setGrupoUtnId] = useState<number | null>(null);
 
@@ -58,7 +51,7 @@ export default function VisitantesForm() {
 
     setRazon(initialData.razon ?? "");
     if (initialData.fecha) setFecha(new Date(initialData.fecha));
-    setProcedenciaId(initialData.procedencia_visita_id ?? null);
+    setProcedencia(initialData.procedencia ?? "");
     setTipoVisitaId(initialData.tipo_visita_id ?? null);
     setGrupoUtnId(initialData.grupo_utn_id ?? null);
   }, [initialData]);
@@ -87,7 +80,7 @@ export default function VisitantesForm() {
 
     if (!razon.trim()) newErrors.razon = "Debe ingresar razón de la visita";
     if (!fecha) newErrors.fecha = "Debe seleccionar fecha";
-    if (!procedenciaId) newErrors.procedencia = "Debe seleccionar procedencia";
+    if (!procedencia.trim()) newErrors.procedencia = "Debe ingresar procedencia";
     if (!tipoVisitaId) newErrors.tipoVisita = "Debe seleccionar tipo de visita";
     if (!grupoUtnId) newErrors.grupoUtn = "Debe seleccionar grupo UTN";
 
@@ -102,7 +95,7 @@ export default function VisitantesForm() {
     mutation.mutate({
       razon,
       fecha: fecha!.toISOString().split("T")[0],
-      procedencia_visita_id: procedenciaId!,
+      procedencia: procedencia,
       tipo_visita_id: tipoVisitaId!,
       grupo_utn_id: grupoUtnId!,
     });
@@ -148,22 +141,16 @@ export default function VisitantesForm() {
         </Field>
 
         <Field label="Procedencia">
-          <select
+          <input
+            type="text"
             className={inputClass("procedencia")}
-            value={procedenciaId ?? ""}
+            value={procedencia}
             onChange={(e) => {
-              const value = e.target.value ? Number(e.target.value) : null;
-              setProcedenciaId(value);
-              if (value) clearError("procedencia");
+              setProcedencia(e.target.value);
+              if (e.target.value.trim()) clearError("procedencia");
             }}
-          >
-            <option value="" disabled>Seleccionar procedencia</option>
-            {procedencias.map((p: Procedencia) => (
-              <option key={p.id} value={p.id}>
-                {p.nombre}
-              </option>
-            ))}
-          </select>
+            placeholder="Ej: Universidad Nacional de Córdoba"
+          />
           {errors.procedencia && <p className="text-red-500 text-sm mt-1">{errors.procedencia}</p>}
         </Field>
 
