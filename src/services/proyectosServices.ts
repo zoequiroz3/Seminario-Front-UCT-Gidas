@@ -130,7 +130,7 @@ export function vincularInvestigadores(
   investigadoresIds: number[],
   fechaInicio: string
 ) {
-  return http(`/proyectos/${proyectoId}/investigadores/`, {
+  return http(`/proyectos/${proyectoId}/investigadores`, {
     method: "POST",
     body: JSON.stringify(
       investigadoresIds.map((id) => ({
@@ -146,7 +146,7 @@ export function vincularBecarios(
   becariosIds: number[],
   fechaInicio: string
 ) {
-  return http(`/proyectos/${proyectoId}/becarios/`, {
+  return http(`/proyectos/${proyectoId}/becarios`, {
     method: "POST",
     body: JSON.stringify(
       becariosIds.map((id) => ({
