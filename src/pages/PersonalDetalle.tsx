@@ -45,8 +45,8 @@ export default function PersonalDetalle() {
     if (Array.isArray(value)) {
       return value.length
         ? value
-            .map((v) => v.nombre_apellido || v.nombre || JSON.stringify(v))
-            .join(", ")
+          .map((v) => v.nombre_apellido || v.nombre || v.nombre_beca || JSON.stringify(v))
+          .join(", ")
         : "—";
     }
 
@@ -96,9 +96,12 @@ export default function PersonalDetalle() {
             <Button
               size="sm"
               className="px-3 py-1 text-xs"
-              onClick={() =>
-                navigate(`/personal/${rol}/${id}/editar`)
-              }
+              onClick={() => {
+                // If it's becario, the route is /becarios/:id/editar
+                if (rol === "becario") navigate(`/becarios/${id}/editar`);
+                else if (rol === "investigador") navigate(`/investigadores/${id}/editar`);
+                else navigate(`/personal/${rol}/${id}/editar`);
+              }}
             >
               Editar
             </Button>
