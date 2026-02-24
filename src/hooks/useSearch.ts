@@ -1,18 +1,41 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { searchAll, type SearchResult, type Orden } from "@/services/searchService";
 
 /* ─── hook principal ─── */
 export function useSearch() {
-  const [q, setQ] = useState("");
-  const [orden, setOrden] = useState<Orden>("alf_asc");
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [dateFrom, setDateFrom] = useState<string | undefined>();
-  const [dateTo, setDateTo] = useState<string | undefined>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Leer valores iniciales de la URL
+  const initialQ = searchParams.get("q") || "";
+  const initialOrden = (searchParams.get("orden") as Orden) || "alf_asc";
+  const initialTypes = searchParams.get("tipos")?.split(",").filter(Boolean) || [];
+  const initialDateFrom = searchParams.get("desde") || undefined;
+  const initialDateTo = searchParams.get("hasta") || undefined;
+  
+  const [q, setQ] = useState(initialQ);
+  const [orden, setOrden] = useState<Orden>(initialOrden);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(initialTypes);
+  const [dateFrom, setDateFrom] = useState<string | undefined>(initialDateFrom);
+  const [dateTo, setDateTo] = useState<string | undefined>(initialDateTo);
 
   const [loading, setLoading] = useState(false);
   const [rawResults, setRawResults] = useState<SearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [hasSearched, setHasSearched] = useState(initialQ.length >= 2);
+
+  // Sincronizar estado con URL
+  useEffect(() => {
+    const params: Record<string, string> = {};
+    
+    if (q.trim()) params.q = q.trim();
+    if (orden !== "alf_asc") params.orden = orden;
+    if (selectedTypes.length > 0) params.tipos = selectedTypes.join(",");
+    if (dateFrom) params.desde = dateFrom;
+    if (dateTo) params.hasta = dateTo;
+    
+    setSearchParams(params, { replace: true });
+  }, [q, orden, selectedTypes, dateFrom, dateTo, setSearchParams]);
 
   /** 
    * Ejecuta la búsqueda de forma manual.
@@ -31,8 +54,6 @@ export function useSearch() {
 
     setLoading(true);
     setError(null);
-    // No reseteamos hasSearched aquí para no parpadear la UI si ya había resultados,
-    // pero lo haremos al final del proceso.
 
     try {
       const r = await searchAll(queryToUse, ordenToUse);
@@ -89,6 +110,7 @@ export function useSearch() {
     setRawResults([]);
     setError(null);
     setHasSearched(false);
+    setSearchParams({}, { replace: true });
   }
 
   return {
@@ -105,6 +127,6 @@ export function useSearch() {
     error,
     clearAll,
     executeSearch,
-    hasSearched, // Exportamos esto
+    hasSearched,
   };
 }
