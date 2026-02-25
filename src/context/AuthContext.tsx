@@ -10,8 +10,10 @@ import {
   register as registerService,
   logout as logoutService,
   getStoredAuth,
-  clearStoredAuth,
+  esPrimerUsuario as esPrimerUsuarioService,
+  cambiarPassword as cambiarPasswordService,
   type User,
+  type Rol,
 } from "@/services/authService";
 
 type AuthContextValue = {
@@ -21,6 +23,11 @@ type AuthContextValue = {
   login: (usuario: string, password: string) => Promise<void>; 
   register: (nombre: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+  esPrimerUsuario: () => Promise<boolean>;
+  cambiarPassword: (passwordActual: string, passwordNueva: string) => Promise<void>;
+  isAdmin: () => boolean;
+  isGestor: () => boolean;
+  debeCambiarPassword: () => boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -41,23 +48,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function login(usuario: string, password: string) {
-    // loginService devuelve { user, token }
     const auth = await loginService(usuario, password);
     setUser(auth.user);
     setToken(auth.token);
   }
 
   async function register(nombre: string, email: string, password: string) {
-    // registerService no devuelve nada (void), solo crea la cuenta.
     await registerService(nombre, email, password);
+  }
 
-    // El flujo es: Registro -> Redirigir a Login -> Usuario se loguea.
+  async function esPrimerUsuario() {
+    return esPrimerUsuarioService();
+  }
+
+  async function cambiarPassword(passwordActual: string, passwordNueva: string) {
+    await cambiarPasswordService(passwordActual, passwordNueva);
+    // Actualizar el estado del usuario para indicar que ya cambió la password
+    if (user) {
+      const updatedUser = { ...user, primer_login: false };
+      setUser(updatedUser);
+      // Actualizar también en localStorage
+      const stored = getStoredAuth();
+      if (stored) {
+        localStorage.setItem("gidas_auth_current_session", JSON.stringify({
+          ...stored,
+          user: updatedUser,
+        }));
+      }
+    }
   }
 
   function logout() {
-    logoutService(); // Limpia localStorage
-    setUser(null);   // Limpia estado de React
+    logoutService();
+    setUser(null);
     setToken(null);
+  }
+
+  // Helpers para verificar roles
+  function isAdmin(): boolean {
+    return user?.rol === "ADMIN";
+  }
+
+  function isGestor(): boolean {
+    return user?.rol === "GESTOR";
+  }
+
+  function debeCambiarPassword(): boolean {
+    return user?.primer_login === true;
   }
 
   const value: AuthContextValue = {
@@ -67,6 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     register,
     logout,
+    esPrimerUsuario,
+    cambiarPassword,
+    isAdmin,
+    isGestor,
+    debeCambiarPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

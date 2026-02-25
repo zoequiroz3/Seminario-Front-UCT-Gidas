@@ -69,6 +69,11 @@ import VisitantesHome from "./pages/VisitantesHome";
 import VisitantesForm from "./pages/VisitantesForm";
 import VisitantesDetalle from "./pages/VisitantesDetalle";
 
+// Gestión de usuarios
+import CambiarPassword from "./pages/CambiarPassword";
+import UsuariosHome from "./pages/UsuariosHome";
+import UsuariosForm from "./pages/UsuariosForm";
+
 // Definición de rutas
 const router = createBrowserRouter([
   // rutas públicas (sin login)
@@ -212,6 +217,32 @@ const router = createBrowserRouter([
       { path: "visitantes/nuevo", element: <VisitantesForm /> },
       { path: "visitantes/:id", element: <VisitantesDetalle /> },
       { path: "visitantes/:id/editar", element: <VisitantesForm /> },
+
+      // Gestión de Usuarios (solo admin)
+      {
+        path: "cambiar-password",
+        element: (
+          <ProtectedRoute>
+            <CambiarPassword />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "usuarios",
+        element: (
+          <ProtectedRoute requiredRole="ADMIN">
+            <UsuariosHome />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "usuarios/nuevo",
+        element: (
+          <ProtectedRoute requiredRole="ADMIN">
+            <UsuariosForm />
+          </ProtectedRoute>
+        ),
+      },
 
       { path: "*", element: <NotFound /> },
     ],

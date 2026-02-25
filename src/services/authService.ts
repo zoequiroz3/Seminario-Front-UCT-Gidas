@@ -1,9 +1,13 @@
 import { http } from "@/lib/http";
 
+export type Rol = "ADMIN" | "GESTOR";
+
 export type User = {
   id: number;
   nombre_usuario: string;
   mail: string;
+  rol: Rol;
+  primer_login: boolean;
 };
 
 export type AuthResponse = {
@@ -63,7 +67,35 @@ export async function register(usuario: string, email: string, password: string)
   });
 }
 
-// LOGOUT: Esta es la función que faltaba
+// Verificar si es el primer usuario (sistema vacío)
+export async function esPrimerUsuario(): Promise<boolean> {
+  try {
+    const response = await http<{ existe: boolean }>("/auth/primer-usuario", {
+      method: "GET",
+    });
+    return !response.existe;
+  } catch {
+    // Si el endpoint no existe, asumimos que no es el primer usuario (más seguro)
+    return false;
+  }
+}
+
+// Cambiar contraseña
+export async function cambiarPassword(
+  passwordActual: string, 
+  passwordNueva: string
+): Promise<void> {
+  await http("/auth/cambiar-password", {
+    method: "POST",
+    body: JSON.stringify({
+      password_actual: passwordActual,
+      password_nueva: passwordNueva,
+      password_confirmacion: passwordNueva,
+    }),
+  });
+}
+
+// LOGOUT
 export function logout() {
   localStorage.removeItem(AUTH_KEY);
   window.location.href = "/login";

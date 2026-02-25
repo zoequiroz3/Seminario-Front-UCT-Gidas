@@ -14,7 +14,7 @@ const banner = () => (
 );
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, debeCambiarPassword } = useAuth();
   const nav = useNavigate();
   const location = useLocation() as any;
   const from = location.state?.from?.pathname || "/";
@@ -34,7 +34,13 @@ export default function LoginPage() {
     try {
       // Enviar el usuario y contraseña al contexto
       await login(usuario, password);
-      nav(from, { replace: true });
+      
+      // Verificar si debe cambiar la contraseña
+      if (debeCambiarPassword()) {
+        nav("/cambiar-password", { replace: true });
+      } else {
+        nav(from, { replace: true });
+      }
     } catch (err: any) {
       setError(err?.message ?? "Credenciales incorrectas");
     } finally {
