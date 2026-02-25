@@ -2,10 +2,35 @@ import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { crearUsuario } from "@/services/usuariosService";
+import { HttpError } from "@/lib/http";
 import type { Rol } from "@/services/authService";
 import Button from "@/components/Button";
 import Field from "@/components/Field";
-import { UserPlus, Eye, EyeOff, CheckCircle, Copy, ArrowLeft } from "lucide-react";
+import { UserPlus, Eye, EyeOff, CheckCircle, Copy, ArrowLeft, Loader2 } from "lucide-react";
+
+// Función para obtener mensaje de error del backend
+function getErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const body = error.body as any;
+    if (body?.error) return body.error;
+    if (body?.message) return body.message;
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "Error desconocido";
+}
+
+// Validar email
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Validar nombre de usuario (sin espacios)
+function isValidUsername(username: string): boolean {
+  return /^[a-zA-Z0-9._-]+$/.test(username);
+}
 
 export default function UsuariosForm() {
   const nav = useNavigate();
@@ -17,9 +42,14 @@ export default function UsuariosForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [copiado, setCopiado] = useState(false);
   
-  // Estado para mostrar el resultado exitoso
   const [creado, setCreado] = useState(false);
-  const [usuarioCreado, setUsuarioCreado] = useState<{ nombre: string; password: string }> | null>(null);
+  const [usuarioCreado, setUsuarioCreado] = useState<{ nombre: string; password: string } | null>(null);
+  
+  const [errors, setErrors] = useState<{
+    nombre?: string;
+    email?: string;
+    password?: string;
+  }>({});
 
   const crearMutation = useMutation({
     mutationFn: crearUsuario,
@@ -27,12 +57,42 @@ export default function UsuariosForm() {
       setCreado(true);
       setUsuarioCreado({ nombre, password });
     },
+    onError: () => {
+      setErrors({});
+    }
   });
+
+  function validateForm(): boolean {
+    const newErrors: typeof errors = {};
+    
+    if (!nombre.trim()) {
+      newErrors.nombre = "El nombre de usuario es obligatorio";
+    } else if (nombre.length < 3) {
+      newErrors.nombre = "El nombre debe tener al menos 3 caracteres";
+    } else if (!isValidUsername(nombre)) {
+      newErrors.nombre = "Solo letras, números, puntos, guiones y guiones bajos";
+    }
+    
+    if (!email.trim()) {
+      newErrors.email = "El email es obligatorio";
+    } else if (!isValidEmail(email)) {
+      newErrors.email = "Ingresa un email válido";
+    }
+    
+    if (!password) {
+      newErrors.password = "La contraseña es obligatoria";
+    } else if (password.length < 6) {
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     
-    if (password.length < 6) {
+    if (!validateForm()) {
       return;
     }
 
@@ -43,6 +103,27 @@ export default function UsuariosForm() {
       rol,
     });
   }
+  
+  function handleNombreChange(value: string) {
+    setNombre(value);
+    if (errors.nombre) {
+      setErrors(prev => ({ ...prev, nombre: undefined }));
+    }
+  }
+  
+  function handleEmailChange(value: string) {
+    setEmail(value);
+    if (errors.email) {
+      setErrors(prev => ({ ...prev, email: undefined }));
+    }
+  }
+  
+  function handlePasswordChange(value: string) {
+    setPassword(value);
+    if (errors.password) {
+      setErrors(prev => ({ ...prev, password: undefined }));
+    }
+  }
 
   function copiarPassword() {
     if (usuarioCreado) {
@@ -52,39 +133,41 @@ export default function UsuariosForm() {
     }
   }
 
-  // Generar password aleatoria
   function generarPassword() {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
     let result = "";
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 12; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setPassword(result);
+    if (errors.password) {
+      setErrors(prev => ({ ...prev, password: undefined }));
+    }
   }
 
   if (creado && usuarioCreado) {
     return (
       <section className="w-full max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-          <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-8 text-center">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-slate-900" />
           </div>
           
-          <h2 className="text-xl font-semibold mb-2">¡Usuario Creado Exitosamente!</h2>
+          <h2 className="text-2xl font-semibold mb-2">¡Usuario Creado Exitosamente!</h2>
           
           <p className="text-slate-600 mb-6">
             El usuario <strong>{usuarioCreado.nombre}</strong> ha sido creado con éxito.
           </p>
 
-          <div className="bg-slate-50 rounded-xl p-6 mb-6">
-            <p className="text-sm text-slate-500 mb-2">Contraseña temporal:</p>
+          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-6 mb-6">
+            <p className="text-sm text-slate-600 mb-2">Contraseña temporal:</p>
             <div className="flex items-center gap-2 justify-center">
-              <code className="bg-slate-200 px-3 py-1.5 rounded-lg font-mono text-lg">
+              <code className="bg-white border border-slate-200 px-3 py-1.5 rounded-lg font-mono text-lg">
                 {usuarioCreado.password}
               </code>
               <button
                 onClick={copiarPassword}
-                className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition-colors"
+                className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-colors"
                 title="Copiar contraseña"
               >
                 {copiado ? "¡Copiado!" : <Copy className="w-4 h-4" />}
@@ -92,8 +175,8 @@ export default function UsuariosForm() {
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
-            <p className="text-sm text-amber-800">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 mb-6 text-left">
+            <p className="text-sm text-slate-600">
               <strong>Importante:</strong> Compartí esta contraseña de forma segura con el usuario. 
               Deberá cambiarla en su primer inicio de sesión.
             </p>
@@ -116,6 +199,7 @@ export default function UsuariosForm() {
                 setEmail("");
                 setPassword("");
                 setRol("GESTOR");
+                setErrors({});
               }}
               className="flex-1"
             >
@@ -128,62 +212,51 @@ export default function UsuariosForm() {
   }
 
   return (
-    <section className="w-full max-w-2xl mx-auto">
-      {/* HEADER */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => nav("/usuarios")}
-          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div>
-          <h2 className="text-2xl font-semibold">Nuevo Usuario</h2>
-          <p className="text-slate-500 text-sm">Crear una cuenta de usuario para el sistema</p>
-        </div>
-      </div>
+    <section className="w-full">
+      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+        Nuevo Usuario
+      </h2>
 
-      {/* FORMULARIO */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Field label="Nombre de Usuario" required>
+          <Field label="Nombre de Usuario" required error={errors.nombre}>
             <input
               type="text"
-              className="input"
+              className={`input ${errors.nombre ? "border-rose-300" : ""}`}
               value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              onChange={(e) => handleNombreChange(e.target.value)}
               placeholder="Ej: juan.perez"
-              required
+              disabled={crearMutation.isPending}
             />
           </Field>
 
-          <Field label="Email" required>
+          <Field label="Email" required error={errors.email}>
             <input
               type="email"
-              className="input"
+              className={`input ${errors.email ? "border-rose-300" : ""}`}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => handleEmailChange(e.target.value)}
               placeholder="Ej: juan@email.com"
-              required
+              disabled={crearMutation.isPending}
             />
           </Field>
 
-          <Field label="Contraseña Temporal" required>
+          <Field label="Contraseña Temporal" required error={errors.password}>
             <div className="space-y-2">
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  className="input pr-24"
+                  className={`input pr-24 ${errors.password ? "border-rose-300" : ""}`}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
-                  minLength={6}
-                  required
+                  disabled={crearMutation.isPending}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-20 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  disabled={crearMutation.isPending}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -191,67 +264,38 @@ export default function UsuariosForm() {
                   type="button"
                   onClick={generarPassword}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded transition-colors"
+                  disabled={crearMutation.isPending}
                 >
                   Generar
                 </button>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 El usuario deberá cambiar esta contraseña en su primer inicio de sesión.
               </p>
             </div>
           </Field>
 
           <Field label="Rol" required>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
-                rol === "GESTOR"
-                  ? "border-slate-900 bg-slate-50"
-                  : "border-slate-200 hover:border-slate-300"
-              }`}>
-                <input
-                  type="radio"
-                  name="rol"
-                  value="GESTOR"
-                  checked={rol === "GESTOR"}
-                  onChange={(e) => setRol(e.target.value as Rol)}
-                  className="sr-only"
-                />
-                <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-                  <UserPlus className="w-5 h-5 text-slate-600" />
+            <div className="mt-2 p-4 rounded-xl border border-slate-200 bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
+                  <UserPlus className="w-5 h-5 text-slate-700" />
                 </div>
                 <div>
-                  <p className="font-medium">Gestor</p>
-                  <p className="text-xs text-slate-500">Acceso estándar</p>
+                  <p className="font-medium text-slate-900">Gestor</p>
+                  <p className="text-sm text-slate-600">Acceso estándar al sistema</p>
                 </div>
-              </label>
-
-              <label className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
-                rol === "ADMIN"
-                  ? "border-purple-500 bg-purple-50"
-                  : "border-slate-200 hover:border-slate-300"
-              }`}>
-                <input
-                  type="radio"
-                  name="rol"
-                  value="ADMIN"
-                  checked={rol === "ADMIN"}
-                  onChange={(e) => setRol(e.target.value as Rol)}
-                  className="sr-only"
-                />
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <span className="text-purple-700 font-bold">A</span>
-                </div>
-                <div>
-                  <p className="font-medium">Administrador</p>
-                  <p className="text-xs text-slate-500">Control total del sistema</p>
-                </div>
-              </label>
+              </div>
+              <p className="text-xs text-slate-500 mt-3">
+                Por el momento solo se pueden crear usuarios con rol Gestor. 
+                Los administradores deben ser creados manualmente por el equipo de desarrollo.
+              </p>
             </div>
           </Field>
 
           {crearMutation.isError && (
-            <div className="bg-rose-50 text-rose-600 text-sm px-4 py-3 rounded-lg border border-rose-100">
-              Error al crear usuario: {crearMutation.error.message}
+            <div className="bg-rose-50 text-rose-600 text-sm px-4 py-3 rounded-lg border border-rose-200">
+              {getErrorMessage(crearMutation.error)}
             </div>
           )}
 
@@ -261,16 +305,24 @@ export default function UsuariosForm() {
               variant="secondary"
               onClick={() => nav("/usuarios")}
               className="flex-1"
+              disabled={crearMutation.isPending}
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               variant="primary"
-              disabled={crearMutation.isPending || password.length < 6}
+              disabled={crearMutation.isPending}
               className="flex-1"
             >
-              {crearMutation.isPending ? "Creando..." : "Crear Usuario"}
+              {crearMutation.isPending ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creando...
+                </span>
+              ) : (
+                "Crear Usuario"
+              )}
             </Button>
           </div>
         </form>

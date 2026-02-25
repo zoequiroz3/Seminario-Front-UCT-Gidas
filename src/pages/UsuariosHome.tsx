@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getUsuarios, eliminarUsuario, type Usuario } from "@/services/usuariosService";
 import { useAuth } from "@/context/AuthContext";
 import Button from "@/components/Button";
-import { Users, Plus, Shield, User, Trash2, Edit2, AlertCircle } from "lucide-react";
+import { Users, Plus, Trash2, AlertCircle, X } from "lucide-react";
 import { useState } from "react";
 
 export default function UsuariosHome() {
@@ -12,24 +12,21 @@ export default function UsuariosHome() {
   const queryClient = useQueryClient();
   const [usuarioAEliminar, setUsuarioAEliminar] = useState<Usuario | null>(null);
 
-  // Verificar que sea admin
   if (!isAdmin()) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
+        <AlertCircle className="w-16 h-16 text-slate-400 mx-auto mb-4" />
         <h2 className="text-xl font-semibold mb-2">Acceso Denegado</h2>
         <p className="text-slate-500">No tienes permisos para gestionar usuarios.</p>
       </div>
     );
   }
 
-  // Query para obtener usuarios
   const { data: usuarios, isLoading, error } = useQuery({
     queryKey: ["usuarios"],
     queryFn: getUsuarios,
   });
 
-  // Mutation para eliminar usuario
   const eliminarMutation = useMutation({
     mutationFn: eliminarUsuario,
     onSuccess: () => {
@@ -50,15 +47,19 @@ export default function UsuariosHome() {
 
   return (
     <section className="w-full">
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-6">
+      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+        Gestión de Usuarios
+      </h2>
+
+      <div className="mt-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-slate-100 rounded-lg">
             <Users className="w-6 h-6 text-slate-700" />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold">Gestión de Usuarios</h2>
-            <p className="text-slate-500 text-sm">Administrar usuarios del sistema</p>
+            <p className="text-sm text-slate-600">
+              {usuarios?.length || 0} usuario{usuarios?.length !== 1 ? "s" : ""} registrados
+            </p>
           </div>
         </div>
 
@@ -72,8 +73,7 @@ export default function UsuariosHome() {
         </Button>
       </div>
 
-      {/* TABLA DE USUARIOS */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="animate-pulse space-y-4">
@@ -90,7 +90,7 @@ export default function UsuariosHome() {
           </div>
         ) : error ? (
           <div className="p-8 text-center text-rose-600">
-            Error al cargar usuarios: {error.message}
+            Error al cargar usuarios
           </div>
         ) : !usuarios || usuarios.length === 0 ? (
           <div className="p-12 text-center">
@@ -113,28 +113,17 @@ export default function UsuariosHome() {
                 {usuarios.map((usuario) => (
                   <tr key={usuario.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          usuario.rol === "ADMIN" ? "bg-purple-100" : "bg-slate-100"
-                        }`}>
-                          {usuario.rol === "ADMIN" ? (
-                            <Shield className="w-5 h-5 text-purple-700" />
-                          ) : (
-                            <User className="w-5 h-5 text-slate-600" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">{usuario.nombre_usuario}</p>
-                          <p className="text-xs text-slate-500">ID: {usuario.id}</p>
-                        </div>
+                      <div>
+                        <p className="font-medium text-slate-900">{usuario.nombre_usuario}</p>
+                        <p className="text-xs text-slate-500">ID: {usuario.id}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-slate-600">{usuario.mail}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                         usuario.rol === "ADMIN"
-                          ? "bg-purple-50 text-purple-700 border border-purple-200"
-                          : "bg-slate-50 text-slate-700 border border-slate-200"
+                          ? "bg-violet-100 text-violet-700 border border-violet-200"
+                          : "bg-slate-100 text-slate-700 border border-slate-200"
                       }`}>
                         {usuario.rol === "ADMIN" ? "Administrador" : "Gestor"}
                       </span>
@@ -148,14 +137,7 @@ export default function UsuariosHome() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => nav(`/usuarios/${usuario.id}/editar`)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Editar"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
+                      <div className="flex items-center justify-end">
                         <button
                           onClick={() => handleEliminar(usuario)}
                           className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
@@ -177,11 +159,14 @@ export default function UsuariosHome() {
       {usuarioAEliminar && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-rose-50 rounded-full">
-                <AlertCircle className="w-6 h-6 text-rose-600" />
-              </div>
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">¿Eliminar usuario?</h3>
+              <button
+                onClick={() => setUsuarioAEliminar(null)}
+                className="p-1 hover:bg-slate-100 rounded"
+              >
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
             </div>
             
             <p className="text-slate-600 mb-6">
@@ -201,6 +186,7 @@ export default function UsuariosHome() {
                 variant="primary"
                 onClick={confirmarEliminar}
                 className="flex-1 bg-rose-600 hover:bg-rose-700"
+                disabled={eliminarMutation.isPending}
               >
                 {eliminarMutation.isPending ? "Eliminando..." : "Eliminar"}
               </Button>
