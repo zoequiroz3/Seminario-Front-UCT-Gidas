@@ -26,21 +26,21 @@ export type ActualizarUsuarioPayload = {
 
 // Listar todos los usuarios (solo ADMIN)
 export async function getUsuarios(): Promise<Usuario[]> {
-  return http<Usuario[]>("/usuarios", {
+  return http<Usuario[]>("/auth/usuarios", {
     method: "GET",
   });
 }
 
 // Obtener un usuario por ID (solo ADMIN)
 export async function getUsuario(id: number): Promise<Usuario> {
-  return http<Usuario>(`/usuarios/${id}`, {
+  return http<Usuario>(`/auth/usuarios/${id}`, {
     method: "GET",
   });
 }
 
 // Crear nuevo usuario (solo ADMIN)
 export async function crearUsuario(payload: CrearUsuarioPayload): Promise<Usuario> {
-  return http<Usuario>("/usuarios", {
+  return http<Usuario>("/auth/usuarios", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -51,7 +51,7 @@ export async function actualizarUsuario(
   id: number, 
   payload: ActualizarUsuarioPayload
 ): Promise<Usuario> {
-  return http<Usuario>(`/usuarios/${id}`, {
+  return http<Usuario>(`/auth/usuarios/${id}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
@@ -59,7 +59,7 @@ export async function actualizarUsuario(
 
 // Eliminar usuario (solo ADMIN)
 export async function eliminarUsuario(id: number): Promise<void> {
-  await http(`/usuarios/${id}`, {
+  await http(`/auth/usuarios/${id}`, {
     method: "DELETE",
   });
 }
