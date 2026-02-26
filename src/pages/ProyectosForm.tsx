@@ -72,6 +72,14 @@ export default function ProyectosForm() {
     setTipoProyectoId(initialData.tipoProyectoId ?? null);
     setFuenteId(initialData.fuenteFinanciamientoId ?? null);
 
+    if (initialData.investigadores) {
+      setInvestigadoresIds(initialData.investigadores.map(i => i.id));
+    }
+
+    if (initialData.becarios) {
+      setBecariosIds(initialData.becarios.map(b => b.id));
+    }
+
   }, [initialData]);
 
   const mutation = useMutation({
