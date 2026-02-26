@@ -24,10 +24,16 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  // Si el usuario recién se registra (primer_login), forzar a cambiar password
+  // evitando un loop infinito si ya está en la ruta de cambiar-password.
+  if (user.primer_login && location.pathname !== "/cambiar-password") {
+    return <Navigate to="/cambiar-password" replace />;
+  }
+
   // Si se requiere un rol específico, verificar
   if (requiredRole) {
     const tieneRol = requiredRole === "ADMIN" ? isAdmin() : user.rol === requiredRole;
-    
+
     if (!tieneRol) {
       // Redirigir a home si no tiene el rol requerido
       return <Navigate to="/" replace />;
