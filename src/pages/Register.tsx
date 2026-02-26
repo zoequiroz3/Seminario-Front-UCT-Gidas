@@ -102,10 +102,6 @@ export default function RegisterPage() {
         ) : (
           <>
             <div className="mb-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm mb-3">
-                <span>⭐</span>
-                <span>Configuración Inicial</span>
-              </div>
               <h1 className="text-2xl font-semibold">Crear Cuenta de Administrador</h1>
               <p className="text-slate-500 text-sm mt-1">
                 Estás configurando el sistema por primera vez. Esta cuenta será el administrador principal.
