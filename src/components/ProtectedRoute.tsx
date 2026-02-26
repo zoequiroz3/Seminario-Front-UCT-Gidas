@@ -25,8 +25,9 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   }
 
   // Si el usuario recién se registra (primer_login), forzar a cambiar password
-  // evitando un loop infinito si ya está en la ruta de cambiar-password.
-  if (user.primer_login && location.pathname !== "/cambiar-password") {
+  // solo a los GESTORES.
+  // Evitar loop infinito si ya está en la ruta de cambiar-password.
+  if (user.primer_login && user.rol === "GESTOR" && location.pathname !== "/cambiar-password") {
     return <Navigate to="/cambiar-password" replace />;
   }
 
