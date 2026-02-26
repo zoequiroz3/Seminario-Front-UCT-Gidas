@@ -201,17 +201,19 @@ export default function PersonalDetalle() {
               Volver
             </Button>
 
-            <Button
-              size="sm"
-              className="px-3 py-1 text-xs"
-              onClick={() => {
-                if (rol === "becario") navigate(`/becarios/${id}/editar`);
-                else if (rol === "investigador") navigate(`/investigadores/${id}/editar`);
-                else navigate(`/personal/${rol}/${id}/editar`);
-              }}
-            >
-              Editar
-            </Button>
+            {data?.activo !== false && (
+              <Button
+                size="sm"
+                className="px-3 py-1 text-xs"
+                onClick={() => {
+                  if (rol === "becario") navigate(`/becarios/${id}/editar`);
+                  else if (rol === "investigador") navigate(`/investigadores/${id}/editar`);
+                  else navigate(`/personal/${rol}/${id}/editar`);
+                }}
+              >
+                Editar
+              </Button>
+            )}
           </div>
         </article>
       </section>
