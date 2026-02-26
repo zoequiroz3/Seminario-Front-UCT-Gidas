@@ -4,7 +4,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Field from "@/components/Field";
 import DatePicker from "@/components/Calendar";
-import { useUct } from "@/hooks/useUct";
+import { useUctGuard } from "@/hooks/useUctGuard";
 import { useTiposRegistroPropiedad } from "@/hooks/useTipoRegistroPropiedad";
 import {
   createRegistroPropiedad,
@@ -15,7 +15,7 @@ import {
 export default function RegistrosPropiedadForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { uct } = useUct();
+  const { uct, uctGuard } = useUctGuard();
   const { tipos } = useTiposRegistroPropiedad();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
@@ -199,8 +199,8 @@ export default function RegistrosPropiedadForm() {
           <>
             <select
               className={`${inputClass("tipo_registro_id")} ${!data.tipo_registro_id
-                  ? "text-slate-400"
-                  : "text-slate-900"
+                ? "text-slate-400"
+                : "text-slate-900"
                 }`}
               value={data.tipo_registro_id}
               onChange={(e) => {
@@ -253,6 +253,7 @@ export default function RegistrosPropiedadForm() {
           </Button>
         </div>
       </form>
+      {uctGuard}
     </section>
   );
 }

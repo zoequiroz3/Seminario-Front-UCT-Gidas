@@ -7,13 +7,13 @@ import Field from "@/components/Field";
 import { useDocumentacionForm } from "@/hooks/useDocumentacionForm";
 import { getDocumentacionById } from "@/services/documentacionServices";
 import { removeAutorFromDocumentacion } from "@/services/documentacionServices";
-import { useUct } from "@/hooks/useUct";
+import { useUctGuard } from "@/hooks/useUctGuard";
 
 
 export default function DocumentacionForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { uct } = useUct(); // 🔥 TRAEMOS LA UCT
+  const { uct, uctGuard } = useUctGuard(); // 🔥 TRAEMOS LA UCT
 
   const { data: initial, isLoading } = useQuery({
     queryKey: ["documentacion", id],
@@ -236,6 +236,7 @@ export default function DocumentacionForm() {
           </Button>
         </div>
       </form>
+      {uctGuard}
     </section>
   );
 }

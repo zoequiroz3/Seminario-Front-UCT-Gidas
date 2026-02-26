@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import Button from "@/components/Button";
 import SuccessToast from "@/components/SuccessToast";
+import { useUctGuard } from "@/hooks/useUctGuard";
 
 import FormPTAAProfesional from "./FormPTAAProfesional";
 import FormBecario from "./FormBecario";
@@ -14,6 +15,8 @@ type Tipo = "" | "PTAA" | "PROFESIONAL" | "BECARIO" | "INVESTIGADOR";
 
 export default function PersonalForm() {
   const { rol: paramRol, id } = useParams<{ rol?: string; id?: string }>();
+  const { uctGuard } = useUctGuard();
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -151,6 +154,9 @@ export default function PersonalForm() {
           />
         )}
       </div>
+
+      {/* UCT GUARD */}
+      {uctGuard}
 
       {/* 🔥 SUCCESS TOAST */}
       <SuccessToast

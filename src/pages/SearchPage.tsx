@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "@/hooks/useSearch";
+import { useUctGuard } from "@/hooks/useUctGuard";
 import { highlight } from "@/utils/highlight";
 import { Search, X, Filter, BookOpen, Users, Folder, FileText, Award, TrendingUp, Microscope, Briefcase, Calendar as CalendarIcon, Building, Zap } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -40,6 +41,7 @@ const getTypeConfig = (tipo: string) => {
 
 export default function SearchPage() {
   const nav = useNavigate();
+  const { uctGuard } = useUctGuard();
   const {
     q, setQ,
     orden, setOrden,
@@ -311,10 +313,10 @@ export default function SearchPage() {
   // Sugerencias para empty state
   const getSuggestions = () => {
     if (!q || q.length < 2) return [];
-    
+
     const suggestions = [];
     const lowerQ = q.toLowerCase();
-    
+
     // Sugerencias comunes basadas en el query
     if (lowerQ.includes("rober")) {
       suggestions.push({ text: "Robert", type: "Corrección" });
@@ -326,7 +328,7 @@ export default function SearchPage() {
     if (lowerQ.includes("inv")) {
       suggestions.push({ text: "Investigador", type: "Completa" });
     }
-    
+
     return suggestions.slice(0, 3);
   };
 
@@ -425,17 +427,16 @@ export default function SearchPage() {
                       const isActive = selectedTypes.includes(tipo);
                       const config = getTypeConfig(tipo);
                       const Icon = config.icon;
-                      
+
                       return (
                         <button
                           key={tipo}
                           type="button"
                           onClick={() => toggleType(tipo)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
-                            isActive
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${isActive
                               ? `${config.color} ${config.bgColor} border-transparent shadow-sm`
                               : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
-                          }`}
+                            }`}
                         >
                           <Icon className="w-3.5 h-3.5" />
                           {tipo}
@@ -501,7 +502,7 @@ export default function SearchPage() {
             </div>
             <p className="text-slate-500 font-medium text-lg">Sin resultados para "{q}"</p>
             <p className="text-slate-400 text-sm mt-2">Prueba ajustando los filtros o usando otras palabras clave.</p>
-            
+
             {suggestions.length > 0 && (
               <div className="mt-6">
                 <p className="text-sm text-slate-500 mb-3">¿Quizás quisiste decir?</p>
@@ -548,7 +549,7 @@ export default function SearchPage() {
               {Object.entries(groupedResults).map(([tipo, items]) => {
                 const config = getTypeConfig(tipo);
                 const Icon = config.icon;
-                
+
                 return (
                   <div key={tipo} className="space-y-2">
                     {/* Header del grupo */}
@@ -593,8 +594,8 @@ export default function SearchPage() {
                                 if ((item.origin.tipo === "Becario" || item.origin.tipo === "Investigador") && item.origin.extra?.proyectos) {
                                   const proyectos = item.origin.extra.proyectos;
                                   if (!Array.isArray(proyectos) || proyectos.length === 0) return null;
-                                  
-                                   return (
+
+                                  return (
                                     <div className="mt-2">
                                       <div className="flex items-center gap-1.5 flex-wrap">
                                         <span className="text-xs text-slate-500 font-medium">Proyectos:</span>
@@ -619,15 +620,15 @@ export default function SearchPage() {
                                     </div>
                                   );
                                 }
-                                
+
                                 // Resto de tipos - mostrar como preview de equipo
                                 const preview = renderEquipoPreview(item.origin);
                                 if (!preview) return null;
-                                
+
                                 // Separar el label de los items
                                 const [label, ...itemsPart] = preview.texto.split(': ');
                                 const items = itemsPart.join(': ').split(', ');
-                                
+
                                 return (
                                   <div className="mt-1.5 text-xs text-slate-500">
                                     <div className="flex items-start gap-1.5">
@@ -639,7 +640,7 @@ export default function SearchPage() {
                                           const searchTerms = q.toLowerCase().split(' ').filter(t => t.length > 0);
                                           const nombreLower = nombre.toLowerCase();
                                           const isMatch = searchTerms.some(term => nombreLower.includes(term));
-                                          
+
                                           return (
                                             <span key={idx}>
                                               {isMatch ? (
@@ -689,6 +690,7 @@ export default function SearchPage() {
           </>
         )}
       </div>
+      {uctGuard}
     </section>
   );
 }

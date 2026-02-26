@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
 import Field from "@/components/Field";
-import { useUct } from "@/hooks/useUct";
+import { useUctGuard } from "@/hooks/useUctGuard";
 import {
   createArticulo,
   getArticuloById,
@@ -14,7 +14,7 @@ import {
 export default function ArticulosDivulgacionForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { uct } = useUct();
+  const { uct, uctGuard } = useUctGuard();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
 
@@ -235,6 +235,7 @@ export default function ArticulosDivulgacionForm() {
           </Button>
         </div>
       </form>
+      {uctGuard}
     </section>
   );
 }
