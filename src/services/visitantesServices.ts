@@ -130,6 +130,7 @@ export const eliminarVisitante = async (id: number): Promise<{ message: string }
 export const getGruposUtn = async () => {
   try {
     const data = await http<any>("/grupo-utn/", { method: "GET" });
+    if (!data) return MOCK_GRUPOS_UTN;
     const arrayData = Array.isArray(data) ? data : [data];
     return arrayData.map((g) => ({
       id: g.id,
