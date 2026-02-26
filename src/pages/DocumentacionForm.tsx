@@ -7,7 +7,6 @@ import Field from "@/components/Field";
 import { useDocumentacionForm } from "@/hooks/useDocumentacionForm";
 import { getDocumentacionById } from "@/services/documentacionServices";
 import { removeAutorFromDocumentacion } from "@/services/documentacionServices";
-import { useUctGuard } from "@/hooks/useUctGuard";
 
 
 export default function DocumentacionForm() {
@@ -236,7 +235,7 @@ export default function DocumentacionForm() {
           </Button>
         </div>
       </form>
-      {uctGuard}
+      
     </section>
   );
 }

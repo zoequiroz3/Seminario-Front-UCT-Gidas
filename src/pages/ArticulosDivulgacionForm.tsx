@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import DatePicker from "@/components/Calendar";
 import Field from "@/components/Field";
-import { useUctGuard } from "@/hooks/useUctGuard";
 import {
   createArticulo,
   getArticuloById,
@@ -235,7 +234,7 @@ export default function ArticulosDivulgacionForm() {
           </Button>
         </div>
       </form>
-      {uctGuard}
+      
     </section>
   );
 }

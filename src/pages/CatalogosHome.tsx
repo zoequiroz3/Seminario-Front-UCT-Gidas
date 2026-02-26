@@ -12,7 +12,6 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import SuccessToast from "@/components/SuccessToast";
 import Button from "@/components/Button";
 import Field from "@/components/Field";
-import { useUctGuard } from "@/hooks/useUctGuard";
 
 /* ───── Catalog definitions ───── */
 

@@ -8,7 +8,6 @@ import {
   getPlanificacionById,
   updatePlanificacion,
 } from "@/services/planificacionGrupoServices";
-import { useUctGuard } from "@/hooks/useUctGuard";
 
 export default function PlanificacionGrupoForm() {
   const navigate = useNavigate();
@@ -172,7 +171,7 @@ export default function PlanificacionGrupoForm() {
           </Button>
         </div>
       </form>
-      {uctGuard}
+      
     </section>
   );
 }

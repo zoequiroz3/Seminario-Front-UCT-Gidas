@@ -4,7 +4,6 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Field from "@/components/Field";
 import DatePicker from "@/components/Calendar";
-import { useUctGuard } from "@/hooks/useUctGuard";
 import { useTiposRegistroPropiedad } from "@/hooks/useTipoRegistroPropiedad";
 import {
   createRegistroPropiedad,
@@ -253,7 +252,7 @@ export default function RegistrosPropiedadForm() {
           </Button>
         </div>
       </form>
-      {uctGuard}
+      
     </section>
   );
 }

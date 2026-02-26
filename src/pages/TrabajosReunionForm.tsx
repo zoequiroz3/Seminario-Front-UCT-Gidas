@@ -19,7 +19,6 @@ import {
 
 import { useTiposReunion } from "@/hooks/useTiposReunion";
 import { useInvestigadores } from "@/hooks/useInvestigadores";
-import { useUctGuard } from "@/hooks/useUctGuard";
 
 export default function TrabajoReunionForm() {
   const { id } = useParams<{ id: string }>();
@@ -317,7 +316,7 @@ export default function TrabajoReunionForm() {
         message={successMessage}
         onClose={() => setShowSuccess(false)}
       />
-      {uctGuard}
+      
     </section>
   );
 }

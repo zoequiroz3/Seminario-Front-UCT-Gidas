@@ -8,7 +8,6 @@ import {
   getErogacionById,
   updateErogacion,
 } from "@/services/erogacionesServices";
-import { useUctGuard } from "@/hooks/useUctGuard";
 import { useTiposErogacion } from "@/hooks/useTipoErogacion";
 import { useFuentesFinanciamiento } from "@/hooks/useFuenteFinanciamiento";
 
@@ -276,7 +275,7 @@ export default function ErogacionesForm() {
           </Button>
         </div>
       </form>
-      {uctGuard}
+      
     </section>
   );
 }

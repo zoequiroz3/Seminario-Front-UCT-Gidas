@@ -19,7 +19,6 @@ import {
 
 import { useTiposReunion } from "@/hooks/useTiposReunion";
 import { useInvestigadores } from "@/hooks/useInvestigadores";
-import { useUctGuard } from "@/hooks/useUctGuard";
 
 export default function TrabajosRevistasForm() {
   const { id } = useParams<{ id: string }>();
@@ -416,7 +415,7 @@ export default function TrabajosRevistasForm() {
           setShowSuccess(false)
         }
       />
-      {uctGuard}
+      
     </section>
   );
 }

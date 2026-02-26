@@ -18,6 +18,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import UCTProtected from "@/components/UCTProtected";
 
 // nuevas páginas
 import PersonalLanding from "@/pages/PersonalHome"; // título + botón Agregar + Volver
@@ -78,8 +79,8 @@ import CatalogosHome from "./pages/CatalogosHome";
 // Definición de rutas
 const router = createBrowserRouter([
   // rutas públicas (sin login)
-  { path: "/login", element: <Login /> },
-  { path: "/registro", element: <Register /> },
+  { path: "/login", element: <UCTProtected><Login  /></UCTProtected> },
+  { path: "/registro", element: <UCTProtected><Register  /></UCTProtected> },
 
   // rutas protegidas (requieren estar logueado)
   {
@@ -98,16 +99,16 @@ const router = createBrowserRouter([
       { path: "uct/nueva", element: <UctForm /> },
 
       // Personal
-      { path: "personal", element: <PersonalLanding /> },   // landing  
-      { path: "personal/nuevo", element: <PersonalForm /> },    // formulario
-      { path: "personal/:rol/:id", element: <PersonalDetalle /> }, // detalle de personal
-      { path: "personal/:rol/:id/editar", element: <PersonalForm /> }, // editar personal
-      { path: "becarios/:id/editar", element: <PersonalForm /> }, // editar becario
-      { path: "investigadores/:id/editar", element: <PersonalForm /> }, // editar investigador
-      { path: "becarios/:id", element: <PersonalDetalle /> }, // detalle de becario
-      { path: "investigadores/:id", element: <PersonalDetalle /> }, // detalle de investigador
-      { path: "ptaa/:id", element: <PersonalDetalle /> }, // detalle de PTAA
-      { path: "profesionales/:id", element: <PersonalDetalle /> }, // detalle de profesional
+      { path: "personal", element: <UCTProtected><PersonalLanding  /></UCTProtected> },   // landing  
+      { path: "personal/nuevo", element: <UCTProtected><PersonalForm  /></UCTProtected> },    // formulario
+      { path: "personal/:rol/:id", element: <UCTProtected><PersonalDetalle  /></UCTProtected> }, // detalle de personal
+      { path: "personal/:rol/:id/editar", element: <UCTProtected><PersonalForm  /></UCTProtected> }, // editar personal
+      { path: "becarios/:id/editar", element: <UCTProtected><PersonalForm  /></UCTProtected> }, // editar becario
+      { path: "investigadores/:id/editar", element: <UCTProtected><PersonalForm  /></UCTProtected> }, // editar investigador
+      { path: "becarios/:id", element: <UCTProtected><PersonalDetalle  /></UCTProtected> }, // detalle de becario
+      { path: "investigadores/:id", element: <UCTProtected><PersonalDetalle  /></UCTProtected> }, // detalle de investigador
+      { path: "ptaa/:id", element: <UCTProtected><PersonalDetalle  /></UCTProtected> }, // detalle de PTAA
+      { path: "profesionales/:id", element: <UCTProtected><PersonalDetalle  /></UCTProtected> }, // detalle de profesional
       // Redirecciones para mantener compatibilidad con URLs anteriores
       {
         path: "investigadores",
@@ -128,96 +129,96 @@ const router = createBrowserRouter([
 
 
       // Proyectos
-      { path: "proyectos", element: <ProyectosLanding /> },
-      { path: "proyectos/nuevo", element: <ProyectosForm /> },
-      { path: "proyectos/:id", element: <ProyectosDetalle /> },
-      { path: "proyectos/editar/:id", element: <ProyectosForm /> },
+      { path: "proyectos", element: <UCTProtected><ProyectosLanding  /></UCTProtected> },
+      { path: "proyectos/nuevo", element: <UCTProtected><ProyectosForm  /></UCTProtected> },
+      { path: "proyectos/:id", element: <UCTProtected><ProyectosDetalle  /></UCTProtected> },
+      { path: "proyectos/editar/:id", element: <UCTProtected><ProyectosForm  /></UCTProtected> },
       // Docencia
-      { path: "docenciaInvestigador", element: <DocenciaLanding /> },
-      { path: "docenciaInvestigador/nuevo", element: <DocenciaForm /> },
-      { path: "docenciaInvestigador/:id", element: <DocenciaDetalle /> },
-      { path: "docenciaInvestigador/:id/editar", element: <DocenciaForm /> },
+      { path: "docenciaInvestigador", element: <UCTProtected><DocenciaLanding  /></UCTProtected> },
+      { path: "docenciaInvestigador/nuevo", element: <UCTProtected><DocenciaForm  /></UCTProtected> },
+      { path: "docenciaInvestigador/:id", element: <UCTProtected><DocenciaDetalle  /></UCTProtected> },
+      { path: "docenciaInvestigador/:id/editar", element: <UCTProtected><DocenciaForm  /></UCTProtected> },
 
       // Trabajos en reuniones científicas
-      { path: "trabajosCientInv", element: <TrabajosReunionHome /> },
-      { path: "trabajosCientInv/nuevo", element: <TrabajosReunionForm /> },
+      { path: "trabajosCientInv", element: <UCTProtected><TrabajosReunionHome  /></UCTProtected> },
+      { path: "trabajosCientInv/nuevo", element: <UCTProtected><TrabajosReunionForm  /></UCTProtected> },
 
       //Actividades I+D+I
       //Registros de propiedad  e industrial
-      { path: "registros-propiedad", element: <RegistrosPropiedadHome /> },
-      { path: "registros-propiedad/nuevo", element: <RegistrosPropiedadForm /> },
-      { path: "registros-propiedad/:id", element: <RegistrosPropiedadDetalle /> },
-      { path: "registros-propiedad/:id/editar", element: <RegistrosPropiedadForm /> },
+      { path: "registros-propiedad", element: <UCTProtected><RegistrosPropiedadHome  /></UCTProtected> },
+      { path: "registros-propiedad/nuevo", element: <UCTProtected><RegistrosPropiedadForm  /></UCTProtected> },
+      { path: "registros-propiedad/:id", element: <UCTProtected><RegistrosPropiedadDetalle  /></UCTProtected> },
+      { path: "registros-propiedad/:id/editar", element: <UCTProtected><RegistrosPropiedadForm  /></UCTProtected> },
 
       // Planificaciones de grupo
-      { path: "planificaciones", element: <PlanificacionGrupoLanding /> },
-      { path: "planificaciones/nuevo", element: <PlanificacionesGrupoForm /> },
-      { path: "planificaciones/:id", element: <PlanificacionGrupoDetalle /> },
-      { path: "planificaciones/:id/editar", element: <PlanificacionesGrupoForm /> },
+      { path: "planificaciones", element: <UCTProtected><PlanificacionGrupoLanding  /></UCTProtected> },
+      { path: "planificaciones/nuevo", element: <UCTProtected><PlanificacionesGrupoForm  /></UCTProtected> },
+      { path: "planificaciones/:id", element: <UCTProtected><PlanificacionGrupoDetalle  /></UCTProtected> },
+      { path: "planificaciones/:id/editar", element: <UCTProtected><PlanificacionesGrupoForm  /></UCTProtected> },
 
       //Trabajos en reuniones científicas
-      { path: "trabajos-reunion", element: <TrabajosReunionHome /> },
-      { path: "trabajos-reunion/nuevo", element: <TrabajosReunionForm /> },
-      { path: "trabajos-reunion/:id", element: <TrabajosReunionDetalle /> },
-      { path: "trabajos-reunion/:id/editar", element: <TrabajosReunionForm /> },
+      { path: "trabajos-reunion", element: <UCTProtected><TrabajosReunionHome  /></UCTProtected> },
+      { path: "trabajos-reunion/nuevo", element: <UCTProtected><TrabajosReunionForm  /></UCTProtected> },
+      { path: "trabajos-reunion/:id", element: <UCTProtected><TrabajosReunionDetalle  /></UCTProtected> },
+      { path: "trabajos-reunion/:id/editar", element: <UCTProtected><TrabajosReunionForm  /></UCTProtected> },
 
       //Trabajos en revistas
-      { path: "trabajos-revistas", element: <TrabajosRevistasHome /> },
-      { path: "trabajos-revistas/nuevo", element: <TrabajosRevistasForm /> },
-      { path: "trabajos-revistas/:id", element: <TrabajosRevistasDetalle /> },
-      { path: "trabajos-revistas/:id/editar", element: <TrabajosRevistasForm /> },
+      { path: "trabajos-revistas", element: <UCTProtected><TrabajosRevistasHome  /></UCTProtected> },
+      { path: "trabajos-revistas/nuevo", element: <UCTProtected><TrabajosRevistasForm  /></UCTProtected> },
+      { path: "trabajos-revistas/:id", element: <UCTProtected><TrabajosRevistasDetalle  /></UCTProtected> },
+      { path: "trabajos-revistas/:id/editar", element: <UCTProtected><TrabajosRevistasForm  /></UCTProtected> },
 
       //Artículos de divulgación
-      { path: "articulos-divulgacion", element: <ArticulosDivulgacionLanding /> },
-      { path: "articulos-divulgacion/nuevo", element: <ArticulosDivulgacionForm /> },
-      { path: "articulos-divulgacion/:id", element: <ArticulosDivulgacionDetalle /> },
-      { path: "articulos-divulgacion/:id/editar", element: <ArticulosDivulgacionForm /> },
+      { path: "articulos-divulgacion", element: <UCTProtected><ArticulosDivulgacionLanding  /></UCTProtected> },
+      { path: "articulos-divulgacion/nuevo", element: <UCTProtected><ArticulosDivulgacionForm  /></UCTProtected> },
+      { path: "articulos-divulgacion/:id", element: <UCTProtected><ArticulosDivulgacionDetalle  /></UCTProtected> },
+      { path: "articulos-divulgacion/:id/editar", element: <UCTProtected><ArticulosDivulgacionForm  /></UCTProtected> },
 
 
 
 
       // Erogaciones / Compras
-      { path: "erogaciones", element: <ErogacionesLanding /> },
-      { path: "erogaciones/nuevo", element: <ErogacionesForm /> },
-      { path: "erogaciones/:id", element: <ErogacionesDetalle /> },
-      { path: "erogaciones/:id/editar", element: <ErogacionesForm /> },
+      { path: "erogaciones", element: <UCTProtected><ErogacionesLanding  /></UCTProtected> },
+      { path: "erogaciones/nuevo", element: <UCTProtected><ErogacionesForm  /></UCTProtected> },
+      { path: "erogaciones/:id", element: <UCTProtected><ErogacionesDetalle  /></UCTProtected> },
+      { path: "erogaciones/:id/editar", element: <UCTProtected><ErogacionesForm  /></UCTProtected> },
 
       // Equipamiento
-      { path: "equipamiento", element: <EquipamientoLanding /> },
-      { path: "equipamiento/nuevo", element: <EquipamientoForm /> },
-      { path: "equipamiento/:id", element: <EquipamientoDetalle /> },
-      { path: "equipamiento/:id/editar", element: <EquipamientoForm /> },
+      { path: "equipamiento", element: <UCTProtected><EquipamientoLanding  /></UCTProtected> },
+      { path: "equipamiento/nuevo", element: <UCTProtected><EquipamientoForm  /></UCTProtected> },
+      { path: "equipamiento/:id", element: <UCTProtected><EquipamientoDetalle  /></UCTProtected> },
+      { path: "equipamiento/:id/editar", element: <UCTProtected><EquipamientoForm  /></UCTProtected> },
 
       // Objetos y financiamiento
-      { path: "objetosfinanciamiento", element: <ObjetosLanding /> },
+      { path: "objetosfinanciamiento", element: <UCTProtected><ObjetosLanding  /></UCTProtected> },
 
       // Documentación
-      { path: "documentacion", element: <DocumentacionLanding /> },
-      { path: "documentacion/nuevo", element: <DocumentacionForm /> },
-      { path: "documentacion/:id", element: <DocumentacionDetalle /> },
-      { path: "documentacion/:id/editar", element: <DocumentacionForm /> },
+      { path: "documentacion", element: <UCTProtected><DocumentacionLanding  /></UCTProtected> },
+      { path: "documentacion/nuevo", element: <UCTProtected><DocumentacionForm  /></UCTProtected> },
+      { path: "documentacion/:id", element: <UCTProtected><DocumentacionDetalle  /></UCTProtected> },
+      { path: "documentacion/:id/editar", element: <UCTProtected><DocumentacionForm  /></UCTProtected> },
 
       // Transferencias (Vinculación Socio-Productiva)
-      { path: "transferencias", element: <TransferenciasHome /> },
-      { path: "transferencias/nuevo", element: <TransferenciasForm /> },
-      { path: "transferencias/:id", element: <TransferenciasDetalle /> },
-      { path: "transferencias/:id/editar", element: <TransferenciasForm /> },
+      { path: "transferencias", element: <UCTProtected><TransferenciasHome  /></UCTProtected> },
+      { path: "transferencias/nuevo", element: <UCTProtected><TransferenciasForm  /></UCTProtected> },
+      { path: "transferencias/:id", element: <UCTProtected><TransferenciasDetalle  /></UCTProtected> },
+      { path: "transferencias/:id/editar", element: <UCTProtected><TransferenciasForm  /></UCTProtected> },
 
       // Actividades I+D+i
-      { path: "distinciones", element: <DistincionesHome /> },
-      { path: "distinciones/nuevo", element: <DistincionesForm /> },
-      { path: "distinciones/:id", element: <DistincionesDetalle /> },
-      { path: "distinciones/:id/editar", element: <DistincionesForm /> },
+      { path: "distinciones", element: <UCTProtected><DistincionesHome  /></UCTProtected> },
+      { path: "distinciones/nuevo", element: <UCTProtected><DistincionesForm  /></UCTProtected> },
+      { path: "distinciones/:id", element: <UCTProtected><DistincionesDetalle  /></UCTProtected> },
+      { path: "distinciones/:id/editar", element: <UCTProtected><DistincionesForm  /></UCTProtected> },
 
-      { path: "participaciones", element: <ParticipacionesHome /> },
-      { path: "participaciones/nuevo", element: <ParticipacionesForm /> },
-      { path: "participaciones/:id", element: <ParticipacionesDetalle /> },
-      { path: "participaciones/:id/editar", element: <ParticipacionesForm /> },
+      { path: "participaciones", element: <UCTProtected><ParticipacionesHome  /></UCTProtected> },
+      { path: "participaciones/nuevo", element: <UCTProtected><ParticipacionesForm  /></UCTProtected> },
+      { path: "participaciones/:id", element: <UCTProtected><ParticipacionesDetalle  /></UCTProtected> },
+      { path: "participaciones/:id/editar", element: <UCTProtected><ParticipacionesForm  /></UCTProtected> },
 
-      { path: "visitantes", element: <VisitantesHome /> },
-      { path: "visitantes/nuevo", element: <VisitantesForm /> },
-      { path: "visitantes/:id", element: <VisitantesDetalle /> },
-      { path: "visitantes/:id/editar", element: <VisitantesForm /> },
+      { path: "visitantes", element: <UCTProtected><VisitantesHome  /></UCTProtected> },
+      { path: "visitantes/nuevo", element: <UCTProtected><VisitantesForm  /></UCTProtected> },
+      { path: "visitantes/:id", element: <UCTProtected><VisitantesDetalle  /></UCTProtected> },
+      { path: "visitantes/:id/editar", element: <UCTProtected><VisitantesForm  /></UCTProtected> },
 
       // Gestión de Usuarios (solo admin)
       {

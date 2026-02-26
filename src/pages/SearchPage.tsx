@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "@/hooks/useSearch";
-import { useUctGuard } from "@/hooks/useUctGuard";
 import { highlight } from "@/utils/highlight";
 import { Search, X, Filter, BookOpen, Users, Folder, FileText, Award, TrendingUp, Microscope, Briefcase, Calendar as CalendarIcon, Building, Zap } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -41,8 +40,7 @@ const getTypeConfig = (tipo: string) => {
 
 export default function SearchPage() {
   const nav = useNavigate();
-  const { uctGuard } = useUctGuard();
-  const {
+    const {
     q, setQ,
     orden, setOrden,
     selectedTypes,
@@ -712,7 +710,7 @@ export default function SearchPage() {
           </>
         )}
       </div>
-      {uctGuard}
+      
     </section>
   );
 }

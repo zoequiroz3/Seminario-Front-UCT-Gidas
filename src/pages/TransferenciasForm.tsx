@@ -14,7 +14,6 @@ import {
     type TransferenciaPayload,
 } from "@/services/transferenciasServices";
 import { useTiposContrato } from "@/hooks/useTransferencias";
-import { useUctGuard } from "@/hooks/useUctGuard";
 import type { Adoptante } from "@/services/adoptantesServices";
 
 // ── Helpers fechas (reutilizados de ProyectosForm) ──
@@ -399,7 +398,7 @@ export default function TransferenciasForm() {
                     </Button>
                 </div>
             </form>
-            {uctGuard}
+            
         </section>
     );
 }
