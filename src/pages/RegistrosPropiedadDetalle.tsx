@@ -9,6 +9,8 @@ import {
 } from "@/services/registrosPropiedadServices";
 import { formatFecha } from "@/utils/formatFecha";
 
+import AuditInfo from "@/components/AuditInfo";
+
 export default function RegistrosPropiedadDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -79,8 +81,16 @@ export default function RegistrosPropiedadDetalle() {
 
           </div>
 
+          <AuditInfo
+            created_at={data.created_at}
+            creator_name={data.creator_name}
+            deleted_at={data.deleted_at}
+            deleter_name={data.deleter_name}
+            activo={data.activo}
+          />
+
           {/* Acciones */}
-          <div className="mt-8 flex items-center justify-between">
+          <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-4">
             <Button
               variant="secondary"
               size="sm"

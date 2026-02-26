@@ -10,11 +10,12 @@ import {
   updateRegistroPropiedad,
   getRegistroPropiedadById,
 } from "@/services/registrosPropiedadServices";
+import { useUct } from "@/hooks/useUct";
 
 export default function RegistrosPropiedadForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { uct, uctGuard } = useUctGuard();
+  const { uct } = useUct();
   const { tipos } = useTiposRegistroPropiedad();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
@@ -252,7 +253,7 @@ export default function RegistrosPropiedadForm() {
           </Button>
         </div>
       </form>
-      
+
     </section>
   );
 }

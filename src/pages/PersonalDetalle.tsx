@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Button from "@/components/Button";
 import SuccessToast from "@/components/SuccessToast";
 import { getPersonalCompletoByRolAndId } from "@/services/personalCompletoServices";
+import AuditInfo from "@/components/AuditInfo";
 
 export default function PersonalDetalle() {
   const { rol: paramRol, id } = useParams();
@@ -165,7 +166,11 @@ export default function PersonalDetalle() {
                   key !== "activo" &&
                   key !== "rol" &&
                   key !== "relaciones" &&
-                  key !== "grupo"
+                  key !== "grupo" &&
+                  key !== "created_at" &&
+                  key !== "creator_name" &&
+                  key !== "deleted_at" &&
+                  key !== "deleter_name"
               )
               .map(([key, value]) => (
                 <p key={key}>
@@ -178,7 +183,15 @@ export default function PersonalDetalle() {
 
           </div>
 
-          <div className="mt-8 flex items-center justify-between">
+          <AuditInfo
+            created_at={data.created_at}
+            creator_name={data.creator_name}
+            deleted_at={data.deleted_at}
+            deleter_name={data.deleter_name}
+            activo={data.activo}
+          />
+
+          <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-4">
             <Button
               variant="secondary"
               size="sm"

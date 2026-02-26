@@ -21,6 +21,13 @@ export type Erogaciones = {
     id: number;
     nombre: string;
   };
+
+  // Auditoría
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 };
 
 

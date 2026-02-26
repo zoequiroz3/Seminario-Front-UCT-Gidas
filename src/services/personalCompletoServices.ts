@@ -6,14 +6,20 @@ export interface PersonalCompleto {
   id: number;
   nombre_apellido: string;
   horas_semanales: number;
-    activo: boolean;
-    tipo_personal_id: number;
+  activo: boolean;
+  tipo_personal_id: number;
   rol: "personal" | "becario" | "investigador";
   grupo?: {
     id: number;
     nombre: string;
   } | null;
   relaciones?: any;
+
+  // Auditoría
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
 }
 
 export const getPersonalCompletoByRolAndId = (

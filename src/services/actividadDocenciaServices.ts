@@ -1,4 +1,4 @@
-import {http} from "@/lib/http";
+import { http } from "@/lib/http";
 
 export interface ActividadDocencia {
   rol_actividad_id: null;
@@ -12,6 +12,11 @@ export interface ActividadDocencia {
   rol_actividad: string;
   investigador_id: number;
   investigador?: string;
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 }
 
 export interface ActividadDocenciaPayload {

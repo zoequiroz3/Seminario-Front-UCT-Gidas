@@ -31,6 +31,13 @@ export type Proyecto = {
     id: number;
     nombre_apellido: string;
   }[];
+
+  // Auditoría
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 };
 
 
@@ -56,6 +63,12 @@ export async function getProyectos(): Promise<Proyecto[]> {
     investigadores: p.investigadores || [],
     becarios: p.becarios || [],
 
+    // Auditoría
+    created_at: p.created_at,
+    creator_name: p.creator_name,
+    deleted_at: p.deleted_at,
+    deleter_name: p.deleter_name,
+    activo: p.activo,
   }));
 
 }
@@ -110,6 +123,13 @@ export async function getProyectoById(id: number) {
       data.planificacion?.descripcion,
     investigadores: data.investigadores || [],
     becarios: data.becarios || [],
+
+    // Auditoría
+    created_at: data.created_at,
+    creator_name: data.creator_name,
+    deleted_at: data.deleted_at,
+    deleter_name: data.deleter_name,
+    activo: data.activo,
   };
 }
 

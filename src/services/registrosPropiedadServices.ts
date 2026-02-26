@@ -8,6 +8,11 @@ export interface RegistroPropiedad {
   fecha_registro: string;
   tipo_registro: string;
   grupo: string;
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 }
 
 export interface RegistroPropiedadPayload {

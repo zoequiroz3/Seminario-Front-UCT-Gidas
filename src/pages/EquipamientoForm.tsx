@@ -9,11 +9,14 @@ import {
   createEquipamiento,
   updateEquipamiento,
 } from "@/services/equipamientoServices";
+import AuditInfo from "@/components/AuditInfo";
+import { useUct } from "@/hooks/useUct";
 
 export default function EquipamientoForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { uct } = useUct();
 
   const isEdit = Boolean(id);
 
@@ -108,6 +111,7 @@ export default function EquipamientoForm() {
             descripcion_breve: data.descripcion_breve,
             fecha_incorporacion: data.fecha_incorporacion,
             monto_invertido: data.monto_invertido!,
+            grupo_utn_id: uct?.id,
           });
 
           if (isEdit) {
@@ -244,6 +248,16 @@ export default function EquipamientoForm() {
                 : "Guardar"}
           </Button>
         </div>
+
+        {isEdit && initial && (
+          <AuditInfo
+            created_at={initial.created_at}
+            creator_name={initial.creator_name}
+            deleted_at={initial.deleted_at}
+            deleter_name={initial.deleter_name}
+            activo={initial.activo}
+          />
+        )}
       </form>
     </section>
   );

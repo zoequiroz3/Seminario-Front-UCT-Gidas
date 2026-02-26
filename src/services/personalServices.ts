@@ -13,6 +13,12 @@ export interface PersonalItem {
   tipo: "PTAA" | "PROFESIONAL" | "BECARIO" | "INVESTIGADOR";
   activo: boolean;
   rol: string;
+
+  // Auditoría
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
 }
 
 

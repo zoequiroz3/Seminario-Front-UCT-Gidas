@@ -14,7 +14,9 @@ import {
     type TransferenciaPayload,
 } from "@/services/transferenciasServices";
 import { useTiposContrato } from "@/hooks/useTransferencias";
+import { useUct } from "@/hooks/useUct";
 import type { Adoptante } from "@/services/adoptantesServices";
+import AuditInfo from "@/components/AuditInfo";
 
 // ── Helpers fechas (reutilizados de ProyectosForm) ──
 
@@ -38,7 +40,7 @@ export default function TransferenciasForm() {
     const { id: idParam } = useParams<{ id: string }>();
     const numericId = idParam ? Number(idParam) : undefined;
     const isEdit = !!numericId;
-    const { uct, uctGuard } = useUctGuard();
+    const { uct } = useUct();
     const { tipos: tiposContrato, isLoading: loadingTipos } = useTiposContrato();
 
     // ── Form state ──
@@ -398,7 +400,19 @@ export default function TransferenciasForm() {
                     </Button>
                 </div>
             </form>
-            
+
+            {isEdit && existing && (
+                <div className="mt-4">
+                    <AuditInfo
+                        created_at={existing.created_at}
+                        creator_name={existing.creator_name}
+                        deleted_at={existing.deleted_at}
+                        deleter_name={existing.deleter_name}
+                        activo={existing.activo}
+                    />
+                </div>
+            )}
+
         </section>
     );
 }

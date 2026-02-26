@@ -6,6 +6,11 @@ export interface PlanificacionGrupo {
   anio: number;
   grupo_id: number;
   grupo?: string;
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 }
 
 export interface PlanificacionGrupoPayload {

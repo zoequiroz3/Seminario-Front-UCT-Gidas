@@ -19,6 +19,11 @@ export interface TrabajoReunion {
   tipo_reunion: TipoReunion;
   investigadores: InvestigadorResumen[];
   grupo_utn: string;
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 }
 
 export interface TrabajoReunionPayload {

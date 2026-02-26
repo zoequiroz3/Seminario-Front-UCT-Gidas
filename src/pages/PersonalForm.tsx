@@ -7,6 +7,7 @@ import SuccessToast from "@/components/SuccessToast";
 import FormPTAAProfesional from "./FormPTAAProfesional";
 import FormBecario from "./FormBecario";
 import FormInvestigador from "./FormInvestigador";
+import AuditInfo from "@/components/AuditInfo";
 
 import { getPersonalCompletoByRolAndId } from "@/services/personalCompletoServices";
 
@@ -14,7 +15,7 @@ type Tipo = "" | "PTAA" | "PROFESIONAL" | "BECARIO" | "INVESTIGADOR";
 
 export default function PersonalForm() {
   const { rol: paramRol, id } = useParams<{ rol?: string; id?: string }>();
-  
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -151,10 +152,22 @@ export default function PersonalForm() {
             onCancel={() => navigate(-1)}
           />
         )}
+
+        {isEdit && initialData && (
+          <div className="pt-2">
+            <AuditInfo
+              created_at={initialData.created_at}
+              creator_name={initialData.creator_name}
+              deleted_at={initialData.deleted_at}
+              deleter_name={initialData.deleter_name}
+              activo={initialData.activo}
+            />
+          </div>
+        )}
       </div>
 
       {/* UCT GUARD */}
-      
+
 
       {/* 🔥 SUCCESS TOAST */}
       <SuccessToast

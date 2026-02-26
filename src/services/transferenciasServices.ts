@@ -21,6 +21,13 @@ interface TransferenciaBackend {
     adoptantes?: Adoptante[];
     numero_transferencia: number;
     denominacion: string;
+
+    // Auditoría
+    created_at?: string;
+    creator_name?: string;
+    deleted_at?: string;
+    deleter_name?: string;
+    activo?: boolean;
 }
 
 /** Interfaz unificada del frontend (incluye campos mock-only del spec). */
@@ -39,6 +46,13 @@ export interface Transferencia {
     // Campos completos que mapean al backend
     denominacion: string;
     numeroTransferencia: number;
+
+    // Auditoría
+    created_at?: string;
+    creator_name?: string;
+    deleted_at?: string;
+    deleter_name?: string;
+    activo?: boolean;
 }
 
 /** Payload para crear/editar en el frontend. */
@@ -71,6 +85,13 @@ function fromBackend(raw: TransferenciaBackend): Transferencia {
         adoptantes: raw.adoptantes ?? [],
         denominacion: raw.denominacion || "",
         numeroTransferencia: (raw as any).numero_transferencia || 0,
+
+        // Auditoría
+        created_at: raw.created_at,
+        creator_name: raw.creator_name,
+        deleted_at: raw.deleted_at,
+        deleter_name: raw.deleter_name,
+        activo: raw.activo,
     };
 }
 

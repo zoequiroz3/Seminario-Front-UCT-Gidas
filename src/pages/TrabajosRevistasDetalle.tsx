@@ -10,6 +10,8 @@ import {
   type TrabajoRevista,
 } from "@/services/trabajosRevistasServices";
 
+import AuditInfo from "@/components/AuditInfo";
+
 export default function TrabajoRevistaDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -111,17 +113,25 @@ export default function TrabajoRevistaDetalle() {
               </span>{" "}
               {data.investigadores?.length
                 ? data.investigadores
-                    .map(
-                      (i) =>
-                        i.nombre_apellido
-                    )
-                    .join(", ")
+                  .map(
+                    (i) =>
+                      i.nombre_apellido
+                  )
+                  .join(", ")
                 : "—"}
             </p>
 
           </div>
 
-          <div className="mt-8 flex items-center justify-between">
+          <AuditInfo
+            created_at={data.created_at}
+            creator_name={data.creator_name}
+            deleted_at={data.deleted_at}
+            deleter_name={data.deleter_name}
+            activo={data.activo}
+          />
+
+          <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-4">
             <Button
               variant="secondary"
               size="sm"

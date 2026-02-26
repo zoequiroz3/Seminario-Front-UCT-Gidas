@@ -19,6 +19,7 @@ import {
 
 import { useTiposReunion } from "@/hooks/useTiposReunion";
 import { useInvestigadores } from "@/hooks/useInvestigadores";
+import { useUct } from "@/hooks/useUct";
 
 export default function TrabajoReunionForm() {
   const { id } = useParams<{ id: string }>();
@@ -26,7 +27,7 @@ export default function TrabajoReunionForm() {
   const qc = useQueryClient();
   const isEdit = Boolean(id);
 
-  const { uct, uctGuard } = useUctGuard();
+  const { uct } = useUct();
   const { tipos = [] } = useTiposReunion();
   const { data: investigadores = [] } = useInvestigadores();
 
@@ -316,7 +317,7 @@ export default function TrabajoReunionForm() {
         message={successMessage}
         onClose={() => setShowSuccess(false)}
       />
-      
+
     </section>
   );
 }

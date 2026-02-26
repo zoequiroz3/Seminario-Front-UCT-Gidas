@@ -12,11 +12,13 @@ import {
   getActividadDocenciaById,
   actualizarActividadDocencia,
 } from "@/services/actividadDocenciaServices";
+import { useUct } from "@/hooks/useUct";
 
 export default function FormDocenciaInvestigador() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { uct } = useUct();
   const isEdit = Boolean(id);
 
   const { data: investigadores = [] } = useInvestigadores();
@@ -106,6 +108,7 @@ export default function FormDocenciaInvestigador() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (!uct?.id) return;
 
     mutation.mutate({
       investigador_id: investigadorId!,
@@ -115,6 +118,7 @@ export default function FormDocenciaInvestigador() {
       fecha_fin: fechaFin!.toISOString().split("T")[0],
       grado_academico_id: gradoAcademicoId,
       rol_actividad_id: rolActividadId,
+      grupo_utn_id: uct.id,
     });
   };
 

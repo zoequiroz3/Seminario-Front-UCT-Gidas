@@ -8,11 +8,12 @@ import {
   getPlanificacionById,
   updatePlanificacion,
 } from "@/services/planificacionGrupoServices";
+import { useUct } from "@/hooks/useUct";
 
 export default function PlanificacionGrupoForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { uct, uctGuard } = useUctGuard();
+  const { uct } = useUct();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
 
@@ -171,7 +172,7 @@ export default function PlanificacionGrupoForm() {
           </Button>
         </div>
       </form>
-      
+
     </section>
   );
 }

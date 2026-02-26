@@ -13,6 +13,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import SuccessToast from "@/components/SuccessToast";
 import Button from "@/components/Button";
 import Field from "@/components/Field";
+import AuditInfo from "@/components/AuditInfo";
 
 /* ───── Catalog definitions ───── */
 
@@ -253,6 +254,14 @@ function CatalogPanel({ def }: { def: CatalogDef }) {
                                             Guardar
                                         </Button>
                                     </div>
+
+                                    <AuditInfo
+                                        created_at={item.created_at}
+                                        creator_name={item.creator_name}
+                                        deleted_at={item.deleted_at}
+                                        deleter_name={item.deleter_name}
+                                        activo={item.activo}
+                                    />
                                 </div>
                             ) : (
                                 /* ── View mode ── */

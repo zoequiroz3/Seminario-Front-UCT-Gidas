@@ -6,6 +6,7 @@ import Button from "@/components/Button";
 import Calendar from "@/components/Calendar";
 import Field from "@/components/Field";
 import PersonalProyectoField from "@/components/PersonalProyectoField";
+import AuditInfo from "@/components/AuditInfo";
 
 import {
   upsertProyectos,
@@ -362,6 +363,16 @@ export default function ProyectosForm() {
                 : "Guardar"}
           </Button>
         </div>
+
+        {isEdit && initialData && (
+          <AuditInfo
+            created_at={initialData.created_at}
+            creator_name={initialData.creator_name}
+            deleted_at={initialData.deleted_at}
+            deleter_name={initialData.deleter_name}
+            activo={initialData.activo}
+          />
+        )}
       </form>
     </section>
   );

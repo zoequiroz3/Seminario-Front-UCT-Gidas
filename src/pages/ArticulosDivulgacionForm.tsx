@@ -9,11 +9,12 @@ import {
   getArticuloById,
   updateArticulo,
 } from "@/services/articulosDivulgacionServices";
+import { useUct } from "@/hooks/useUct";
 
 export default function ArticulosDivulgacionForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { uct, uctGuard } = useUctGuard();
+  const { uct } = useUct();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
 
@@ -234,7 +235,7 @@ export default function ArticulosDivulgacionForm() {
           </Button>
         </div>
       </form>
-      
+
     </section>
   );
 }

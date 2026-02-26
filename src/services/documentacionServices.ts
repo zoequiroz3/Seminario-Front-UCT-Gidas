@@ -12,7 +12,11 @@ export interface Documentacion {
   anio: number;
   grupo_id: string | null;
   autores: Autor[];
-  
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 }
 
 export interface DocumentacionPayload {

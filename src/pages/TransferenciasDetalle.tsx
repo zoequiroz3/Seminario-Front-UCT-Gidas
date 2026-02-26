@@ -11,6 +11,7 @@ import {
     useTransferencia,
     useDeleteTransferencia,
 } from "@/hooks/useTransferencias";
+import AuditInfo from "@/components/AuditInfo";
 
 /** Convierte claves snake/camel a un label legible. */
 const formatearLabel = (key: string) =>
@@ -53,6 +54,13 @@ const HIDDEN_KEYS = new Set([
     "id",
     "grupoUtnId",
     "tipoContratoId",
+    "createdAt",
+    "created_at",
+    "creator_name",
+    "deletedAt",
+    "deleted_at",
+    "deleter_name",
+    "activo",
 ]);
 
 export default function TransferenciasDetalle() {
@@ -122,8 +130,16 @@ export default function TransferenciasDetalle() {
                         ))}
                 </div>
 
+                <AuditInfo
+                    created_at={t.created_at}
+                    creator_name={t.creator_name}
+                    deleted_at={t.deleted_at}
+                    deleter_name={t.deleter_name}
+                    activo={t.activo}
+                />
+
                 {/* Acciones */}
-                <div className="mt-8 flex items-center justify-between">
+                <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-4">
                     <Button
                         variant="secondary"
                         size="sm"

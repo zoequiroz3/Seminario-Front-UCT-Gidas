@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import { getDistincionById } from "@/services/distincionesServices";
 
+import AuditInfo from "@/components/AuditInfo";
+
 export default function DistincionesDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -15,16 +17,16 @@ export default function DistincionesDetalle() {
 
   const formatFecha = (fecha?: string | Date | null) => {
     if (!fecha) return "—";
-    
+
     if (fecha instanceof Date) {
       const d = String(fecha.getDate()).padStart(2, "0");
       const m = String(fecha.getMonth() + 1).padStart(2, "0");
       const y = fecha.getFullYear();
       return `${d}/${m}/${y}`;
     }
-    
+
     const dateStr = String(fecha);
-    
+
     if (dateStr.includes("T")) {
       const date = new Date(dateStr);
       if (!isNaN(date.getTime())) {
@@ -34,12 +36,12 @@ export default function DistincionesDetalle() {
         return `${d}/${m}/${y}`;
       }
     }
-    
+
     if (dateStr.includes("-")) {
       const [y, m, d] = dateStr.split("-");
       return `${d}/${m}/${y}`;
     }
-    
+
     return dateStr;
   };
 
@@ -70,7 +72,15 @@ export default function DistincionesDetalle() {
           </p>
         </div>
 
-        <div className="mt-8 flex items-center justify-between">
+        <AuditInfo
+          created_at={data.created_at}
+          creator_name={data.creator_name}
+          deleted_at={data.deleted_at}
+          deleter_name={data.deleter_name}
+          activo={data.activo}
+        />
+
+        <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-4">
           <Button
             variant="secondary"
             size="sm"

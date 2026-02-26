@@ -10,11 +10,13 @@ import { useState, useEffect } from "react";
 const fmtMoney = (n?: number) =>
   typeof n === "number"
     ? new Intl.NumberFormat("es-AR", {
-        style: "currency",
-        currency: "ARS",
-        maximumFractionDigits: 2,
-      }).format(n)
+      style: "currency",
+      currency: "ARS",
+      maximumFractionDigits: 2,
+    }).format(n)
     : "—";
+
+import AuditInfo from "@/components/AuditInfo";
 
 export default function EquipamientoDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -80,7 +82,15 @@ export default function EquipamientoDetalle() {
             </p>
           </div>
 
-          <div className="mt-8 flex items-center justify-between">
+          <AuditInfo
+            created_at={data.created_at}
+            creator_name={data.creator_name}
+            deleted_at={data.deleted_at}
+            deleter_name={data.deleter_name}
+            activo={data.activo}
+          />
+
+          <div className="mt-8 flex items-center justify-between border-t border-slate-100 pt-4">
             <Button
               variant="secondary"
               size="sm"
@@ -100,10 +110,11 @@ export default function EquipamientoDetalle() {
       </section>
 
       {/* 🔥 TOAST */}
-      <SuccessToast
+      < SuccessToast
         open={showSuccess}
         message={successMessage}
-        onClose={() => setShowSuccess(false)}
+        onClose={() => setShowSuccess(false)
+        }
       />
     </>
   );

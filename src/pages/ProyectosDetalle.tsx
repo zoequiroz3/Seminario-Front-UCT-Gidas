@@ -5,6 +5,7 @@ import {
   getProyectoById,
   type Proyecto,
 } from "@/services/proyectosServices";
+import AuditInfo from "@/components/AuditInfo";
 
 export default function ProyectoDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -25,15 +26,15 @@ export default function ProyectoDetalle() {
     const date = new Date(fecha);
     return date.toLocaleDateString("es-AR");
   };
-const proyecto: any = data;
+  const proyecto: any = data;
 
-const investigadores = data.investigadores?.length
-  ? data.investigadores.map((a)=> a.nombre_apellido).join(", ")
-  : "—";
+  const investigadores = data.investigadores?.length
+    ? data.investigadores.map((a: any) => a.nombre_apellido).join(", ")
+    : "—";
 
-const becarios = data.becarios?.length
-  ? data.becarios.map((a)=> a.nombre_apellido).join(", ")
-  : "—";
+  const becarios = data.becarios?.length
+    ? data.becarios.map((a: any) => a.nombre_apellido).join(", ")
+    : "—";
 
   return (
     <section className="flex flex-col gap-6">
@@ -44,58 +45,66 @@ const becarios = data.becarios?.length
 
       <article className="rounded-2xl border border-slate-200 bg-white p-6 flex flex-col gap-6">
 
-<div className="flex flex-col gap-3 text-[16px]">
+        <div className="flex flex-col gap-3 text-[16px]">
 
-  <p>
-    <span className="font-medium">Código del proyecto:</span>{" "}
-    {data.codigoProyecto}
-  </p>
-{/* INVESTIGADORES */}
-<div>
-  <p>
-    <span className="font-medium text-slate-700">Investigadores:</span>{" "}
-    {investigadores}
-  </p>
-</div>
+          <p>
+            <span className="font-medium">Código del proyecto:</span>{" "}
+            {data.codigoProyecto}
+          </p>
+          {/* INVESTIGADORES */}
+          <div>
+            <p>
+              <span className="font-medium text-slate-700">Investigadores:</span>{" "}
+              {investigadores}
+            </p>
+          </div>
 
-{/* BECARIOS */}
-<div>
-  <p>
-    <span className="font-medium text-slate-700">Becarios:</span>{" "}
-    {becarios}
-  </p>
-</div>
+          {/* BECARIOS */}
+          <div>
+            <p>
+              <span className="font-medium text-slate-700">Becarios:</span>{" "}
+              {becarios}
+            </p>
+          </div>
 
-  <p>
-    <span className="font-medium">Descripción:</span>{" "}
-    {data.descripcionProyecto || "—"}
-  </p>
+          <p>
+            <span className="font-medium">Descripción:</span>{" "}
+            {data.descripcionProyecto || "—"}
+          </p>
 
-  <p>
-    <span className="font-medium">Tipo de proyecto:</span>{" "}
-    {data.tipoProyectoNombre || "—"}
-  </p>
+          <p>
+            <span className="font-medium">Tipo de proyecto:</span>{" "}
+            {data.tipoProyectoNombre || "—"}
+          </p>
 
-  <p>
-    <span className="font-medium">Fuente de financiamiento:</span>{" "}
-    {data.fuenteFinanciamientoNombre || "—"}
-  </p>
+          <p>
+            <span className="font-medium">Fuente de financiamiento:</span>{" "}
+            {data.fuenteFinanciamientoNombre || "—"}
+          </p>
 
-  <p>
-    <span className="font-medium">Fecha inicio:</span>{" "}
-    {formatFecha(data.fechaInicio)}
-  </p>
+          <p>
+            <span className="font-medium">Fecha inicio:</span>{" "}
+            {formatFecha(data.fechaInicio)}
+          </p>
 
-  <p>
-    <span className="font-medium">Fecha fin:</span>{" "}
-    {formatFecha(data.fechaFinalizacion)}
-  </p>
+          <p>
+            <span className="font-medium">Fecha fin:</span>{" "}
+            {formatFecha(data.fechaFinalizacion)}
+          </p>
 
-</div>
+        </div>
 
 
 
-        <div className="flex justify-between pt-4">
+        <AuditInfo
+          created_at={data.created_at}
+          creator_name={data.creator_name}
+          deleted_at={data.deleted_at}
+          deleter_name={data.deleter_name}
+          activo={data.activo}
+        />
+
+        <div className="flex justify-between pt-4 border-t border-slate-100">
           <Button
             type="button"
             variant="secondary"
@@ -115,7 +124,6 @@ const becarios = data.becarios?.length
             Editar
           </Button>
         </div>
-
       </article>
     </section>
   );

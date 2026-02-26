@@ -17,6 +17,11 @@ export interface TrabajoRevista {
     id: number;
     nombre_apellido: string;
   }[];
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 }
 
 export const getTrabajosRevistas = async () =>

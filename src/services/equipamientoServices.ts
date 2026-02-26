@@ -7,6 +7,13 @@ export type Equipamiento = {
   fecha_incorporacion: string; // YYYY-MM-DD
   monto_invertido: number;
   grupo_utn_id: number;
+
+  // Auditoría
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 };
 
 export async function getEquipamiento() {
@@ -22,6 +29,7 @@ export async function createEquipamiento(payload: {
   descripcion_breve: string;
   fecha_incorporacion: string;
   monto_invertido: number;
+  grupo_utn_id?: number | null;
 }) {
   return http("/equipamiento/", {
     method: "POST",

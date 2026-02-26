@@ -8,6 +8,11 @@ export interface Distincion {
     codigo: string;
     nombre: string;
   };
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 }
 
 export interface Participacion {
@@ -17,6 +22,11 @@ export interface Participacion {
   fecha: string;
   investigador_id: number;
   investigador?: string;
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 }
 
 export interface Visitante {
@@ -31,6 +41,11 @@ export interface Visitante {
     id: number;
     nombre: string;
   };
+  created_at?: string;
+  creator_name?: string;
+  deleted_at?: string;
+  deleter_name?: string;
+  activo?: boolean;
 }
 
 export const MOCK_DISTINCIONES: Distincion[] = [

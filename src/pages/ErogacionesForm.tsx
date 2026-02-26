@@ -10,11 +10,12 @@ import {
 } from "@/services/erogacionesServices";
 import { useTiposErogacion } from "@/hooks/useTipoErogacion";
 import { useFuentesFinanciamiento } from "@/hooks/useFuenteFinanciamiento";
+import { useUct } from "@/hooks/useUct";
 
 export default function ErogacionesForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { uct, uctGuard } = useUctGuard();
+  const { uct } = useUct();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
 
@@ -275,7 +276,7 @@ export default function ErogacionesForm() {
           </Button>
         </div>
       </form>
-      
+
     </section>
   );
 }
