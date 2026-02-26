@@ -73,6 +73,7 @@ import VisitantesDetalle from "./pages/VisitantesDetalle";
 import CambiarPassword from "./pages/CambiarPassword";
 import UsuariosHome from "./pages/UsuariosHome";
 import UsuariosForm from "./pages/UsuariosForm";
+import CatalogosHome from "./pages/CatalogosHome";
 
 // Definición de rutas
 const router = createBrowserRouter([
@@ -240,6 +241,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole="ADMIN">
             <UsuariosForm />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "catalogos",
+        element: (
+          <ProtectedRoute requiredRole="ADMIN">
+            <CatalogosHome />
           </ProtectedRoute>
         ),
       },

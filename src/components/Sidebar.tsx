@@ -74,6 +74,7 @@ const baseItems: Item[] = [
 // Items solo para admins
 const adminItems: Item[] = [
   { label: "Gestión de Usuarios", to: "/usuarios" },
+  { label: "Gestionar Catálogos", to: "/catalogos" },
 ];
 
 export default function Sidebar() {
