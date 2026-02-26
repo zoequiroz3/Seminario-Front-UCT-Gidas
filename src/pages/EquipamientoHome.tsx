@@ -140,7 +140,7 @@ export default function EquipamientoLanding() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl md:text-3xl font-semibold">
-            Equipamiento
+            Equipamiento e Infraestructura
           </h2>
           {!isLoading && (
             <p className="text-sm text-slate-500 mt-1">

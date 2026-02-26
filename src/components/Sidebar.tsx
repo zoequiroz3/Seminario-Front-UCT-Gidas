@@ -26,11 +26,7 @@ const baseItems: Item[] = [
     ],
   },
   {
-    label: "Proyectos",
-    children: [
-      { label: "Ver todos los proyectos", to: "/proyectos" },
-    ],
-  },
+    label: "Proyectos", to: "/proyectos" },
   {
     label: "Actividades I+D+I",
     children: [
@@ -42,26 +38,12 @@ const baseItems: Item[] = [
       { label: "Visitantes del país y del extranjero", to: "/visitantes" },
     ],
   },
+  { label: "Equipamiento e Infraestructura", to: "/equipamiento" },
+  { label: "Resumen de Ingresos y Egresos", to: "/erogaciones" },
   {
-    label: "Objetos y Financiamiento",
-    children: [
-      { label: "Ver todos los objetos y financiamiento", to: "/objetosfinanciamiento" },
-      { label: "Equipamiento", to: "/equipamiento" },
-      { label: "Erogaciones", to: "/erogaciones" },
-    ],
-  },
+    label: "Documentación y Biblioteca", to: "/documentacion" },
   {
-    label: "Documentación y Biblioteca",
-    children: [
-      { label: "Ver todo en documentación y biblioteca", to: "/documentacion" }
-    ],
-  },
-  {
-    label: "Programa de Actividades",
-    children: [
-      { label: "Ver todos los programas de actividades", to: "/planificaciones" }
-    ],
-  },
+    label: "Programa de Actividades", to: "/planificaciones" },
   {
     label: "Vinculación Socio-Productiva",
     children: [
