@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useUct } from "@/hooks/useUct";
 import { useAuth } from "@/context/AuthContext";
+import { useDirectivos } from "@/hooks/useDirectivos";
 import Button from "@/components/Button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import SuccessToast from "@/components/SuccessToast";
@@ -11,6 +12,17 @@ export default function Home() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const grupoId = uct?.id;
+  const { data: directivos = [] } = useDirectivos(grupoId);
+
+  const director = directivos.find(
+    (d) => d.cargo === "Director"
+  );
+
+  const vicedirector = directivos.find(
+    (d) => d.cargo === "Vicedirector"
+  );
 
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -81,11 +93,39 @@ export default function Home() {
       {uct ? (
         <article className="rounded-2xl border border-slate-200 bg-white shadow-sm p-8">
           <dl className="grid md:grid-cols-2 gap-y-8 gap-x-12 text-sm">
-            <Field label="Facultad Regional" value={uct.facultadRegional} />
-            <Field label="Nombre y Sigla" value={uct.nombreSigla} />
-            <Field label="Director/a" value={uct.director} />
-            <Field label="Vicedirector/a" value={uct.vicedirector} />
-            <Field label="Correo electrónico" value={uct.correo} />
+            <Field
+              label="Facultad Regional"
+              value={uct.facultadRegional}
+            />
+
+            <Field
+              label="Nombre y Sigla"
+              value={uct.nombreSigla}
+            />
+
+            <Field
+              label="Director/a"
+              value={
+                director
+                  ? `${director.nombre_apellido}`
+                  : "—"
+              }
+            />
+
+            <Field
+              label="Vicedirector/a"
+              value={
+                vicedirector
+                  ? `${vicedirector.nombre_apellido}`
+                  : "—"
+              }
+            />
+
+            <Field
+              label="Correo electrónico"
+              value={uct.correo}
+            />
+
             <Field
               label="Objetivos y desarrollo"
               value={uct.objetivos}
