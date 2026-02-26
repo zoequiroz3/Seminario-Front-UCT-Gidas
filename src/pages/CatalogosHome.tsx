@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import {
     getCatalogItems,
@@ -59,6 +60,7 @@ const CATALOGS: CatalogDef[] = [
 /* ───── Single catalog CRUD panel ───── */
 
 function CatalogPanel({ def }: { def: CatalogDef }) {
+    const queryClient = useQueryClient();
     const nameField = def.nameField ?? "nombre";
     const [items, setItems] = useState<CatalogItem[]>([]);
     const [loading, setLoading] = useState(false);
@@ -119,6 +121,7 @@ function CatalogPanel({ def }: { def: CatalogDef }) {
             setNewFkId("");
             setShowAdd(false);
             setToast("Creado con éxito");
+            queryClient.invalidateQueries();
             load();
         } catch {
             setToast("Error al crear");
@@ -134,6 +137,7 @@ function CatalogPanel({ def }: { def: CatalogDef }) {
             await updateCatalogItem(def.endpoint, id, body);
             setEditId(null);
             setToast("Actualizado con éxito");
+            queryClient.invalidateQueries();
             load();
         } catch {
             setToast("Error al actualizar");
@@ -146,6 +150,7 @@ function CatalogPanel({ def }: { def: CatalogDef }) {
             await deleteCatalogItem(def.endpoint, deleteTarget.id);
             setDeleteTarget(null);
             setToast("Eliminado con éxito");
+            queryClient.invalidateQueries();
             load();
         } catch {
             setToast("Error al eliminar. Puede estar en uso.");
