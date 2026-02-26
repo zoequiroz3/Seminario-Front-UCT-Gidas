@@ -147,11 +147,33 @@ export default function SearchPage() {
         break;
 
       case "Investigador":
+        if (extra.categoria_utn) {
+          return { texto: `Categoría: ${extra.categoria_utn.nombre || extra.categoria_utn}`, count: 0 };
+        }
         items = (extra.proyectos || []).map((p: any) => p.nombre || p.titulo);
         label = "Proyectos";
         break;
 
       case "Becario":
+        if (extra.tipo_formacion) {
+          return { texto: `Grado de Formación: ${extra.tipo_formacion.nombre || extra.tipo_formacion}`, count: 0 };
+        }
+        items = (extra.proyectos || []).map((p: any) => p.nombre || p.titulo);
+        label = "Proyectos";
+        break;
+
+      case "Personal":
+        if (extra.tipo_personal) {
+          return { texto: `Tipo de Personal: ${extra.tipo_personal.nombre || extra.tipo_personal}`, count: 0 };
+        }
+        items = (extra.proyectos || []).map((p: any) => p.nombre || p.titulo);
+        label = "Proyectos";
+        break;
+
+      case "Profesional":
+        if (extra.tipo_personal) {
+          return { texto: `Tipo de Personal: ${extra.tipo_personal.nombre || extra.tipo_personal}`, count: 0 };
+        }
         items = (extra.proyectos || []).map((p: any) => p.nombre || p.titulo);
         label = "Proyectos";
         break;
@@ -434,8 +456,8 @@ export default function SearchPage() {
                           type="button"
                           onClick={() => toggleType(tipo)}
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${isActive
-                              ? `${config.color} ${config.bgColor} border-transparent shadow-sm`
-                              : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
+                            ? `${config.color} ${config.bgColor} border-transparent shadow-sm`
+                            : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
                             }`}
                         >
                           <Icon className="w-3.5 h-3.5" />

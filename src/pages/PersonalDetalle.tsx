@@ -69,12 +69,31 @@ export default function PersonalDetalle() {
   return (
     <>
       <section className="flex flex-col gap-6">
-        <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-          {data?.nombre_apellido ?? "Detalle de personal"}
-        </h2>
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+            {data?.nombre_apellido ?? "Detalle"}
+          </h2>
+          {rol && (
+            <span className="w-fit px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-600 uppercase tracking-wider border border-slate-200">
+              {rol === "personal" ? "PTAA" : rol}
+            </span>
+          )}
+        </div>
 
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
           <div className="space-y-2 text-sm md:text-base text-slate-500">
+            {data?.relaciones?.tipo_personal && (
+              <p>
+                <span className="font-medium text-slate-700">Tipo de Personal:</span>{" "}
+                {data.relaciones.tipo_personal.nombre}
+              </p>
+            )}
+            {data?.relaciones?.tipo_formacion && (
+              <p>
+                <span className="font-medium text-slate-700">Grado de Formación:</span>{" "}
+                {data.relaciones.tipo_formacion.nombre}
+              </p>
+            )}
             {Object.entries(data)
               .filter(
                 ([key]) =>

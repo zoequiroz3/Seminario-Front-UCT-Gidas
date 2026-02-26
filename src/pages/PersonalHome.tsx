@@ -48,8 +48,8 @@ export default function PersonalLanding() {
       checked
         ? [...prev, { id, rol, nombre }]
         : prev.filter(
-            (x) => !(x.id === id && x.rol === rol)
-          )
+          (x) => !(x.id === id && x.rol === rol)
+        )
     );
   };
 
@@ -74,7 +74,7 @@ export default function PersonalLanding() {
 
   return (
     <section className="w-full min-h-[calc(100vh-80px)] px-4 py-2 flex flex-col">
-      
+
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl md:text-3xl font-semibold">
@@ -136,7 +136,12 @@ export default function PersonalLanding() {
                 key={`${p.rol}-${p.id}`}
                 item={p}
                 title={(x) => x.nombre_apellido}
-                subtitle={(x) => x.rol}
+                subtitle={(x) =>
+                  x.rol === "personal" ? "PTAA" :
+                    x.rol === "becario" ? "Becario" :
+                      x.rol === "investigador" ? "Investigador" :
+                        x.rol === "profesional" ? "Profesional" : x.rol
+                }
                 selectable={selectMode}
                 selected={
                   selectedItems.some(
