@@ -101,7 +101,8 @@ export default function PersonalDetalle() {
                   key !== "nombre_apellido" &&
                   key !== "activo" &&
                   key !== "rol" &&
-                  key !== "relaciones"
+                  key !== "relaciones" &&
+                  key !== "grupo"
               )
               .map(([key, value]) => (
                 <p key={key}>
