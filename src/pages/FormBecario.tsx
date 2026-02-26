@@ -35,7 +35,6 @@ export default function FormBecario({
   const [nombreApellido, setNombre] = useState("");
   const [horasSemanales, setHoras] = useState<number | "">("");
   const [tipoFormacionId, setTipoFormacionId] = useState<number | "">("");
-  const [fuenteId, setFuenteId] = useState<number | "">("");
   const [activo, setActivo] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -79,8 +78,6 @@ export default function FormBecario({
     if (initialData.relaciones?.tipo_formacion)
       setTipoFormacionId(initialData.relaciones.tipo_formacion.id);
 
-    if (initialData.relaciones?.fuente_financiamiento)
-      setFuenteId(initialData.relaciones.fuente_financiamiento.id);
 
     // Initial data load for becas
     if (initialData.becas && initialData.becas.length > 0) {
@@ -141,7 +138,6 @@ export default function FormBecario({
       nombre_apellido: nombreApellido,
       horas_semanales: Number(horasSemanales),
       tipo_formacion_id: Number(tipoFormacionId),
-      fuente_financiamiento_id: fuenteId ? Number(fuenteId) : undefined,
       grupo_utn_id: uct!.id,
       activo,
     };
@@ -299,26 +295,7 @@ export default function FormBecario({
         {/* Toggle para Beca */}
         <div className="border border-slate-200 p-6 rounded-lg bg-slate-50 space-y-6">
           <div className="flex flex-col gap-2 border-b border-slate-200 pb-4">
-            <h4 className="font-semibold text-slate-800">Fuente de financiamiento</h4>
-
-            <div className="mb-4">
-              <Field label="Entidad financiadora (Opcional)">
-                <select
-                  className={`input ${!fuenteId ? "text-slate-400" : "text-slate-900"}`}
-                  value={fuenteId}
-                  onChange={(e) => {
-                    const value = e.target.value ? +e.target.value : "";
-                    setFuenteId(value);
-                  }}
-                >
-                  <option value="" disabled>Seleccionar fuente</option>
-                  <option value="">Ninguna</option>
-                  {fuentes.map((f: any) => (
-                    <option key={f.id} value={f.id}>{f.nombre}</option>
-                  ))}
-                </select>
-              </Field>
-            </div>
+            <h4 className="font-semibold text-slate-800">Becas</h4>
 
             <div className="flex items-center gap-2">
               <input
