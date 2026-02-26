@@ -8,14 +8,14 @@ import {
   getErogacionById,
   updateErogacion,
 } from "@/services/erogacionesServices";
-import { useUct } from "@/hooks/useUct";
+import { useUctGuard } from "@/hooks/useUctGuard";
 import { useTiposErogacion } from "@/hooks/useTipoErogacion";
 import { useFuentesFinanciamiento } from "@/hooks/useFuenteFinanciamiento";
 
 export default function ErogacionesForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { uct } = useUct();
+  const { uct, uctGuard } = useUctGuard();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
 
@@ -164,8 +164,8 @@ export default function ErogacionesForm() {
           <>
             <select
               className={`${inputClass("tipo")} ${!data.tipoErogacionId
-                  ? "text-slate-400"
-                  : "text-slate-900"
+                ? "text-slate-400"
+                : "text-slate-900"
                 }`}
               value={data.tipoErogacionId}
               onChange={(e) => {
@@ -276,6 +276,7 @@ export default function ErogacionesForm() {
           </Button>
         </div>
       </form>
+      {uctGuard}
     </section>
   );
 }

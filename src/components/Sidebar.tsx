@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, type To } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 type Item = {
   label: string;
@@ -9,7 +10,8 @@ type Item = {
   children?: Item[];
 };
 
-const items: Item[] = [
+// Items base visibles para todos
+const baseItems: Item[] = [
   { label: "Inicio", to: "/" },
   {
     label: "Personal",
@@ -51,10 +53,20 @@ const items: Item[] = [
   { label: "Búsqueda", to: "/busqueda" },
 ];
 
+// Items solo para admins
+const adminItems: Item[] = [
+  { label: "Gestión de Usuarios", to: "/usuarios" },
+  { label: "Gestionar Catálogos", to: "/catalogos" },
+];
+
 export default function Sidebar() {
-  const [isOpen, setIsOpen] = useState(false);     // visible a nivel de clase
-  const [isVisible, setIsVisible] = useState(false); // visible en el DOM
+  const { isAdmin } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  // Combinar items según el rol del usuario
+  const items = isAdmin() ? [...baseItems, ...adminItems] : baseItems;
 
   // ESC para cerrar
   useEffect(() => {
@@ -73,12 +85,12 @@ export default function Sidebar() {
 
   const open = () => {
     setIsVisible(true);
-    setTimeout(() => setIsOpen(true), 10); // darle tiempo a montar antes de animar
+    setTimeout(() => setIsOpen(true), 10);
   };
 
   const close = () => {
-    setIsOpen(false); // activa translate-x
-    setTimeout(() => setIsVisible(false), 300); // luego desmonta
+    setIsOpen(false);
+    setTimeout(() => setIsVisible(false), 300);
   };
 
   const toggleNode = (key: string) =>

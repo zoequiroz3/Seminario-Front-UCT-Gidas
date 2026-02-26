@@ -6,9 +6,20 @@ import SuccessToast from "@/components/SuccessToast";
 import { getPersonalCompletoByRolAndId } from "@/services/personalCompletoServices";
 
 export default function PersonalDetalle() {
-  const { rol, id } = useParams();
+  const { rol: paramRol, id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Infer role from URL path when :rol param is absent
+  const rol = (() => {
+    if (paramRol) return paramRol;
+    const path = location.pathname;
+    if (path.includes("/becarios/")) return "becario";
+    if (path.includes("/investigadores/")) return "investigador";
+    if (path.includes("/ptaa/")) return "personal";
+    if (path.includes("/profesionales/")) return "profesional";
+    return undefined;
+  })();
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -17,8 +28,6 @@ export default function PersonalDetalle() {
     if (location.state?.successMessage) {
       setSuccessMessage(location.state.successMessage);
       setShowSuccess(true);
-
-      // Limpia el state para que no vuelva a aparecer al refrescar
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -45,8 +54,8 @@ export default function PersonalDetalle() {
     if (Array.isArray(value)) {
       return value.length
         ? value
-            .map((v) => v.nombre_apellido || v.nombre || JSON.stringify(v))
-            .join(", ")
+          .map((v) => v.nombre_apellido || v.nombre || v.nombre_beca || JSON.stringify(v))
+          .join(", ")
         : "—";
     }
 
@@ -96,9 +105,12 @@ export default function PersonalDetalle() {
             <Button
               size="sm"
               className="px-3 py-1 text-xs"
-              onClick={() =>
-                navigate(`/personal/${rol}/${id}/editar`)
-              }
+              onClick={() => {
+                // If it's becario, the route is /becarios/:id/editar
+                if (rol === "becario") navigate(`/becarios/${id}/editar`);
+                else if (rol === "investigador") navigate(`/investigadores/${id}/editar`);
+                else navigate(`/personal/${rol}/${id}/editar`);
+              }}
             >
               Editar
             </Button>

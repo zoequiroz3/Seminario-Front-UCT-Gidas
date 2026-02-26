@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import Button from "@/components/Button";
 import SuccessToast from "@/components/SuccessToast";
+import { useUctGuard } from "@/hooks/useUctGuard";
 
 import FormPTAAProfesional from "./FormPTAAProfesional";
 import FormBecario from "./FormBecario";
@@ -13,16 +14,28 @@ import { getPersonalCompletoByRolAndId } from "@/services/personalCompletoServic
 type Tipo = "" | "PTAA" | "PROFESIONAL" | "BECARIO" | "INVESTIGADOR";
 
 export default function PersonalForm() {
-  const { rol, id } = useParams<{ rol?: string; id?: string }>();
+  const { rol: paramRol, id } = useParams<{ rol?: string; id?: string }>();
+  const { uctGuard } = useUctGuard();
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isEdit = Boolean(id && rol);
+  // Infer role from URL path when :rol param is absent
+  // e.g. /becarios/5/editar -> "becario", /investigadores/5/editar -> "investigador"
+  const inferredRol = (() => {
+    if (paramRol) return paramRol;
+    const path = location.pathname;
+    if (path.includes("/becarios/")) return "becario";
+    if (path.includes("/investigadores/")) return "investigador";
+    return undefined;
+  })();
+
+  const isEdit = Boolean(id && inferredRol);
 
   const { data: initialData, isLoading } = useQuery({
-    queryKey: ["personal-edit", rol, id],
-    queryFn: () => getPersonalCompletoByRolAndId(rol!, Number(id)),
-    enabled: Boolean(rol && id),
+    queryKey: ["personal-edit", inferredRol, id],
+    queryFn: () => getPersonalCompletoByRolAndId(inferredRol!, Number(id)),
+    enabled: Boolean(inferredRol && id),
   });
 
   const [tipo, setTipo] = useState<Tipo>("");
@@ -44,7 +57,8 @@ export default function PersonalForm() {
   }, [location.state]);
 
   useEffect(() => {
-    if (!rol) return;
+    const r = inferredRol;
+    if (!r) return;
 
     const rolMap: Record<string, Tipo> = {
       personal: "PTAA",
@@ -53,9 +67,9 @@ export default function PersonalForm() {
       investigador: "INVESTIGADOR",
     };
 
-    const mapped = rolMap[rol.toLowerCase()];
+    const mapped = rolMap[r.toLowerCase()];
     if (mapped) setTipo(mapped);
-  }, [rol]);
+  }, [inferredRol]);
 
   if (isLoading) return <p>Cargando…</p>;
 
@@ -140,6 +154,9 @@ export default function PersonalForm() {
           />
         )}
       </div>
+
+      {/* UCT GUARD */}
+      {uctGuard}
 
       {/* 🔥 SUCCESS TOAST */}
       <SuccessToast

@@ -9,6 +9,10 @@ import {
   crearBecario,
   actualizarBecario,
 } from "@/services/becarioServices";
+import { useQueryClient } from "@tanstack/react-query";
+import { useBecas } from "@/hooks/useBecas";
+import { vincularBecarioABeca, desvincularBecarioDeBeca } from "@/services/becasService";
+import Calendar from "@/components/Calendar";
 
 interface Props {
   initialData?: any;
@@ -23,15 +27,46 @@ export default function FormBecario({
   const { uct } = useUct();
   const { data: tiposFormacion = [] } = useTiposFormacion();
   const { fuentes = [] } = useFuentesFinanciamiento();
+  const qc = useQueryClient();
+  const { data: becasLista = [] } = useBecas();
 
   const isEdit = Boolean(initialData);
 
   const [nombreApellido, setNombre] = useState("");
   const [horasSemanales, setHoras] = useState<number | "">("");
   const [tipoFormacionId, setTipoFormacionId] = useState<number | "">("");
-  const [fuenteId, setFuenteId] = useState<number | "">("");
   const [activo, setActivo] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Sub-form para becas
+  const [percibeBeca, setPercibeBeca] = useState(false);
+
+  type BecaVinculada = {
+    idLocal: string; // para el key de react
+    becaId: number | "";
+    fechaInicio: Date | null;
+    fechaFin: Date | null;
+    monto: number | "";
+  };
+
+  const createEmptyBeca = (): BecaVinculada => ({
+    idLocal: Math.random().toString(36).substr(2, 9),
+    becaId: "",
+    fechaInicio: null,
+    fechaFin: null,
+    monto: "",
+  });
+
+  const [becasVinculadas, setBecasVinculadas] = useState<BecaVinculada[]>([]);
+
+  // Function to serialize local Date to YYYY-MM-DD
+  const formatDateStr = (d: Date | null) => {
+    if (!d) return undefined;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+  };
 
   useEffect(() => {
     if (!initialData) return;
@@ -43,8 +78,20 @@ export default function FormBecario({
     if (initialData.relaciones?.tipo_formacion)
       setTipoFormacionId(initialData.relaciones.tipo_formacion.id);
 
-    if (initialData.relaciones?.fuente_financiamiento)
-      setFuenteId(initialData.relaciones.fuente_financiamiento.id);
+
+    // Initial data load for becas
+    if (initialData.becas && initialData.becas.length > 0) {
+      setPercibeBeca(true);
+      setBecasVinculadas(
+        initialData.becas.map((b: any) => ({
+          idLocal: Math.random().toString(36).substr(2, 9),
+          becaId: b.id,
+          fechaInicio: b.fecha_inicio ? new Date(b.fecha_inicio + "T00:00:00") : null,
+          fechaFin: b.fecha_fin ? new Date(b.fecha_fin + "T00:00:00") : null,
+          monto: b.monto_percibido || "",
+        }))
+      );
+    }
   }, [initialData]);
 
   const clearError = (field: string) => {
@@ -68,9 +115,16 @@ export default function FormBecario({
       newErrors.tipoFormacion =
         "Debe seleccionar tipo de formación";
 
-    if (!fuenteId)
-      newErrors.fuente =
-        "Debe seleccionar fuente de financiamiento";
+    if (percibeBeca) {
+      if (becasVinculadas.length === 0) {
+        newErrors.becaGlobal = "Debe agregar al menos una beca";
+      } else {
+        becasVinculadas.forEach((beca, index) => {
+          if (!beca.becaId) newErrors[`beca_${index}_id`] = "Debe seleccionar un tipo de beca";
+          if (!beca.fechaInicio) newErrors[`beca_${index}_fechaInicio`] = "Debe ingresar una fecha de inicio";
+        });
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -84,13 +138,34 @@ export default function FormBecario({
       nombre_apellido: nombreApellido,
       horas_semanales: Number(horasSemanales),
       tipo_formacion_id: Number(tipoFormacionId),
-      fuente_financiamiento_id: Number(fuenteId),
       grupo_utn_id: uct!.id,
       activo,
     };
 
     if (isEdit && initialData?.id) {
       await actualizarBecario(initialData.id, payload);
+
+      // Eliminar vínculos antiguos (limpiamos todo o actualizamos)
+      for (const b of initialData.becas || []) {
+        await desvincularBecarioDeBeca(b.id, initialData.id).catch(() => { });
+      }
+
+      if (percibeBeca && becasVinculadas.length > 0) {
+        // Enviar todas las becas vinculadas de forma concurrente
+        await Promise.all(
+          becasVinculadas.map((beca) => {
+            if (!beca.becaId) return Promise.resolve();
+            return vincularBecarioABeca(Number(beca.becaId), {
+              id_becario: initialData.id,
+              fecha_inicio: formatDateStr(beca.fechaInicio)!,
+              fecha_fin: formatDateStr(beca.fechaFin),
+              monto_percibido: beca.monto ? Number(beca.monto) : undefined,
+            });
+          })
+        ).catch((err) => console.error("Error al actualizar becas", err));
+      }
+
+      qc.invalidateQueries({ queryKey: ["personal"] });
 
       navigate(`/personal/becario/${initialData.id}`, {
         state: { successMessage: "Actualizado con éxito!" },
@@ -99,158 +174,296 @@ export default function FormBecario({
       return;
     }
 
-    await crearBecario(payload);
+    // Creating initial Becario
+    const newBecario: any = await crearBecario(payload);
+    const createdId = newBecario.id;
 
+    // Link the initial Becas
+    if (createdId && percibeBeca && becasVinculadas.length > 0) {
+      await Promise.all(
+        becasVinculadas.map((beca) => {
+          if (!beca.becaId) return Promise.resolve();
+          return vincularBecarioABeca(Number(beca.becaId), {
+            id_becario: createdId,
+            fecha_inicio: formatDateStr(beca.fechaInicio)!,
+            fecha_fin: formatDateStr(beca.fechaFin),
+            monto_percibido: beca.monto ? Number(beca.monto) : undefined,
+          });
+        })
+      ).catch((err) => console.error("Error al crear becas vinculadas", err));
+    }
+
+    qc.invalidateQueries({ queryKey: ["personal"] });
     navigate("/personal", {
       state: { successMessage: "Creado con éxito!" },
     });
   };
 
   return (
-    <form
-      onSubmit={submit}
-      className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
-    >
-      {/* Nombre */}
-      <Field label="Nombre y apellido">
-        <>
-          <input
-            className={`input ${errors.nombre
+    <>
+      <form
+        onSubmit={submit}
+        className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
+      >
+        {/* Nombre */}
+        <Field label="Nombre y apellido">
+          <>
+            <input
+              className={`input ${errors.nombre
                 ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-              }`}
-            value={nombreApellido}
-            onChange={(e) => {
-              setNombre(e.target.value);
-              if (e.target.value.trim())
-                clearError("nombre");
-            }}
-          />
-          {errors.nombre && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.nombre}
-            </p>
-          )}
-        </>
-      </Field>
+                }`}
+              value={nombreApellido}
+              onChange={(e) => {
+                setNombre(e.target.value);
+                if (e.target.value.trim())
+                  clearError("nombre");
+              }}
+            />
+            {errors.nombre && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.nombre}
+              </p>
+            )}
+          </>
+        </Field>
 
-      {/* Horas */}
-      <Field label="Horas semanales">
-        <>
-          <input
-            type="number"
-            className={`input ${errors.horas
+        {/* Horas */}
+        <Field label="Horas semanales">
+          <>
+            <input
+              type="number"
+              className={`input ${errors.horas
                 ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-              }`}
-            value={horasSemanales}
-            onChange={(e) => {
-              const value =
-                e.target.value === ""
-                  ? ""
-                  : +e.target.value;
-              setHoras(value);
-              if (value) clearError("horas");
-            }}
-          />
-          {errors.horas && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.horas}
-            </p>
-          )}
-        </>
-      </Field>
+                }`}
+              value={horasSemanales}
+              onChange={(e) => {
+                const value =
+                  e.target.value === ""
+                    ? ""
+                    : +e.target.value;
+                setHoras(value);
+                if (value) clearError("horas");
+              }}
+            />
+            {errors.horas && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.horas}
+              </p>
+            )}
+          </>
+        </Field>
 
-      {/* Tipo Formación */}
-      <Field label="Tipo de formación">
-        <>
-          <select
-            className={`input ${errors.tipoFormacion
+        {/* Tipo Formación */}
+        <Field label="Tipo de formación">
+          <>
+            <select
+              className={`input ${errors.tipoFormacion
                 ? "!border-red-500 !ring-2 !ring-red-500"
                 : ""
-              } ${!tipoFormacionId
-                ? "text-slate-400"
-                : "text-slate-900"
-              }`}
-            value={tipoFormacionId}
-            onChange={(e) => {
-              const value = e.target.value
-                ? +e.target.value
-                : "";
-              setTipoFormacionId(value);
-              if (value) clearError("tipoFormacion");
-            }}
-          >
-            <option value="" disabled>
-              Seleccionar tipo de formación
-            </option>
-            {tiposFormacion.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nombre}
+                } ${!tipoFormacionId
+                  ? "text-slate-400"
+                  : "text-slate-900"
+                }`}
+              value={tipoFormacionId}
+              onChange={(e) => {
+                const value = e.target.value
+                  ? +e.target.value
+                  : "";
+                setTipoFormacionId(value);
+                if (value) clearError("tipoFormacion");
+              }}
+            >
+              <option value="" disabled>
+                Seleccionar tipo de formación
               </option>
-            ))}
-          </select>
-          {errors.tipoFormacion && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.tipoFormacion}
-            </p>
-          )}
-        </>
-      </Field>
+              {tiposFormacion.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.tipoFormacion && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.tipoFormacion}
+              </p>
+            )}
+          </>
+        </Field>
 
-      {/* Fuente */}
-      <Field label="Fuente de financiamiento">
-        <>
-          <select
-            className={`input ${errors.fuente
-                ? "border-red-500 ring-2 ring-red-500"
-                : ""
-              } ${!fuenteId
-                ? "text-slate-400"
-                : "text-slate-900"
-              }`}
-            value={fuenteId}
-            onChange={(e) => {
-              const value = e.target.value
-                ? +e.target.value
-                : "";
-              setFuenteId(value);
-              if (value) clearError("fuente");
-            }}
+        {/* Toggle para Beca */}
+        <div className="border border-slate-200 p-6 rounded-lg bg-slate-50 space-y-6">
+          <div className="flex flex-col gap-2 border-b border-slate-200 pb-4">
+            <h4 className="font-semibold text-slate-800">Becas</h4>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="checkbox-percibe-beca"
+                checked={percibeBeca}
+                onChange={e => {
+                  const isChecked = e.target.checked;
+                  setPercibeBeca(isChecked);
+                  if (!isChecked) {
+                    setBecasVinculadas([]);
+                    // Clean all beca errors
+                    Object.keys(errors).forEach(k => {
+                      if (k.startsWith("beca") || k.includes("fechaInicio")) clearError(k);
+                    });
+                  } else {
+                    // Automatically add an empty one to start
+                    if (becasVinculadas.length === 0) {
+                      setBecasVinculadas([createEmptyBeca()]);
+                    }
+                    clearError("becaGlobal");
+                  }
+                }}
+                className="h-4 w-4 accent-slate-700 rounded border-slate-300 cursor-pointer"
+              />
+              <label htmlFor="checkbox-percibe-beca" className="text-sm text-slate-700 font-medium cursor-pointer">
+                {percibeBeca ? "Percibe una beca" : "Ad-honorem (No percibe beca)"}
+              </label>
+            </div>
+            {errors.becaGlobal && <p className="text-red-500 text-xs mt-1">{errors.becaGlobal}</p>}
+          </div>
+
+          {percibeBeca && (
+            <div className="space-y-6">
+              {becasVinculadas.map((beca, index) => (
+                <div key={beca.idLocal} className="relative bg-white border border-slate-200 p-4 rounded-lg shadow-sm group">
+                  {/* Remove button (Only if more than 1) */}
+                  {becasVinculadas.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="absolute top-2 right-2 px-3 py-1 text-xs text-red-500 hover:text-red-700 bg-white"
+                      title="Eliminar esta beca"
+                      onClick={() => {
+                        setBecasVinculadas(prev => prev.filter((_, i) => i !== index));
+                      }}
+                    >
+                      ✕
+                    </Button>
+                  )}
+
+                  <h5 className="text-xs font-semibold text-slate-500 uppercase mb-3">
+                    Beca #{index + 1}
+                  </h5>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                    <Field label="Tipo de beca">
+                      <>
+                        <select
+                          className={`input py-2 text-sm text-slate-900 ${errors[`beca_${index}_id`] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`}
+                          value={beca.becaId}
+                          onChange={(e) => {
+                            const val = e.target.value === "" ? "" : Number(e.target.value);
+                            setBecasVinculadas(prev => {
+                              const nc = [...prev];
+                              nc[index].becaId = val;
+                              return nc;
+                            });
+                            if (val !== "") clearError(`beca_${index}_id`);
+                          }}
+                        >
+                          <option value="" disabled>Seleccionar tipo de beca</option>
+                          {becasLista.map((b: any) => (
+                            <option key={b.id} value={b.id}>{b.nombre_beca}</option>
+                          ))}
+                        </select>
+                        {errors[`beca_${index}_id`] && <p className="text-red-500 text-xs mt-1">{errors[`beca_${index}_id`]}</p>}
+                      </>
+                    </Field>
+
+                    <Field label="Monto total (Opcional)">
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="Ej. 150000"
+                        className="input py-2 text-sm"
+                        value={beca.monto}
+                        onChange={(e) => {
+                          const val = e.target.value === "" ? "" : +e.target.value;
+                          setBecasVinculadas(prev => {
+                            const nc = [...prev];
+                            nc[index].monto = val;
+                            return nc;
+                          });
+                        }}
+                      />
+                    </Field>
+
+                    <Field label="Fecha inicio">
+                      <>
+                        <Calendar
+                          value={beca.fechaInicio}
+                          onChange={(date) => {
+                            setBecasVinculadas(prev => {
+                              const nc = [...prev];
+                              nc[index].fechaInicio = date;
+                              return nc;
+                            });
+                            if (date) clearError(`beca_${index}_fechaInicio`);
+                          }}
+                          className={`input py-2 text-sm ${errors[`beca_${index}_fechaInicio`] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`}
+                          helperText={errors[`beca_${index}_fechaInicio`] ?? "DD/MM/AAAA"}
+                        />
+                      </>
+                    </Field>
+
+                    <Field label="Fecha fin (Opcional)">
+                      <Calendar
+                        value={beca.fechaFin}
+                        onChange={(date) => {
+                          setBecasVinculadas(prev => {
+                            const nc = [...prev];
+                            nc[index].fechaFin = date;
+                            return nc;
+                          });
+                        }}
+                        minDate={beca.fechaInicio ?? undefined}
+                        className="input py-2 text-sm"
+                        helperText="DD/MM/AAAA"
+                      />
+                    </Field>
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setBecasVinculadas(prev => [...prev, createEmptyBeca()])}
+                  className="px-3 py-1 text-xs"
+                >
+                  + Agregar beca
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Botones */}
+        <div className="flex justify-between pt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={onCancel}
           >
-            <option value="" disabled>
-              Seleccionar fuente
-            </option>
-            {fuentes.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.nombre}
-              </option>
-            ))}
-          </select>
-          {errors.fuente && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.fuente}
-            </p>
-          )}
-        </>
-      </Field>
+            Volver
+          </Button>
 
-      {/* Botones */}
-      <div className="flex justify-between pt-6">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={onCancel}
-        >
-          Volver
-        </Button>
-
-        <Button type="submit" size="sm">
-          {isEdit ? "Actualizar" : "Guardar"}
-        </Button>
-      </div>
-    </form>
+          <Button type="submit" size="sm">
+            {isEdit ? "Actualizar" : "Guardar"}
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }
 

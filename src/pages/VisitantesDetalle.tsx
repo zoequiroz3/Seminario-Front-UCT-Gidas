@@ -66,7 +66,7 @@ export default function VisitantesDetalle() {
 
           <p>
             <span className="font-medium text-slate-700">Procedencia:</span>{" "}
-            {data.visita_procedencia?.nombre || "—"}
+            {data.procedencia || "—"}
           </p>
 
           <p>

@@ -44,11 +44,25 @@ export type SearchResult = {
    Mapeo de URLs backend → frontend
    ─────────────────────────────────────────── */
 const URL_MAP: [RegExp, string][] = [
+  // Con detalle individual
   [/^\/personal\/(\d+)$/, "/personal/personal/$1"],
   [/^\/actividades-docencia\/(\d+)$/, "/docenciaInvestigador/$1"],
   [/^\/documentacion-bibliografica\/(\d+)$/, "/documentacion/$1"],
   [/^\/participaciones-relevantes\/(\d+)$/, "/participaciones/$1"],
   [/^\/articulos-divulgacion\/(\d+)$/, "/articulos-divulgacion/$1"],
+  
+  // Sin detalle individual - redirigir a listados
+  [/^\/tipos-proyecto\/.+$/, "/proyectos"],
+  [/^\/tipos-erogacion\/.+$/, "/erogaciones"],
+  [/^\/tipos-registro\/.+$/, "/registros-propiedad"],
+  [/^\/tipos-contrato\/.+$/, "/transferencias"],
+  [/^\/tipos-personal\/.+$/, "/personal"],
+  [/^\/fuentes-financiamiento\/.+$/, "/proyectos"],
+  [/^\/autores\/.+$/, "/documentacion"],
+  [/^\/directivos\/.+$/, "/personal"],
+  
+  // Visitas académicas - mapear a la ruta correcta del frontend
+  [/^\/visitas-academicas\/(\d+)$/, "/visitantes/$1"],
 ];
 
 function mapUrl(backendUrl: string): string {

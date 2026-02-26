@@ -18,8 +18,10 @@ export async function getUct() {
   try {
     const data = await http<any>("/grupo-utn/");
 
+    if (!data) return null;
+
     return {
-      id: data.id, 
+      id: data.id,
       facultadRegional: data.nombre_unidad_academica,
       nombreSigla: data.nombre_sigla_grupo,
       correo: data.mail,
@@ -36,7 +38,7 @@ export async function getUct() {
 
 export async function upsertUct(payload: Uct, exists: boolean) {
   if (!BASE) return;
-  
+
   const body = {
     nombre_unidad_academica: payload.facultadRegional,
     nombre_sigla_grupo: payload.nombreSigla,
@@ -47,7 +49,7 @@ export async function upsertUct(payload: Uct, exists: boolean) {
   };
 
   const method = exists ? "PUT" : "POST";
-  
+
   return http("/grupo-utn/", { method, body: JSON.stringify(body) });
 }
 

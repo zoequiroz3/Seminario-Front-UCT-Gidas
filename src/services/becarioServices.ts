@@ -5,8 +5,16 @@ export interface BecarioPayload {
   horas_semanales: number;
   grupo_utn_id: number;
   tipo_formacion_id: number;
-  fuente_financiamiento_id?: number;
   activo: boolean;
+}
+
+export interface BecarioBeca {
+  id: number;
+  nombre_beca: string;
+  descripcion?: string;
+  fecha_inicio: string;
+  fecha_fin?: string;
+  monto_percibido?: number;
 }
 
 export interface Becario {
@@ -17,6 +25,7 @@ export interface Becario {
   tipo_formacion_id: number;
   fuente_financiamiento_id?: number;
   activo: boolean;
+  becas?: BecarioBeca[];
 }
 
 export function crearBecario(payload: BecarioPayload) {

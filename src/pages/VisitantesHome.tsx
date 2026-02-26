@@ -116,7 +116,7 @@ export default function VisitantesHome() {
                 key={v.id}
                 item={v}
                 title={(x) => x.razon}
-                subtitle={(x) => x.visita_procedencia?.nombre || "—"}
+                subtitle={(x) => x.procedencia || "—"}
                 selectable={selectMode}
                 selected={selectedIds.includes(v.id)}
                 onSelectChange={(checked) =>

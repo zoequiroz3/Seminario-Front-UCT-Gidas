@@ -1,9 +1,15 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { JSX } from "react";
+import type { Rol } from "@/services/authService";
 
-export default function ProtectedRoute({ children }: { children: JSX.Element }) {
-  const { user, loading } = useAuth();
+interface ProtectedRouteProps {
+  children: JSX.Element;
+  requiredRole?: Rol;
+}
+
+export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+  const { user, loading, isAdmin } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -16,6 +22,16 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
 
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  // Si se requiere un rol específico, verificar
+  if (requiredRole) {
+    const tieneRol = requiredRole === "ADMIN" ? isAdmin() : user.rol === requiredRole;
+    
+    if (!tieneRol) {
+      // Redirigir a home si no tiene el rol requerido
+      return <Navigate to="/" replace />;
+    }
   }
 
   return children;
