@@ -12,6 +12,10 @@ export interface InvestigadorResumen {
 
 export interface TrabajoReunion {
   id: number;
+  created_by: number | null;
+  created_at: string | null | undefined;
+  deleted_by: number | null;
+  deleted_at: string | null | undefined;
   titulo_trabajo: string;
   nombre_reunion: string;
   procedencia: string;

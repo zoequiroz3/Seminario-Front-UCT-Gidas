@@ -9,6 +9,13 @@ export type Usuario = {
   activo: boolean;
   primer_login: boolean;
   fecha_creacion?: string;
+
+  // 🔵 CAMPOS QUE YA ENVÍA EL BACK (pero no estaban tipados)
+  nombre?: string;
+  persona?: {
+    id: number;
+    nombre: string;
+  };
 };
 
 export type CrearUsuarioPayload = {
@@ -32,7 +39,7 @@ export async function getUsuarios(): Promise<Usuario[]> {
 }
 
 // Obtener un usuario por ID (solo ADMIN)
-export async function getUsuario(id: number): Promise<Usuario> {
+export async function getUsuarioId(id: number): Promise<Usuario> {
   return http<Usuario>(`/auth/usuarios/${id}`, {
     method: "GET",
   });

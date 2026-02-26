@@ -7,6 +7,10 @@ export interface Autor {
 
 export interface Documentacion {
   id: number;
+  created_by: number | null;
+  created_at: string | null | undefined;
+  deleted_by: number | null;
+  deleted_at: string | null | undefined;
   titulo: string;
   editorial: string;
   anio: number;

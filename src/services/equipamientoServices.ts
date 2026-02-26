@@ -3,6 +3,10 @@ import { http } from "@/lib/http";
 export type Equipamiento = {
   id: number;
   denominacion: string;
+  created_by: number | null;
+  created_at: string | null | undefined;
+  deleted_by: number | null;
+  deleted_at: string | null | undefined;
   descripcion_breve: string;
   fecha_incorporacion: string; // YYYY-MM-DD
   monto_invertido: number;

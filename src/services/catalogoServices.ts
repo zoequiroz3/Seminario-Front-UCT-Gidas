@@ -5,6 +5,14 @@ export interface CatalogItem {
     nombre: string;
     nombre_beca?: string;
     descripcion?: string;
+
+    // Auditoría
+    created_at?: string;
+    creator_name?: string;
+    deleted_at?: string;
+    deleter_name?: string;
+    activo?: boolean;
+
     [key: string]: unknown;
 }
 

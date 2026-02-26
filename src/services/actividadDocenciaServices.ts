@@ -1,6 +1,10 @@
 import {http} from "@/lib/http";
 
 export interface ActividadDocencia {
+  created_by: number | null;
+  created_at: string | null | undefined;
+  deleted_by: number | null;
+  deleted_at: string | null | undefined;
   rol_actividad_id: null;
   grado_academico_id: null;
   id: number;

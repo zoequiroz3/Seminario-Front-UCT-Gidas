@@ -3,6 +3,10 @@ import { Option } from "./optionsService";
 
 export type Proyecto = {
   id?: string;
+  created_by?: number | null;
+  created_at?: string | null | undefined;
+  deleted_by?: number | null;
+  deleted_at?: string | null | undefined;
   tipoProyectoId: number;
   tipoProyectoNombre?: string;
 
@@ -157,3 +161,26 @@ export function vincularBecarios(
   });
 }
 
+export function desvincularInvestigadores(
+  proyectoId: number,
+  fechaFin: string,
+  investigadoresIds: number[]) {
+  return http(`/proyectos/${proyectoId}/investigadores`, {
+    method: "PUT",
+    body: JSON.stringify({
+      investigadores_ids: investigadoresIds
+    }),
+  });
+}
+
+export function desvincularBecarios(
+  proyectoId: number,
+  fechaFin: string,
+  becariosIds: number[]) {
+  return http(`/proyectos/${proyectoId}/becarios`, {
+    method: "PUT",
+    body: JSON.stringify({
+      becarios_ids: becariosIds
+    }),
+  });
+}
