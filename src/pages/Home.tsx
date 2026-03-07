@@ -6,12 +6,13 @@ import { useDirectivos } from "@/hooks/useDirectivos";
 import Button from "@/components/Button";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import SuccessToast from "@/components/SuccessToast";
-
+import { useExportarExcelGrupo } from "@/hooks/useExportacion";
 export default function Home() {
   const { uct, isLoading, isError, remove } = useUct();
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { mutate: exportarExcel, isPending } = useExportarExcelGrupo();
 
   const grupoId = uct?.id;
   const { data: directivos = [] } = useDirectivos(grupoId);
@@ -69,8 +70,30 @@ export default function Home() {
           </p>
         </div>
 
+        {/* BOTÓN EXPORTAR */}
+            
+
         {uct && (
           <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                exportarExcel(undefined, {
+                  onSuccess: () => {
+                    setSuccessMessage("Excel generado correctamente.");
+                    setShowSuccess(true);
+                  },
+                  onError: () => {
+                    setSuccessMessage("Error al generar el Excel.");
+                    setShowSuccess(true);
+                  }
+                })
+              }
+              disabled={isPending}
+            >
+              {isPending ? "Generando..." : "Exportar Excel"}
+            </Button>
             <Button
               variant="secondary"
               size="sm"

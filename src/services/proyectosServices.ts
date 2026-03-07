@@ -27,6 +27,7 @@ export type Proyecto = {
   planificacionDescripcion?: string;
 
   investigadores?: {
+    fecha_inicio: any;
     id: number;
     nombre_apellido: string;
   }[];
