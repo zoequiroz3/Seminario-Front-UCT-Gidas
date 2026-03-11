@@ -218,6 +218,7 @@ const router = createBrowserRouter([
       { path: "visitantes/nuevo", element: <VisitantesForm /> },
       { path: "visitantes/:id", element: <VisitantesDetalle /> },
       { path: "visitantes/:id/editar", element: <VisitantesForm /> },
+      
 
       // Gestión de Usuarios (solo admin)
       {

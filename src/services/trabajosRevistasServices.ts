@@ -2,6 +2,10 @@ import { http } from "@/lib/http";
 
 export interface TrabajoRevista {
   id: number;
+  created_by: number | null;
+  created_at: string | null | undefined;
+  deleted_by: number | null;
+  deleted_at: string | null | undefined;
   titulo_trabajo: string;
   nombre_revista: string;
   editorial: string;
@@ -49,7 +53,7 @@ export const vincularInvestigadoresRevista = async (
   trabajoId: number,
   investigadoresIds: number[]
 ) =>
-  http(`/trabajos-revistas/${trabajoId}/investigadores`, {
+  http(`/trabajos-revistas/${trabajoId}/investigadores/`, {
     method: "POST",
     body: JSON.stringify({
       investigadores_ids: investigadoresIds,
@@ -59,7 +63,7 @@ export const vincularInvestigadoresRevista = async (
 export const desvincularInvestigadoresRevista =
   async (trabajoId: number, investigadoresIds: number[]) =>
     http(
-      `/trabajos-revistas/${trabajoId}/investigadores`,
+      `/trabajos-revistas/${trabajoId}/investigadores/`,
       {
         method: "DELETE",
         body: JSON.stringify({

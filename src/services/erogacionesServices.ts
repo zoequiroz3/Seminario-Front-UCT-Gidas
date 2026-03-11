@@ -2,6 +2,10 @@ import { http } from "@/lib/http";
 
 export type Erogaciones = {
   id: number;
+  created_by: number | null;
+  created_at: string | null | undefined;
+  deleted_by: number | null;
+  deleted_at: string | null | undefined;
   egresos: number;
   ingresos: number;
   numero_erogacion: number;

@@ -4,6 +4,13 @@ export interface Beca {
     id: number;
     nombre_beca: string;
     descripcion?: string;
+
+    // Auditoría
+    created_at?: string;
+    creator_name?: string;
+    deleted_at?: string;
+    deleter_name?: string;
+    activo?: boolean;
 }
 
 export interface BecaVinculacionPayload {

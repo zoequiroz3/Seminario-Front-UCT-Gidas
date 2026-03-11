@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
-import Field from "@/components/Field";
 import { useUct } from "@/hooks/useUct";
+import { useTiposPersonal } from "@/hooks/useTiposPersonal";
 import {
   upsertPersonal,
   actualizarPersonal,
@@ -21,12 +21,13 @@ export default function FormPTAAProfesional({
 }: Props) {
   const navigate = useNavigate();
   const { uct } = useUct();
+  const { data: tiposPersonal = [] } = useTiposPersonal();
 
   const isEdit = Boolean(initialData);
 
   const [nombreApellido, setNombre] = useState("");
   const [horasSemanales, setHoras] = useState<number | "">("");
-  const [tipoPersonalId, setTipoPersonalId] = useState<number>(tipo === "PTAA" ? 3 : 4);
+  const [tipoPersonalId, setTipoPersonalId] = useState<number | "">("");
   const [activo, setActivo] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -40,7 +41,7 @@ export default function FormPTAAProfesional({
     if (initialData.relaciones?.tipo_personal) {
       setTipoPersonalId(initialData.relaciones.tipo_personal.id);
     }
-  }, [initialData, tipo]);
+  }, [initialData]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -50,6 +51,9 @@ export default function FormPTAAProfesional({
 
     if (!horasSemanales || Number(horasSemanales) <= 0)
       newErrors.horas = "Debe ingresar horas válidas";
+
+    if (!tipoPersonalId)
+      newErrors.tipoPersonal = "Debe seleccionar tipo de personal";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -100,8 +104,9 @@ export default function FormPTAAProfesional({
       <Field label="Nombre y apellido">
         <>
           <input
-            className={`input ${errors.nombre ? "!border-red-500 !ring-2 !ring-red-500" : ""
-              }`}
+            className={`input ${
+              errors.nombre ? "border-red-500 ring-2 ring-red-500" : ""
+            }`}
             value={nombreApellido}
             onChange={(e) => {
               setNombre(e.target.value);
@@ -120,8 +125,9 @@ export default function FormPTAAProfesional({
         <>
           <input
             type="number"
-            className={`input ${errors.horas ? "!border-red-500 !ring-2 !ring-red-500" : ""
-              }`}
+            className={`input ${
+              errors.horas ? "border-red-500 ring-2 ring-red-500" : ""
+            }`}
             value={horasSemanales}
             onChange={(e) => {
               const value = e.target.value === "" ? "" : +e.target.value;
@@ -132,6 +138,36 @@ export default function FormPTAAProfesional({
           {errors.horas && (
             <p className="text-red-500 text-sm mt-1">
               {errors.horas}
+            </p>
+          )}
+        </>
+      </Field>
+
+      <Field label="Tipo de personal">
+        <>
+          <select
+            className={`input ${
+              errors.tipoPersonal ? "border-red-500 ring-2 ring-red-500" : ""
+            }`}
+            value={tipoPersonalId}
+            onChange={(e) => {
+              const value = e.target.value ? +e.target.value : "";
+              setTipoPersonalId(value);
+              if (value) clearError("tipoPersonal");
+            }}
+          >
+            <option value="" disabled>
+              Seleccionar tipo de personal
+            </option>
+            {tiposPersonal.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.tipoPersonal && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.tipoPersonal}
             </p>
           )}
         </>
@@ -152,5 +188,22 @@ export default function FormPTAAProfesional({
         </Button>
       </div>
     </form>
+  );
+}
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-2">
+        {label}
+      </label>
+      {children}
+    </div>
   );
 }

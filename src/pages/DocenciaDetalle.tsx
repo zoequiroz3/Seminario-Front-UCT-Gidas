@@ -5,6 +5,7 @@ import Button from "@/components/Button";
 import { getActividadDocenciaById } from "@/services/actividadDocenciaServices";
 import { getGradoAcademicoById } from "@/services/gradoAcademicoService";
 import { getRolActividadById } from "@/services/rolActividadService";
+import { useAuditoria } from "@/hooks/useAuditoria";
 
 export default function ActividadDocenciaDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,7 @@ export default function ActividadDocenciaDetalle() {
       getRolActividadById(Number(data?.rol_actividad_id)),
     enabled: !!data?.rol_actividad_id,
   });
+  const auditoria = useAuditoria(data);
 
   if (isLoading) return <p className="text-slate-500">Cargando…</p>;
   if (!data)
@@ -36,23 +38,40 @@ export default function ActividadDocenciaDetalle() {
 
   const formatFecha = (fecha?: string | null) => {
     if (!fecha) return "—";
-
     const date = new Date(fecha);
     const dia = String(date.getDate()).padStart(2, "0");
     const mes = String(date.getMonth() + 1).padStart(2, "0");
     const anio = date.getFullYear();
-
     return `${dia}/${mes}/${anio}`;
   };
 
+  const formatFechaHora = (fecha?: string | null) => {
+    if (!fecha) return "—";
+    return new Date(fecha).toLocaleString("es-AR");
+  };
+
+
   return (
     <section className="flex flex-col gap-6">
-      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-        {data.curso}
-      </h2>
 
+      {/* 🔵 HEADER CON EDITAR ARRIBA */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+          {data.curso}
+        </h2>
+
+        <Button
+          size="sm"
+          onClick={() =>
+            navigate(`/docenciaInvestigador/${id}/editar`)
+          }
+        >
+          Editar
+        </Button>
+      </div>
+
+      {/* ================= TARJETA PRINCIPAL ================= */}
       <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-
         <div className="space-y-2 text-sm md:text-base text-slate-500">
 
           <p>
@@ -97,28 +116,65 @@ export default function ActividadDocenciaDetalle() {
             {rolActividad?.nombre ?? "—"}
           </p>
         </div>
+      </article>
 
-        <div className="mt-8 flex items-center justify-between">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="px-3 py-1 text-xs"
-            onClick={() => navigate(-1)}
-          >
-            Volver
-          </Button>
+      {/* ================= TARJETA AUDITORÍA ================= */}
+      <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-slate-700">
+            Auditoría
+          </h3>
 
-          <Button
-            size="sm"
-            className="px-3 py-1 text-xs"
-            onClick={() =>
-              navigate(`/docenciaInvestigador/${id}/editar`)
-            }
-          >
-            Editar
-          </Button>
+          <p className="text-xs text-slate-500 mt-1">
+            {data.curso} - {data.investigador ?? "—"}
+          </p>
+        </div>
+
+        <div className="space-y-2 text-sm md:text-base text-slate-500">
+
+          <p>
+            <span className="font-medium text-slate-700">
+              Creado por:
+            </span>{" "}
+            {auditoria.nombreCreador}
+          </p>
+
+          <p>
+            <span className="font-medium text-slate-700">
+              Fecha de creación:
+            </span>{" "}
+            {formatFechaHora(data.created_at)}
+          </p>
+
+         <p>
+          <span className="font-medium text-slate-700">
+            Eliminado por:
+          </span>{" "}
+          {auditoria.nombreEliminador}
+        </p>
+
+
+          <p>
+            <span className="font-medium text-slate-700">
+              Fecha de eliminación:
+            </span>{" "}
+            {formatFechaHora(data.deleted_at)}
+          </p>
+
         </div>
       </article>
+
+      {/* 🔵 VOLVER ABAJO DE TODO, FUERA DE LAS TARJETAS */}
+      <div className="flex justify-start pt-4">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => navigate("/docenciaInvestigador")}
+        >
+          Volver
+        </Button>
+      </div>
+
     </section>
   );
 }

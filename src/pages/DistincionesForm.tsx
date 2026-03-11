@@ -10,11 +10,13 @@ import {
   actualizarDistincion,
 } from "@/services/distincionesServices";
 import { getProyectos, type Proyecto } from "@/services/proyectoInvestigacionServices";
+import { useUct } from "@/hooks/useUct";
 
 export default function DistincionesForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { uct } = useUct();
 
   const isEdit = Boolean(id);
 
@@ -75,11 +77,13 @@ export default function DistincionesForm() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (!uct) return;
 
     mutation.mutate({
       fecha: fecha!.toISOString().split("T")[0],
       descripcion,
       proyecto_investigacion_id: proyectoId ?? undefined,
+      grupo_utn_id: uct.id,
     });
   };
 

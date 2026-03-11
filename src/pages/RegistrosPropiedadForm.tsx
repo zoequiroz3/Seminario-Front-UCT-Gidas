@@ -27,6 +27,7 @@ export default function RegistrosPropiedadForm() {
   });
 
   const [data, setData] = useState({
+    grupo_utn_id: 1,
     nombre_articulo: "",
     organismo_registrante: "",
     fecha_registro: "",
@@ -39,6 +40,7 @@ export default function RegistrosPropiedadForm() {
     if (!initial) return;
 
     setData({
+      grupo_utn_id: initial.grupo_utn_id,
       nombre_articulo: initial.nombre_articulo ?? "",
       organismo_registrante: initial.organismo_registrante ?? "",
       fecha_registro: initial.fecha_registro ?? "",

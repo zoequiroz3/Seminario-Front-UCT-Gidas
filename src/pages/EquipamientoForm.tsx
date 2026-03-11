@@ -24,6 +24,7 @@ export default function EquipamientoForm() {
   });
 
   const [data, setData] = useState({
+    grupo_utn_id: 1,
     denominacion: "",
     descripcion_breve: "",
     monto_invertido: undefined as number | undefined,
@@ -41,6 +42,7 @@ export default function EquipamientoForm() {
         : "";
 
       setData({
+        grupo_utn_id: initial.grupo_utn_id,
         denominacion: initial.denominacion ?? "",
         descripcion_breve: initial.descripcion_breve ?? "",
         monto_invertido: initial.monto_invertido ?? undefined,
@@ -104,6 +106,7 @@ export default function EquipamientoForm() {
           if (!validate()) return;
 
           await mutateAsync({
+            grupo_utn_id: 1,
             denominacion: data.denominacion,
             descripcion_breve: data.descripcion_breve,
             fecha_incorporacion: data.fecha_incorporacion,

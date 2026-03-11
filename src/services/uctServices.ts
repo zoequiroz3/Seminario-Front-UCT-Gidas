@@ -69,3 +69,29 @@ export async function deleteUct() {
     method: "DELETE",
   });
 }
+
+export async function exportarExcelGrupo() {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/grupo-utn/exportar-excel`,
+    {
+      method: "GET",
+      credentials: "include", // por si usás cookies / auth
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Error al exportar el Excel");
+  }
+
+  const blob = await response.blob();
+
+  // Crear descarga automática
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "grupo_utn.xlsx";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+}

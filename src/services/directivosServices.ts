@@ -60,3 +60,19 @@ export function getDirectivosActuales(grupoId: number) {
     }
   );
 }
+
+// En tu archivo de servicios de directivos
+export async function finalizarDirectivo(id_directivo: number, fecha_fin: string) {
+  const response = await fetch("/api/directivos/finalizar", { // Ajusta la URL a tu API
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id_directivo, fecha_fin }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Error al finalizar cargo");
+  }
+
+  return response.json();
+}

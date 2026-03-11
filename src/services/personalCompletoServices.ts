@@ -5,6 +5,10 @@ import { http } from "@/lib/http";
 export interface PersonalCompleto {
   id: number;
   nombre_apellido: string;
+  created_by: number | null;
+  created_at: string | null | undefined;
+  deleted_by: number | null;
+  deleted_at: string | null | undefined;
   horas_semanales: number;
     activo: boolean;
     tipo_personal_id: number;

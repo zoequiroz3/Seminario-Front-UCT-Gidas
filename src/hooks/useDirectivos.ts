@@ -4,6 +4,7 @@ import {
   getDirectivosActuales,
   createDirectivo,
   asignarDirectivo,
+  finalizarDirectivo,
 } from "@/services/directivosServices";
 
 export function useDirectivos(grupoId?: number) {
@@ -41,6 +42,21 @@ export function useCrearYAsignarDirectivo(grupoId: number) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["directivos", grupoId] });
+    },
+  });
+}
+  
+
+export function useFinalizarDirectivo() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id_directivo, fecha_fin }: { id_directivo: number; fecha_fin: string }) =>
+      finalizarDirectivo(id_directivo, fecha_fin),
+    onSuccess: () => {
+      // Invalidamos la query de la UCT para que se refresquen los datos 
+      // y el directivo ya no aparezca como activo
+      qc.invalidateQueries({ queryKey: ["uct"] }); 
     },
   });
 }
