@@ -32,8 +32,8 @@ export default function UctForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (uct) {
+useEffect(() => {
+  if (uct) {
     const director = uct.directivos?.find(
       (d) => d.cargo === "Director"
     );
@@ -42,12 +42,12 @@ export default function UctForm() {
       (d) => d.cargo === "Vicedirector"
     );
 
-      setData((prev) => ({
-        ...prev,
-        facultadRegional: uct.facultadRegional ?? "",
-        nombreSigla: uct.nombreSigla ?? "",
-        correo: uct.correo ?? "",
-        objetivos: uct.objetivos ?? "",
+    setData((prev) => ({
+      ...prev,
+      facultadRegional: uct.facultadRegional ?? "",
+      nombreSigla: uct.nombreSigla ?? "",
+      correo: uct.correo ?? "",
+      objetivos: uct.objetivos ?? "",
 
       nombre1: director?.nombre_apellido ?? "",
       fecha1: director?.fecha_inicio ?? "",
@@ -56,9 +56,9 @@ export default function UctForm() {
       nombre2: vicedirector?.nombre_apellido ?? "",
       fecha2: vicedirector?.fecha_inicio ?? "",
       cargo2: vicedirector ? "2" : "",
-      }));
-    }
-  }, [uct]);
+    }));
+  }
+}, [uct]);
 
   const change =
     (k: string) =>
