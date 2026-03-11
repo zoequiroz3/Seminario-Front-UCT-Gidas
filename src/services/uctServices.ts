@@ -8,6 +8,13 @@ export type Uct = {
   vicedirector: string;
   correo: string;
   objetivos: string;
+
+  directivos?: {
+    id: number;
+    nombre_apellido: string;
+    cargo: string;
+    fecha_inicio: string;
+  }[];
 };
 
 const BASE = import.meta.env.VITE_API_URL;
@@ -27,8 +34,11 @@ export async function getUct() {
       correo: data.mail,
       objetivos: data.objetivo_desarrollo,
       director: data.director,
-      vicedirector: data.vicedirector
-    } as Uct;
+      vicedirector: data.vicedirector,
+
+      
+      directivos: data.directivos ?? [],
+    };
 
   } catch {
     return null;

@@ -34,12 +34,28 @@ export default function UctForm() {
 
   useEffect(() => {
     if (uct) {
+    const director = uct.directivos?.find(
+      (d) => d.cargo === "Director"
+    );
+
+    const vicedirector = uct.directivos?.find(
+      (d) => d.cargo === "Vicedirector"
+    );
+
       setData((prev) => ({
         ...prev,
         facultadRegional: uct.facultadRegional ?? "",
         nombreSigla: uct.nombreSigla ?? "",
         correo: uct.correo ?? "",
         objetivos: uct.objetivos ?? "",
+
+      nombre1: director?.nombre_apellido ?? "",
+      fecha1: director?.fecha_inicio ?? "",
+      cargo1: director ? "1" : "",
+
+      nombre2: vicedirector?.nombre_apellido ?? "",
+      fecha2: vicedirector?.fecha_inicio ?? "",
+      cargo2: vicedirector ? "2" : "",
       }));
     }
   }, [uct]);
