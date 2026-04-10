@@ -29,7 +29,7 @@ export interface Becario {
 }
 
 export function crearBecario(payload: BecarioPayload) {
-  return http("/becarios/", {
+  return http("/becarios", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -43,7 +43,7 @@ export function actualizarBecario(id: number, payload: any) {
 }
 
 export function getBecarios() {
-  return http<Becario[]>("/becarios/", {
+  return http<Becario[]>("/becarios", {
     method: "GET",
   });
 }

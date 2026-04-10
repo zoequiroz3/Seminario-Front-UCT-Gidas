@@ -1,4 +1,3 @@
-// src/hooks/useDirectivos.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getDirectivosActuales,
@@ -15,9 +14,6 @@ export function useDirectivos(grupoId?: number) {
   });
 }
 
-// ------------------------------------
-// Crear + asignar en un solo paso
-// ------------------------------------
 export function useCrearYAsignarDirectivo(grupoId: number) {
   const qc = useQueryClient();
 
@@ -27,12 +23,10 @@ export function useCrearYAsignarDirectivo(grupoId: number) {
       id_cargo: number;
       fecha_inicio: string;
     }) => {
-      // 1️⃣ crear directivo
       const nuevo = await createDirectivo({
         nombre_apellido: data.nombre_apellido,
       });
 
-      // 2️⃣ asignarlo al grupo
       await asignarDirectivo({
         id_directivo: nuevo.id,
         id_grupo_utn: grupoId,
@@ -45,18 +39,20 @@ export function useCrearYAsignarDirectivo(grupoId: number) {
     },
   });
 }
-  
 
 export function useFinalizarDirectivo() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id_directivo, fecha_fin }: { id_directivo: number; fecha_fin: string }) =>
-      finalizarDirectivo(id_directivo, fecha_fin),
+    mutationFn: ({
+      id_directivo,
+      fecha_fin,
+    }: {
+      id_directivo: number;
+      fecha_fin: string;
+    }) => finalizarDirectivo(id_directivo, fecha_fin),
     onSuccess: () => {
-      // Invalidamos la query de la UCT para que se refresquen los datos 
-      // y el directivo ya no aparezca como activo
-      qc.invalidateQueries({ queryKey: ["uct"] }); 
+      qc.invalidateQueries({ queryKey: ["uct"] });
     },
   });
 }

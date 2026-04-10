@@ -1,11 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+
 import Button from "@/components/Button";
 import Field from "@/components/Field";
 import DatePicker from "@/components/Calendar";
+
 import { useUctGuard } from "@/hooks/useUctGuard";
 import { useTiposRegistroPropiedad } from "@/hooks/useTipoRegistroPropiedad";
+
+import { toTitleCase } from "@/utils/format";
+
 import {
   createRegistroPropiedad,
   updateRegistroPropiedad,
@@ -16,18 +21,20 @@ export default function RegistrosPropiedadForm() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { uct, uctGuard } = useUctGuard();
-  const { tipos } = useTiposRegistroPropiedad();
+  const { tipos = [] } = useTiposRegistroPropiedad();
+
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
 
+  const registroId = id ? Number(id) : undefined;
+
   const { data: initial, isLoading } = useQuery({
-    queryKey: ["registros-propiedad", id],
-    queryFn: () => getRegistroPropiedadById(Number(id)),
-    enabled: isEdit,
+    queryKey: ["registro-propiedad", registroId],
+    queryFn: () => getRegistroPropiedadById(registroId as number),
+    enabled: !!registroId,
   });
 
   const [data, setData] = useState({
-    grupo_utn_id: 1,
     nombre_articulo: "",
     organismo_registrante: "",
     fecha_registro: "",
@@ -40,7 +47,6 @@ export default function RegistrosPropiedadForm() {
     if (!initial) return;
 
     setData({
-      grupo_utn_id: initial.grupo_utn_id,
       nombre_articulo: initial.nombre_articulo ?? "",
       organismo_registrante: initial.organismo_registrante ?? "",
       fecha_registro: initial.fecha_registro ?? "",
@@ -59,19 +65,22 @@ export default function RegistrosPropiedadForm() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!data.nombre_articulo.trim())
+    if (!data.nombre_articulo.trim()) {
       newErrors.nombre_articulo = "Debe ingresar el nombre del artículo";
+    }
 
-    if (!data.organismo_registrante.trim())
+    if (!data.organismo_registrante.trim()) {
       newErrors.organismo_registrante =
         "Debe ingresar el organismo registrante";
+    }
 
-    if (!data.fecha_registro)
+    if (!data.fecha_registro) {
       newErrors.fecha_registro = "Debe seleccionar una fecha";
+    }
 
-    if (!data.tipo_registro_id)
-      newErrors.tipo_registro_id =
-        "Debe seleccionar un tipo de registro";
+    if (!data.tipo_registro_id) {
+      newErrors.tipo_registro_id = "Debe seleccionar un tipo de registro";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -80,43 +89,47 @@ export default function RegistrosPropiedadForm() {
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (payload: any) =>
       isEdit
-        ? updateRegistroPropiedad(Number(id), payload)
+        ? updateRegistroPropiedad(registroId as number, payload)
         : createRegistroPropiedad(payload),
-    onSuccess: () => {
+
+    onSuccess: (saved: any) => {
       qc.invalidateQueries({ queryKey: ["registros-propiedad"] });
+
+      navigate(`/registros-propiedad/${saved.id}`, {
+        state: {
+          successMessage: isEdit
+            ? "Registro actualizado con éxito!"
+            : "Registro creado con éxito!",
+        },
+      });
     },
   });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!uct) return;
     if (!validate()) return;
 
     await mutateAsync({
-      nombre_articulo: data.nombre_articulo.trim(),
-      organismo_registrante: data.organismo_registrante.trim(),
+      nombre_articulo: toTitleCase(data.nombre_articulo.trim()),
+      organismo_registrante: toTitleCase(
+        data.organismo_registrante.trim()
+      ),
       fecha_registro: data.fecha_registro,
       tipo_registro_id: Number(data.tipo_registro_id),
       grupo_utn_id: uct.id,
     });
-
-    navigate("/registros-propiedad", {
-      state: {
-        successMessage: isEdit
-          ? "Registro actualizado con éxito!"
-          : "Registro creado con éxito!",
-      },
-    });
   };
 
   const inputClass = (field: string) =>
-    `input ${errors[field]
-      ? "!border-red-500 !ring-2 !ring-red-500"
-      : ""
+    `input ${
+      errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
     }`;
 
-  if (isEdit && isLoading)
+  if (isEdit && isLoading) {
     return <p className="text-slate-500">Cargando…</p>;
+  }
 
   return (
     <section className="w-full">
@@ -128,20 +141,26 @@ export default function RegistrosPropiedadForm() {
         onSubmit={submit}
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
-        {/* Nombre del artículo */}
+        {/* Nombre */}
         <Field label="Nombre del artículo">
           <>
             <input
               className={inputClass("nombre_articulo")}
+              placeholder="Ej: Sistema de monitoreo inteligente"
               value={data.nombre_articulo}
               onChange={(e) => {
                 setData({
                   ...data,
                   nombre_articulo: e.target.value,
                 });
-                if (e.target.value.trim())
-                  clearError("nombre_articulo");
+                if (e.target.value.trim()) clearError("nombre_articulo");
               }}
+              onBlur={() =>
+                setData({
+                  ...data,
+                  nombre_articulo: toTitleCase(data.nombre_articulo),
+                })
+              }
             />
             {errors.nombre_articulo && (
               <p className="text-red-500 text-sm mt-1">
@@ -156,6 +175,7 @@ export default function RegistrosPropiedadForm() {
           <>
             <input
               className={inputClass("organismo_registrante")}
+              placeholder="Ej: INPI"
               value={data.organismo_registrante}
               onChange={(e) => {
                 setData({
@@ -165,6 +185,14 @@ export default function RegistrosPropiedadForm() {
                 if (e.target.value.trim())
                   clearError("organismo_registrante");
               }}
+              onBlur={() =>
+                setData({
+                  ...data,
+                  organismo_registrante: toTitleCase(
+                    data.organismo_registrante
+                  ),
+                })
+              }
             />
             {errors.organismo_registrante && (
               <p className="text-red-500 text-sm mt-1">
@@ -200,23 +228,24 @@ export default function RegistrosPropiedadForm() {
         <Field label="Tipo de registro">
           <>
             <select
-              className={`${inputClass("tipo_registro_id")} ${!data.tipo_registro_id
-                ? "text-slate-400"
-                : "text-slate-900"
-                }`}
+              className={`${inputClass("tipo_registro_id")} ${
+                !data.tipo_registro_id
+                  ? "text-slate-400"
+                  : "text-slate-900"
+              }`}
               value={data.tipo_registro_id}
               onChange={(e) => {
                 setData({
                   ...data,
                   tipo_registro_id: e.target.value,
                 });
-                if (e.target.value)
-                  clearError("tipo_registro_id");
+                if (e.target.value) clearError("tipo_registro_id");
               }}
             >
               <option value="" disabled>
                 Seleccionar tipo
               </option>
+
               {tipos.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.nombre}
@@ -242,21 +271,17 @@ export default function RegistrosPropiedadForm() {
             Volver
           </Button>
 
-          <Button
-            type="submit"
-            size="sm"
-            disabled={isPending}
-          >
+          <Button type="submit" size="sm" disabled={isPending}>
             {isPending
               ? "Guardando…"
               : isEdit
-                ? "Actualizar"
-                : "Guardar"}
+              ? "Actualizar"
+              : "Guardar"}
           </Button>
         </div>
       </form>
+
       {uctGuard}
     </section>
   );
 }
-

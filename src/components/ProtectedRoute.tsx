@@ -6,10 +6,15 @@ import type { Rol } from "@/services/authService";
 interface ProtectedRouteProps {
   children: JSX.Element;
   requiredRole?: Rol;
+  allowedRoles?: Rol[];
 }
 
-export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, loading, isAdmin } = useAuth();
+export default function ProtectedRoute({
+  children,
+  requiredRole,
+  allowedRoles,
+}: ProtectedRouteProps) {
+  const { user, loading, isAdmin, debeCambiarPassword } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -24,12 +29,20 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // Si se requiere un rol específico, verificar
-  if (requiredRole) {
-    const tieneRol = requiredRole === "ADMIN" ? isAdmin() : user.rol === requiredRole;
-    
+  const enCambioPassword = location.pathname === "/cambiar-password";
+
+  // Si está en primer login, obligarlo a pasar por cambiar contraseña
+  if (debeCambiarPassword() && !enCambioPassword) {
+    return <Navigate to="/cambiar-password" replace />;
+  }
+
+  // Verificación de rol si aplica
+  if (requiredRole || allowedRoles?.length) {
+    const tieneRol =
+      allowedRoles?.includes(user.rol) ??
+      (requiredRole === "ADMIN" ? isAdmin() : user.rol === requiredRole);
+
     if (!tieneRol) {
-      // Redirigir a home si no tiene el rol requerido
       return <Navigate to="/" replace />;
     }
   }

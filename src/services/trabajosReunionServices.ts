@@ -13,8 +13,10 @@ export interface InvestigadorResumen {
 export interface TrabajoReunion {
   id: number;
   created_by: number | null;
+  created_by_nombre?: string | null;
   created_at: string | null | undefined;
   deleted_by: number | null;
+  deleted_by_nombre?: string | null;
   deleted_at: string | null | undefined;
   titulo_trabajo: string;
   nombre_reunion: string;
@@ -34,8 +36,32 @@ export interface TrabajoReunionPayload {
   grupo_utn_id: number;
 }
 
-export const getTrabajosReunion = async (): Promise<TrabajoReunion[]> => {
-  return http("/trabajos-reunion-cientifica/", {
+type GetTrabajosReunionOptions = {
+  activos?: "true" | "false" | "all";
+  orden?: "asc" | "desc";
+};
+
+export const getTrabajosReunion = async (
+  options: GetTrabajosReunionOptions = {}
+): Promise<TrabajoReunion[]> => {
+  const { activos, orden = "asc" } = options;
+
+  const params = new URLSearchParams();
+
+  if (activos) {
+    params.append("activos", activos);
+  }
+
+  if (orden) {
+    params.append("orden", orden);
+  }
+
+  const query = params.toString();
+  const endpoint = query
+    ? `/trabajos-reunion-cientifica?${query}`
+    : "/trabajos-reunion-cientifica";
+
+  return http<TrabajoReunion[]>(endpoint, {
     method: "GET",
   });
 };
@@ -43,7 +69,7 @@ export const getTrabajosReunion = async (): Promise<TrabajoReunion[]> => {
 export const getTrabajoReunionById = async (
   id: number
 ): Promise<TrabajoReunion> => {
-  return http(`/trabajos-reunion-cientifica/${id}`, {
+  return http<TrabajoReunion>(`/trabajos-reunion-cientifica/${id}`, {
     method: "GET",
   });
 };
@@ -51,7 +77,7 @@ export const getTrabajoReunionById = async (
 export const createTrabajoReunion = async (
   data: TrabajoReunionPayload
 ) => {
-  return http("/trabajos-reunion-cientifica/", {
+  return http<TrabajoReunion>("/trabajos-reunion-cientifica/", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -61,14 +87,14 @@ export const updateTrabajoReunion = async (
   id: number,
   data: Partial<TrabajoReunionPayload>
 ) => {
-  return http(`/trabajos-reunion-cientifica/${id}`, {
+  return http<TrabajoReunion>(`/trabajos-reunion-cientifica/${id}`, {
     method: "PUT",
     body: JSON.stringify(data),
   });
 };
 
 export const deleteTrabajoReunion = async (id: number) => {
-  return http(`/trabajos-reunion-cientifica/${id}`, {
+  return http<{ message: string }>(`/trabajos-reunion-cientifica/${id}`, {
     method: "DELETE",
   });
 };
@@ -77,7 +103,7 @@ export const vincularInvestigadoresTrabajo = async (
   trabajoId: number,
   investigadoresIds: number[]
 ) => {
-  return http(
+  return http<{ message: string }>(
     `/trabajos-reunion-cientifica/${trabajoId}/investigadores/`,
     {
       method: "POST",
@@ -92,7 +118,7 @@ export const desvincularInvestigadoresTrabajo = async (
   trabajoId: number,
   investigadoresIds: number[]
 ) => {
-  return http(
+  return http<{ message: string }>(
     `/trabajos-reunion-cientifica/${trabajoId}/investigadores/`,
     {
       method: "DELETE",

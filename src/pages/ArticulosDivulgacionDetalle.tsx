@@ -1,254 +1,184 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import Button from "@/components/Button";
-import DatePicker from "@/components/Calendar";
-import { useUct } from "@/hooks/useUct";
-import {
-  createArticulo,
-  getArticuloById,
-  updateArticulo,
-} from "@/services/articulosDivulgacionServices";
+import SuccessToast from "@/components/SuccessToast";
+import { getArticuloById } from "@/services/articulosDivulgacionServices";
+import { useAuditoria } from "@/hooks/useAuditoria";
+import { useAuth } from "@/context/AuthContext";
 
-export default function ArticulosDivulgacionForm() {
-  const navigate = useNavigate();
-  const qc = useQueryClient();
-  const { uct } = useUct();
+export default function ArticulosDivulgacionDetalle() {
   const { id } = useParams<{ id: string }>();
-  const isEdit = !!id;
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { canEditRecords } = useAuth();
 
-  const [data, setData] = useState({
-    titulo: "",
-    descripcion: "",
-    fecha_publicacion: null as Date | null,
+  const puedeEditar = canEditRecords();
+
+  const articuloId = id ? Number(id) : undefined;
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["articulo-divulgacion", articuloId],
+    queryFn: () => getArticuloById(articuloId as number),
+    enabled: !!articuloId,
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const auditoria = useAuditoria(data);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const { data: articulo, isLoading } = useQuery({
-    queryKey: ["articulos-divulgacion", id],
-    queryFn: () => getArticuloById(Number(id)),
-    enabled: isEdit,
-  });
-
-  // 🔹 Cargar datos en edición
   useEffect(() => {
-    if (articulo) {
-      setData({
-        titulo: articulo.titulo,
-        descripcion: articulo.descripcion,
-        fecha_publicacion: new Date(articulo.fecha_publicacion),
-      });
-
-      // 🔥 Limpia errores al entrar en edición
-      setErrors({});
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      setShowSuccess(true);
+      window.history.replaceState({}, document.title);
     }
-  }, [articulo]);
+  }, [location.state]);
 
-  // 🔹 Validación SOLO en submit
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
+  const formatFecha = (fecha?: string | Date | null) => {
+    if (!fecha) return "—";
 
-    if (!data.titulo.trim() || data.titulo.trim().length < 5)
-      newErrors.titulo = "El título debe tener al menos 5 caracteres";
+    if (fecha instanceof Date) {
+      const d = String(fecha.getDate()).padStart(2, "0");
+      const m = String(fecha.getMonth() + 1).padStart(2, "0");
+      const y = fecha.getFullYear();
+      return `${d}/${m}/${y}`;
+    }
 
-    if (!data.descripcion.trim() || data.descripcion.trim().length < 10)
-      newErrors.descripcion =
-        "La descripción debe tener al menos 10 caracteres";
+    const dateStr = String(fecha);
 
-    if (!data.fecha_publicacion)
-      newErrors.fecha = "Debe seleccionar fecha";
+    if (dateStr.includes("T")) {
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        const d = String(date.getDate()).padStart(2, "0");
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}`;
+      }
+    }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (dateStr.includes("-")) {
+      const [y, m, d] = dateStr.split("-");
+      return `${d}/${m}/${y}`;
+    }
+
+    return dateStr;
   };
 
-  const { mutateAsync, isPending } = useMutation({
-    mutationFn: (payload: any) =>
-      isEdit
-        ? updateArticulo(Number(id), payload)
-        : createArticulo(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({
-        queryKey: ["articulos-divulgacion"],
-      });
-    },
-  });
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uct) return;
-    if (!validate()) return;
-
-    await mutateAsync({
-      titulo: data.titulo.trim(),
-      descripcion: data.descripcion.trim(),
-      fecha_publicacion:
-        data.fecha_publicacion?.toISOString().split("T")[0],
-      grupo_utn_id: uct.id,
-    });
-
-    if (isEdit) {
-      navigate(`/articulos-divulgacion/${id}`, {
-        state: {
-          successMessage:
-            "Artículo actualizado con éxito!",
-        },
-      });
-    } else {
-      navigate("/articulos-divulgacion", {
-        state: {
-          successMessage:
-            "Artículo creado con éxito!",
-        },
-      });
-    }
+  const formatFechaHora = (fecha?: string | null) => {
+    if (!fecha) return "—";
+    return new Date(fecha).toLocaleString("es-AR");
   };
 
-  const inputClass = (field: string) =>
-    `input ${
-      errors[field]
-        ? "!border-red-500 !ring-2 !ring-red-500"
-        : ""
-    }`;
+  if (isLoading) return <p className="text-slate-500">Cargando…</p>;
 
-  if (isEdit && isLoading)
+  if (isError || !data) {
     return (
       <p className="text-slate-500">
-        Cargando artículo…
+        No se encontró el artículo de divulgación.
       </p>
     );
+  }
 
   return (
-    <section className="w-full">
-      <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-        {isEdit
-          ? "Editar artículo de divulgación"
-          : "Nuevo artículo de divulgación"}
-      </h2>
+    <>
+      <section className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+            {data.titulo || "—"}
+          </h2>
 
-      <form
-        onSubmit={submit}
-        className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
-      >
-        {/* Título */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Título
-          </label>
-
-          <input
-            className={inputClass("titulo")}
-            value={data.titulo}
-            onChange={(e) => {
-              setData({ ...data, titulo: e.target.value });
-
-              // 🔥 Borra error apenas escribe
-              if (errors.titulo) {
-                setErrors((prev) => {
-                  const copy = { ...prev };
-                  delete copy.titulo;
-                  return copy;
-                });
+          {puedeEditar && !data.deleted_at && (
+            <Button
+              size="sm"
+              onClick={() =>
+                navigate(`/articulos-divulgacion/${articuloId}/editar`)
               }
-            }}
-          />
-
-          {errors.titulo && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.titulo}
-            </p>
+            >
+              Editar
+            </Button>
           )}
         </div>
 
-        {/* Descripción */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Descripción
-          </label>
-
-          <textarea
-            rows={4}
-            className={inputClass("descripcion")}
-            value={data.descripcion}
-            onChange={(e) => {
-              setData({
-                ...data,
-                descripcion: e.target.value,
-              });
-
-              if (errors.descripcion) {
-                setErrors((prev) => {
-                  const copy = { ...prev };
-                  delete copy.descripcion;
-                  return copy;
-                });
-              }
-            }}
-          />
-
-          {errors.descripcion && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.descripcion}
+        <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
+          <div className="space-y-2 text-sm md:text-base text-slate-500">
+            <p>
+              <span className="font-medium text-slate-700">Título:</span>{" "}
+              {data.titulo || "—"}
             </p>
-          )}
-        </div>
 
-        {/* Fecha */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Fecha de publicación
-          </label>
-
-          <DatePicker
-            value={data.fecha_publicacion}
-            onChange={(date) => {
-              setData({
-                ...data,
-                fecha_publicacion: date,
-              });
-
-              if (errors.fecha) {
-                setErrors((prev) => {
-                  const copy = { ...prev };
-                  delete copy.fecha;
-                  return copy;
-                });
-              }
-            }}
-          />
-
-          {errors.fecha && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.fecha}
+            <p>
+              <span className="font-medium text-slate-700">Descripción:</span>{" "}
+              {data.descripcion || "—"}
             </p>
-          )}
-        </div>
 
-        {/* Botones */}
-        <div className="flex justify-between pt-6">
+            <p>
+              <span className="font-medium text-slate-700">
+                Fecha de publicación:
+              </span>{" "}
+              {formatFecha(data.fecha_publicacion)}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">Grupo UTN:</span>{" "}
+              {data.grupo_utn?.nombre || "—"}
+            </p>
+          </div>
+        </article>
+
+        <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-700">Auditoría</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              {data.titulo || "—"}
+            </p>
+          </div>
+
+          <div className="space-y-2 text-sm md:text-base text-slate-500">
+            <p>
+              <span className="font-medium text-slate-700">Creado por:</span>{" "}
+              {data.created_by_nombre || auditoria.nombreCreador}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">
+                Fecha de creación:
+              </span>{" "}
+              {formatFechaHora(data.created_at)}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">
+                Eliminado por:
+              </span>{" "}
+              {data.deleted_by_nombre || auditoria.nombreEliminador}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">
+                Fecha de eliminación:
+              </span>{" "}
+              {formatFechaHora(data.deleted_at)}
+            </p>
+          </div>
+        </article>
+
+        <div className="flex justify-start pt-4">
           <Button
-            type="button"
             variant="secondary"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/articulos-divulgacion")}
           >
             Volver
           </Button>
-
-          <Button
-            type="submit"
-            size="sm"
-            disabled={isPending}
-          >
-            {isPending
-              ? "Guardando…"
-              : isEdit
-              ? "Actualizar"
-              : "Guardar"}
-          </Button>
         </div>
-      </form>
-    </section>
+      </section>
+
+      <SuccessToast
+        open={showSuccess}
+        message={successMessage}
+        onClose={() => setShowSuccess(false)}
+      />
+    </>
   );
 }

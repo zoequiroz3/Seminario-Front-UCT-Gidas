@@ -9,6 +9,9 @@ import Field from "@/components/Field";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import SuccessToast from "@/components/SuccessToast";
 
+import { HttpError } from "@/lib/http";
+import { toTitleCase } from "@/utils/format";
+
 import {
   createTrabajoReunion,
   updateTrabajoReunion,
@@ -60,15 +63,55 @@ export default function TrabajoReunionForm() {
     setNombreReunion(initialData.nombre_reunion ?? "");
     setProcedencia(initialData.procedencia ?? "");
 
-    if (initialData.fecha_inicio)
+    if (initialData.fecha_inicio) {
       setFechaInicio(new Date(initialData.fecha_inicio));
+    }
 
     setTipoId(initialData.tipo_reunion?.id ?? null);
 
     setInvestigadoresIds(
-      initialData.investigadores?.map((i: any) => i.id) ?? []
+      initialData.investigadores?.map((i: { id: number }) => i.id) ?? []
     );
   }, [initialData]);
+
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!titulo.trim()) {
+      newErrors.titulo = "Debe ingresar título";
+    }
+
+    if (!nombreReunion.trim()) {
+      newErrors.nombreReunion = "Debe ingresar nombre de reunión";
+    }
+
+    if (!procedencia.trim()) {
+      newErrors.procedencia = "Debe ingresar procedencia";
+    }
+
+    if (!tipoId) {
+      newErrors.tipoId = "Debe seleccionar tipo de reunión";
+    }
+
+    if (!fechaInicio) {
+      newErrors.fechaInicio = "Debe seleccionar fecha";
+    }
+
+    if (investigadoresIds.length === 0) {
+      newErrors.investigadores = "Debe agregar al menos un investigador";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const mutation = useMutation({
     mutationFn: async (payload: any) => {
@@ -76,104 +119,119 @@ export default function TrabajoReunionForm() {
         ? await updateTrabajoReunion(Number(id), payload)
         : await createTrabajoReunion(payload);
 
-      const trabajoId = trabajo?.id ?? payload.id;
+      const trabajoId = trabajo?.id;
 
-      if (investigadoresIds.length > 0) {
-        await vincularInvestigadoresTrabajo(
-          trabajoId,
-          investigadoresIds
-        );
+      if (trabajoId && investigadoresIds.length > 0) {
+        await vincularInvestigadoresTrabajo(trabajoId, investigadoresIds);
       }
 
       return trabajo;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["trabajos-reunion"] });
+    onSuccess: async (saved: any) => {
+      await qc.invalidateQueries({ queryKey: ["trabajos-reunion"] });
+      await qc.invalidateQueries({ queryKey: ["trabajo-reunion", id] });
 
-      if (isEdit) {
-        navigate(`/trabajos-reunion/${id}`, {
-          state: {
-            successMessage:
-              "Trabajo actualizado con éxito!",
-          },
-        });
-      } else {
-        navigate("/trabajos-reunion", {
-          state: {
-            successMessage:
-              "Trabajo creado con éxito!",
-          },
-        });
-      }
+      navigate(`/trabajos-reunion/${saved.id}`, {
+        state: {
+          successMessage: isEdit
+            ? "Trabajo actualizado con éxito!"
+            : "Trabajo creado con éxito!",
+        },
+      });
     },
   });
 
   const desvincularMutation = useMutation({
     mutationFn: async (investigadorId: number) => {
-      return desvincularInvestigadoresTrabajo(
-        Number(id),
-        [investigadorId]
-      );
+      return desvincularInvestigadoresTrabajo(Number(id), [investigadorId]);
     },
     onSuccess: (_, investigadorId) => {
-      setInvestigadoresIds((prev) =>
-        prev.filter((i) => i !== investigadorId)
-      );
-
+      setInvestigadoresIds((prev) => prev.filter((i) => i !== investigadorId));
       setInvestigadorAEliminar(null);
-      setSuccessMessage(
-        "Investigador desvinculado con éxito!"
-      );
+      setSuccessMessage("Investigador desvinculado con éxito!");
       setShowSuccess(true);
     },
   });
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!titulo.trim())
-      newErrors.titulo = "Debe ingresar título";
-
-    if (!nombreReunion.trim())
-      newErrors.nombreReunion =
-        "Debe ingresar nombre de reunión";
-
-    if (!procedencia.trim())
-      newErrors.procedencia =
-        "Debe ingresar procedencia";
-
-    if (!tipoId)
-      newErrors.tipoId =
-        "Debe seleccionar tipo de reunión";
-
-    if (!fechaInicio)
-      newErrors.fechaInicio =
-        "Debe seleccionar fecha";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uct) return;
     if (!validate()) return;
 
-    mutation.mutate({
-      id: id ?? undefined,
-      titulo_trabajo: titulo,
-      nombre_reunion: nombreReunion,
-      procedencia,
-      fecha_inicio: fechaInicio!
-        .toISOString()
-        .split("T")[0],
-      tipo_reunion_id: tipoId!,
-      grupo_utn_id: uct.id,
-    });
+    try {
+      await mutation.mutateAsync({
+        titulo_trabajo: toTitleCase(titulo.trim()),
+        nombre_reunion: toTitleCase(nombreReunion.trim()),
+        procedencia: toTitleCase(procedencia.trim()),
+        fecha_inicio: fechaInicio!.toISOString().split("T")[0],
+        tipo_reunion_id: tipoId!,
+        grupo_utn_id: uct.id,
+      });
+    } catch (error) {
+      if (error instanceof HttpError) {
+        const body = error.body as
+          | { message?: string; error?: string; detalle?: string }
+          | undefined;
+
+        const backendMessage =
+          body?.error || body?.message || body?.detalle || "";
+
+        const lowerMessage = backendMessage.toLowerCase();
+
+        if (lowerMessage.includes("titulo")) {
+          setErrors((prev) => ({
+            ...prev,
+            titulo: backendMessage,
+          }));
+          return;
+        }
+
+        if (lowerMessage.includes("reunión") || lowerMessage.includes("reunion")) {
+          setErrors((prev) => ({
+            ...prev,
+            nombreReunion: backendMessage,
+          }));
+          return;
+        }
+
+        if (lowerMessage.includes("procedencia")) {
+          setErrors((prev) => ({
+            ...prev,
+            procedencia: backendMessage,
+          }));
+          return;
+        }
+
+        if (lowerMessage.includes("tipo")) {
+          setErrors((prev) => ({
+            ...prev,
+            tipoId: backendMessage,
+          }));
+          return;
+        }
+
+        if (lowerMessage.includes("fecha")) {
+          setErrors((prev) => ({
+            ...prev,
+            fechaInicio: backendMessage,
+          }));
+          return;
+        }
+      }
+
+      setErrors((prev) => ({
+        ...prev,
+        general: "No se pudo guardar el trabajo presentado.",
+      }));
+    }
   };
 
-  if (isEdit && isLoading)
-    return <p>Cargando trabajo…</p>;
+  if (isEdit && isLoading) {
+    return <p className="text-slate-500">Cargando trabajo…</p>;
+  }
+
+  const inputClass = (field: string) =>
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`;
 
   return (
     <section className="w-full">
@@ -185,92 +243,147 @@ export default function TrabajoReunionForm() {
         onSubmit={submit}
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
-        {/* TÍTULO */}
         <Field label="Título del trabajo">
-          <input
-            className="input"
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-          />
+          <>
+            <input
+              className={inputClass("titulo")}
+              value={titulo}
+              placeholder="Ej: Aplicación de modelos predictivos en sistemas complejos"
+              onChange={(e) => {
+                setTitulo(e.target.value);
+                if (e.target.value.trim()) clearError("titulo");
+              }}
+              onBlur={() => {
+                if (titulo.trim()) setTitulo(toTitleCase(titulo));
+              }}
+            />
+            {errors.titulo && (
+              <p className="text-red-500 text-sm mt-1">{errors.titulo}</p>
+            )}
+          </>
         </Field>
 
-        {/* NOMBRE REUNIÓN */}
         <Field label="Nombre de la reunión">
-          <input
-            className="input"
-            value={nombreReunion}
-            onChange={(e) =>
-              setNombreReunion(e.target.value)
-            }
-          />
+          <>
+            <input
+              className={inputClass("nombreReunion")}
+              value={nombreReunion}
+              placeholder="Ej: Congreso Argentino de Ingeniería"
+              onChange={(e) => {
+                setNombreReunion(e.target.value);
+                if (e.target.value.trim()) clearError("nombreReunion");
+              }}
+              onBlur={() => {
+                if (nombreReunion.trim()) {
+                  setNombreReunion(toTitleCase(nombreReunion));
+                }
+              }}
+            />
+            {errors.nombreReunion && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.nombreReunion}
+              </p>
+            )}
+          </>
         </Field>
 
-        {/* PROCEDENCIA */}
         <Field label="Procedencia">
-          <input
-            className="input"
-            value={procedencia}
-            onChange={(e) =>
-              setProcedencia(e.target.value)
-            }
-          />
+          <>
+            <input
+              className={inputClass("procedencia")}
+              value={procedencia}
+              placeholder="Ej: Argentina"
+              onChange={(e) => {
+                setProcedencia(e.target.value);
+                if (e.target.value.trim()) clearError("procedencia");
+              }}
+              onBlur={() => {
+                if (procedencia.trim()) {
+                  setProcedencia(toTitleCase(procedencia));
+                }
+              }}
+            />
+            {errors.procedencia && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.procedencia}
+              </p>
+            )}
+          </>
         </Field>
 
-        {/* TIPO */}
         <Field label="Tipo de reunión">
-          <select
-            className="input"
-            value={tipoId ?? ""}
-            onChange={(e) =>
-              setTipoId(
-                e.target.value
-                  ? Number(e.target.value)
-                  : null
-              )
-            }
-          >
-            <option value="" disabled>
-              Seleccionar tipo
-            </option>
-            {tipos.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.nombre}
+          <>
+            <select
+              className={`${inputClass("tipoId")} ${
+                !tipoId ? "text-slate-400" : "text-slate-900"
+              }`}
+              value={tipoId ?? ""}
+              onChange={(e) => {
+                const value = e.target.value ? Number(e.target.value) : null;
+                setTipoId(value);
+                if (value) clearError("tipoId");
+              }}
+            >
+              <option value="" disabled>
+                Seleccionar tipo
               </option>
-            ))}
-          </select>
+              {tipos.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.tipoId && (
+              <p className="text-red-500 text-sm mt-1">{errors.tipoId}</p>
+            )}
+          </>
         </Field>
 
-        {/* INVESTIGADORES */}
         <Field label="Investigadores">
-          <PersonalProyectoField
-            value={investigadoresIds}
-            options={investigadores}
-            onChange={setInvestigadoresIds}
-            isEdit={isEdit}
-            onRemoveConfirm={(personaId) => {
-              const inv = investigadores.find(
-                (i) => i.id === personaId
-              );
+          <>
+            <PersonalProyectoField
+              value={investigadoresIds}
+              options={investigadores}
+              onChange={(ids) => {
+                setInvestigadoresIds(ids);
+                if (ids.length > 0) clearError("investigadores");
+              }}
+              isEdit={isEdit}
+              onRemoveConfirm={(personaId) => {
+                const inv = investigadores.find((i) => i.id === personaId);
 
-              if (inv) {
-                setInvestigadorAEliminar({
-                  id: inv.id,
-                  nombre: inv.nombre_apellido,
-                });
-              }
-            }}
-          />
+                if (inv) {
+                  setInvestigadorAEliminar({
+                    id: inv.id,
+                    nombre: inv.nombre_apellido,
+                  });
+                }
+              }}
+            />
+            {errors.investigadores && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.investigadores}
+              </p>
+            )}
+          </>
         </Field>
 
-        {/* FECHA */}
         <Field label="Fecha de inicio">
           <Calendar
             value={fechaInicio}
-            onChange={setFechaInicio}
+            onChange={(date) => {
+              setFechaInicio(date);
+              if (date) clearError("fechaInicio");
+            }}
+            className={inputClass("fechaInicio")}
+            helperText={errors.fechaInicio ?? "DD/MM/AAAA"}
           />
         </Field>
 
-        {/* BOTONES */}
+        {errors.general && (
+          <p className="text-red-500 text-sm">{errors.general}</p>
+        )}
+
         <div className="flex justify-between pt-6">
           <Button
             type="button"
@@ -281,11 +394,7 @@ export default function TrabajoReunionForm() {
             Volver
           </Button>
 
-          <Button
-            type="submit"
-            size="sm"
-            disabled={mutation.isPending}
-          >
+          <Button type="submit" size="sm" disabled={mutation.isPending || !uct}>
             {mutation.isPending
               ? "Guardando…"
               : isEdit
@@ -295,28 +404,23 @@ export default function TrabajoReunionForm() {
         </div>
       </form>
 
-      {/* POPUP DESVINCULAR */}
       <ConfirmDialog
         open={!!investigadorAEliminar}
         title="Desvincular investigador"
         message={`¿Desea desvincular a ${investigadorAEliminar?.nombre}?`}
         items={[]}
-        onCancel={() =>
-          setInvestigadorAEliminar(null)
-        }
+        onCancel={() => setInvestigadorAEliminar(null)}
         onConfirm={() =>
-          desvincularMutation.mutate(
-            investigadorAEliminar!.id
-          )
+          desvincularMutation.mutate(investigadorAEliminar!.id)
         }
       />
 
-      {/* TOAST */}
       <SuccessToast
         open={showSuccess}
         message={successMessage}
         onClose={() => setShowSuccess(false)}
       />
+
       {uctGuard}
     </section>
   );

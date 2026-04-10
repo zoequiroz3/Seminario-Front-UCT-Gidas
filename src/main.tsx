@@ -74,6 +74,7 @@ import CambiarPassword from "./pages/CambiarPassword";
 import UsuariosHome from "./pages/UsuariosHome";
 import UsuariosForm from "./pages/UsuariosForm";
 import CatalogosHome from "./pages/CatalogosHome";
+import MiPerfil from "./pages/MiPerfil";
 
 // Definición de rutas
 const router = createBrowserRouter([
@@ -230,6 +231,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: "mi-perfil",
+        element: (
+          <ProtectedRoute>
+            <MiPerfil />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "usuarios",
         element: (
           <ProtectedRoute requiredRole="ADMIN">
@@ -248,7 +257,7 @@ const router = createBrowserRouter([
       {
         path: "catalogos",
         element: (
-          <ProtectedRoute requiredRole="ADMIN">
+          <ProtectedRoute allowedRoles={["ADMIN", "GESTOR"]}>
             <CatalogosHome />
           </ProtectedRoute>
         ),

@@ -8,12 +8,14 @@ import {
 } from "@/services/equipamientoServices";
 import { getUct } from "@/services/uctServices";
 
-export function useEquipamiento() {
+export function useEquipamiento(
+  activos: "true" | "false" | "all" = "true"
+) {
   const qc = useQueryClient();
 
   const equipamientoQuery = useQuery({
-    queryKey: ["equipamiento"],
-    queryFn: getEquipamiento,
+    queryKey: ["equipamiento", activos],
+    queryFn: () => getEquipamiento(activos),
     staleTime: 60_000,
   });
 
@@ -25,7 +27,7 @@ export function useEquipamiento() {
 
   const createMutation = useMutation({
     mutationFn: async (
-      data: Omit<Equipamiento, "id" | "grupo" | "grupo_utn_id">
+      data: Omit<Equipamiento, "id" | "created_by" | "created_at" | "deleted_by" | "deleted_at" | "grupo_utn_id">
     ) => {
       if (!uctQuery.data?.id) {
         throw new Error("No hay grupo UTN configurado");

@@ -2,10 +2,11 @@ import { http } from "@/lib/http";
 
 /* ───────────────────────────────────────────
    Tipos que devuelve el BACKEND
-   GET /search?q=...&orden=...
+   GET /search?q=...&orden=...&eliminados=...
    ─────────────────────────────────────────── */
 
 export type Orden = "alf_asc" | "alf_desc" | "fecha_asc" | "fecha_desc";
+export type EstadoBusqueda = "activos" | "eliminados" | "all";
 
 /** Cada resultado que devuelve la API */
 export type BackendResult = {
@@ -32,26 +33,25 @@ type SearchResponse = {
    ─────────────────────────────────────────── */
 export type SearchResult = {
   id: number;
-  tipo: string;          // "Persona", "Proyecto de Investigación", etc.
+  tipo: string;
   titulo: string;
   subtitulo: string;
   fecha: string | null;
-  href: string;          // ruta de frontend
+  href: string;
   extra?: Record<string, unknown>;
+  activo: boolean | null;
 };
 
 /* ───────────────────────────────────────────
    Mapeo de URLs backend → frontend
    ─────────────────────────────────────────── */
 const URL_MAP: [RegExp, string][] = [
-  // Con detalle individual
   [/^\/personal\/(\d+)$/, "/personal/personal/$1"],
   [/^\/actividades-docencia\/(\d+)$/, "/docenciaInvestigador/$1"],
   [/^\/documentacion-bibliografica\/(\d+)$/, "/documentacion/$1"],
   [/^\/participaciones-relevantes\/(\d+)$/, "/participaciones/$1"],
   [/^\/articulos-divulgacion\/(\d+)$/, "/articulos-divulgacion/$1"],
-  
-  // Sin detalle individual - redirigir a listados
+
   [/^\/tipos-proyecto\/.+$/, "/proyectos"],
   [/^\/tipos-erogacion\/.+$/, "/erogaciones"],
   [/^\/tipos-registro\/.+$/, "/registros-propiedad"],
@@ -60,8 +60,7 @@ const URL_MAP: [RegExp, string][] = [
   [/^\/fuentes-financiamiento\/.+$/, "/proyectos"],
   [/^\/autores\/.+$/, "/documentacion"],
   [/^\/directivos\/.+$/, "/personal"],
-  
-  // Visitas académicas - mapear a la ruta correcta del frontend
+
   [/^\/visitas-academicas\/(\d+)$/, "/visitantes/$1"],
 ];
 
@@ -71,10 +70,13 @@ function mapUrl(backendUrl: string): string {
       return backendUrl.replace(re, replacement);
     }
   }
-  // Para el resto (proyectos, becarios, investigadores, equipamiento,
-  // erogaciones, registros-propiedad, transferencias, trabajos-reunion,
-  // trabajos-revistas) la URL ya coincide con el front.
   return backendUrl;
+}
+
+function mapEstadoToQueryValue(estado: EstadoBusqueda): string | null {
+  if (estado === "activos") return null;
+  if (estado === "eliminados") return "true";
+  return "all";
 }
 
 /* ───────────────────────────────────────────
@@ -83,12 +85,18 @@ function mapUrl(backendUrl: string): string {
 export async function searchAll(
   q: string,
   orden: Orden = "alf_asc",
+  estado: EstadoBusqueda = "activos",
 ): Promise<SearchResult[]> {
-  // El backend rechaza queries < 2 caracteres
   if (q.trim().length < 2) return [];
 
-  const qs = new URLSearchParams({ q, orden }).toString();
-  const data = await http<SearchResponse>(`/search/?${qs}`);
+  const params = new URLSearchParams({ q, orden });
+
+  const eliminados = mapEstadoToQueryValue(estado);
+  if (eliminados !== null) {
+    params.set("eliminados", eliminados);
+  }
+
+  const data = await http<SearchResponse>(`/search/?${params.toString()}`);
 
   if (!data?.resultados) return [];
 
@@ -100,5 +108,6 @@ export async function searchAll(
     fecha: r.fecha ? String(r.fecha) : null,
     href: mapUrl(r.url),
     extra: r.extra,
+    activo: typeof r.activo === "boolean" ? r.activo : null,
   }));
 }

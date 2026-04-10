@@ -9,11 +9,13 @@ import {
   createEquipamiento,
   updateEquipamiento,
 } from "@/services/equipamientoServices";
+import { useUctGuard } from "@/hooks/useUctGuard";
 
 export default function EquipamientoForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { uct, uctGuard } = useUctGuard();
 
   const isEdit = Boolean(id);
 
@@ -24,7 +26,6 @@ export default function EquipamientoForm() {
   });
 
   const [data, setData] = useState({
-    grupo_utn_id: 1,
     denominacion: "",
     descripcion_breve: "",
     monto_invertido: undefined as number | undefined,
@@ -36,13 +37,10 @@ export default function EquipamientoForm() {
   useEffect(() => {
     if (initial) {
       const formattedDate = initial.fecha_incorporacion
-        ? new Date(initial.fecha_incorporacion)
-          .toISOString()
-          .split("T")[0]
+        ? new Date(initial.fecha_incorporacion).toISOString().split("T")[0]
         : "";
 
       setData({
-        grupo_utn_id: initial.grupo_utn_id,
         denominacion: initial.denominacion ?? "",
         descripcion_breve: initial.descripcion_breve ?? "",
         monto_invertido: initial.monto_invertido ?? undefined,
@@ -62,17 +60,24 @@ export default function EquipamientoForm() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!data.denominacion.trim())
+    if (!data.denominacion.trim()) {
       newErrors.denominacion = "La denominación es obligatoria";
+    }
 
-    if (!data.descripcion_breve.trim())
+    if (!data.descripcion_breve.trim()) {
       newErrors.descripcion = "La descripción es obligatoria";
+    }
 
-    if (!data.fecha_incorporacion)
+    if (!data.fecha_incorporacion) {
       newErrors.fecha_incorporacion = "La fecha es obligatoria";
+    }
 
-    if (!data.monto_invertido || data.monto_invertido <= 0)
+    if (
+      data.monto_invertido === undefined ||
+      data.monto_invertido <= 0
+    ) {
       newErrors.monto = "El monto debe ser mayor a 0";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -88,11 +93,38 @@ export default function EquipamientoForm() {
     },
   });
 
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uct) return;
+    if (!validate()) return;
+
+    await mutateAsync({
+      grupo_utn_id: uct.id,
+      denominacion: data.denominacion,
+      descripcion_breve: data.descripcion_breve,
+      fecha_incorporacion: data.fecha_incorporacion,
+      monto_invertido: data.monto_invertido!,
+    });
+
+    if (isEdit) {
+      navigate(`/equipamiento/${id}`, {
+        state: {
+          successMessage: "Equipamiento actualizado con éxito!",
+        },
+      });
+    } else {
+      navigate("/equipamiento", {
+        state: {
+          successMessage: "Equipamiento creado con éxito!",
+        },
+      });
+    }
+  };
+
   if (isLoading) return <p>Cargando…</p>;
 
   const inputClass = (field: string) =>
-    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
-    }`;
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`;
 
   return (
     <section className="w-full">
@@ -101,32 +133,7 @@ export default function EquipamientoForm() {
       </h2>
 
       <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (!validate()) return;
-
-          await mutateAsync({
-            grupo_utn_id: 1,
-            denominacion: data.denominacion,
-            descripcion_breve: data.descripcion_breve,
-            fecha_incorporacion: data.fecha_incorporacion,
-            monto_invertido: data.monto_invertido!,
-          });
-
-          if (isEdit) {
-            navigate(`/equipamiento/${id}`, {
-              state: {
-                successMessage: "Equipamiento actualizado con éxito!",
-              },
-            });
-          } else {
-            navigate("/equipamiento", {
-              state: {
-                successMessage: "Equipamiento creado con éxito!",
-              },
-            });
-          }
-        }}
+        onSubmit={submit}
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
         <Field label="Denominación">
@@ -139,8 +146,7 @@ export default function EquipamientoForm() {
                   ...d,
                   denominacion: e.target.value,
                 }));
-                if (e.target.value.trim())
-                  clearError("denominacion");
+                if (e.target.value.trim()) clearError("denominacion");
               }}
             />
             {errors.denominacion && (
@@ -161,8 +167,7 @@ export default function EquipamientoForm() {
                   ...d,
                   descripcion_breve: e.target.value,
                 }));
-                if (e.target.value.trim())
-                  clearError("descripcion");
+                if (e.target.value.trim()) clearError("descripcion");
               }}
             />
             {errors.descripcion && (
@@ -182,17 +187,14 @@ export default function EquipamientoForm() {
               className={inputClass("monto")}
               value={data.monto_invertido ?? ""}
               onChange={(e) => {
-                const value = e.target.value
-                  ? Number(e.target.value)
-                  : undefined;
+                const value = e.target.value ? Number(e.target.value) : undefined;
 
                 setData((d) => ({
                   ...d,
                   monto_invertido: value,
                 }));
 
-                if (value && value > 0)
-                  clearError("monto");
+                if (value && value > 0) clearError("monto");
               }}
             />
             {errors.monto && (
@@ -248,7 +250,7 @@ export default function EquipamientoForm() {
           </Button>
         </div>
       </form>
+      {uctGuard}
     </section>
   );
 }
-

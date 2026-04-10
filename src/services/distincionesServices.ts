@@ -1,8 +1,21 @@
 import { http } from "@/lib/http";
-import { MOCK_DISTINCIONES, MOCK_PROYECTOS, type Distincion } from "./mockData";
+import {
+  MOCK_DISTINCIONES,
+  MOCK_PROYECTOS,
+  type Distincion as BaseDistincion,
+} from "./mockData";
 
 const STORAGE_KEY = "gidas_distinciones_v3";
 const PROYECTOS_KEY = "gidas_proyectos_v3";
+
+export interface Distincion extends BaseDistincion {
+  created_by?: number | null;
+  created_by_nombre?: string | null;
+  created_at?: string | null;
+  deleted_by?: number | null;
+  deleted_by_nombre?: string | null;
+  deleted_at?: string | null;
+}
 
 const getLocalStorageData = (): Distincion[] => {
   const data = localStorage.getItem(STORAGE_KEY);
@@ -27,13 +40,25 @@ export interface DistincionPayload {
   proyecto_investigacion_id?: number;
 }
 
+type GetDistincionesOptions = {
+  proyectoId?: number;
+  activos?: "true" | "false" | "all";
+  orden?: "asc" | "desc";
+};
+
 export const getDistinciones = async (
-  proyectoId?: number,
-  orden: "asc" | "desc" = "asc"
+  options: GetDistincionesOptions = {}
 ): Promise<Distincion[]> => {
+  const {
+    proyectoId,
+    activos,
+    orden = "asc",
+  } = options;
+
   try {
     const params = new URLSearchParams();
     if (proyectoId) params.append("proyecto_id", String(proyectoId));
+    if (activos) params.append("activos", activos);
     params.append("orden", orden);
     const query = params.toString() ? `?${params.toString()}` : "";
     return await http<Distincion[]>(`/distinciones/${query}`, { method: "GET" });

@@ -1,10 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
-import { getTrabajosRevistas } from "@/services/trabajosRevistasServices";
+import {
+  getTrabajosRevistas,
+  type TrabajoRevista,
+} from "@/services/trabajosRevistasServices";
 
-export function useTrabajosRevistas() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["trabajos-revistas"],
-    queryFn: getTrabajosRevistas,
+export function useTrabajosRevistas(
+  activos: "true" | "false" | "all" = "true",
+  orden: "asc" | "desc" = "asc"
+) {
+  const { data, isLoading, isError } = useQuery<TrabajoRevista[]>({
+    queryKey: ["trabajos-revistas", activos, orden],
+    queryFn: () =>
+      getTrabajosRevistas({
+        activos,
+        orden,
+      }),
+    staleTime: 60_000,
   });
 
   return {

@@ -4,17 +4,21 @@ export type Equipamiento = {
   id: number;
   denominacion: string;
   created_by: number | null;
+  created_by_nombre?: string | null;
   created_at: string | null | undefined;
   deleted_by: number | null;
+  deleted_by_nombre?: string | null;
   deleted_at: string | null | undefined;
   descripcion_breve: string;
-  fecha_incorporacion: string; // YYYY-MM-DD
+  fecha_incorporacion: string;
   monto_invertido: number;
   grupo_utn_id: number;
 };
 
-export async function getEquipamiento() {
-  return http<Equipamiento[]>("/equipamiento/");
+export async function getEquipamiento(
+  activos: "true" | "false" | "all" = "true"
+) {
+  return http<Equipamiento[]>(`/equipamiento/?activos=${activos}`);
 }
 
 export async function getEquipamientoById(id: number) {
@@ -26,14 +30,13 @@ export async function createEquipamiento(payload: {
   descripcion_breve: string;
   fecha_incorporacion: string;
   monto_invertido: number;
+  grupo_utn_id: number;
 }) {
   return http("/equipamiento/", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
-
-
 
 export async function updateEquipamiento(
   id: number,
@@ -49,14 +52,4 @@ export async function deleteEquipamiento(id: number) {
   return http<void>(`/equipamiento/${id}`, {
     method: "DELETE",
   });
-}
-
-function toApiPayload(form: any) {
-  return {
-    denominacion: form.denominacion,
-    descripcion_breve: form.descripcionBreve,
-    fecha_incorporacion: form.fechaIncorporacion,
-    monto_invertido: form.montoInvertido,
-    grupo_utn_id: form.grupoUtnId,
-  };
 }

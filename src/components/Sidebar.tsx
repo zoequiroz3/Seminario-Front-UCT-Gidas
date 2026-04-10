@@ -34,6 +34,7 @@ const baseItems: Item[] = [
       { label: "Trabajos en Reunión Científica", to: "/trabajos-reunion" },
       { label: "Trabajos en Revistas", to: "/trabajos-revistas" },
       { label: "Distinciones Recibidas", to: "/distinciones" },
+      {label: "Artículos de Divulgación", to: "/articulos-divulgacion" },
       { label: "Participaciones Relevantes", to: "/participaciones" },
       { label: "Visitantes del país y del extranjero", to: "/visitantes" },
     ],
@@ -59,14 +60,23 @@ const adminItems: Item[] = [
   { label: "Gestionar Catálogos", to: "/catalogos" },
 ];
 
+const catalogosItem: Item = {
+  label: "Gestionar Cat\u00e1logos",
+  to: "/catalogos",
+};
+
 export default function Sidebar() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isGestor } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   // Combinar items según el rol del usuario
-  const items = isAdmin() ? [...baseItems, ...adminItems] : baseItems;
+  const items = isAdmin()
+    ? [...baseItems, ...adminItems]
+    : isGestor()
+    ? [...baseItems, { label: "Gestionar CatÃ¡logos", to: "/catalogos" }]
+    : baseItems;
 
   // ESC para cerrar
   useEffect(() => {
@@ -203,7 +213,15 @@ export default function Sidebar() {
             </button>
           </div>
           <nav className="px-4 py-2 text-xs">
-            <MenuList nodes={items} />
+            <MenuList
+              nodes={
+                isAdmin()
+                  ? [...baseItems, ...adminItems]
+                  : isGestor()
+                  ? [...baseItems, catalogosItem]
+                  : baseItems
+              }
+            />
           </nav>
         </aside>
 

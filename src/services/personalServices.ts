@@ -13,9 +13,11 @@ export interface PersonalItem {
   tipo: "PTAA" | "PROFESIONAL" | "BECARIO" | "INVESTIGADOR";
   activo: boolean;
   rol: string;
+  grupo?: {
+    id: number;
+    nombre: string;
+  } | null;
 }
-
-
 export interface PersonalPayload {
   nombre_apellido: string;
   horas_semanales: number;
@@ -24,14 +26,20 @@ export interface PersonalPayload {
   activo: boolean;
 }
 
-// 👉 GET listado general
-export function getPersonal(tipo?: PersonalType) {
-  if (tipo) {
-    return http<PersonalItem[]>(`/personal-all/?tipo=${tipo}`);
-  }
-  return http<PersonalItem[]>("/personal-all/");
-}
 
+export function getPersonal(
+  tipo?: PersonalType,
+  activos: "true" | "false" | "all" = "true"
+) {
+  const params = new URLSearchParams();
+
+  if (tipo) params.append("tipo", tipo);
+  if (activos) params.append("activos", activos);
+
+  const query = params.toString();
+
+  return http<PersonalItem[]>(`/personal-all${query ? `?${query}` : ""}`);
+}
 
 // 👉 POST / PUT PTAA + Profesional
 export function upsertPersonal(payload: PersonalPayload) {

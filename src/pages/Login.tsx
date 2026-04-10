@@ -14,7 +14,7 @@ const banner = () => (
 );
 
 export default function LoginPage() {
-  const { login, debeCambiarPassword } = useAuth();
+  const { login } = useAuth();
   const nav = useNavigate();
   const location = useLocation() as any;
   const from = location.state?.from?.pathname || "/";
@@ -27,26 +27,26 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      // Enviar el usuario y contraseña al contexto
-      await login(usuario, password);
-      
-      // Verificar si debe cambiar la contraseña
-      if (debeCambiarPassword()) {
-        nav("/cambiar-password", { replace: true });
-      } else {
-        nav(from, { replace: true });
-      }
-    } catch (err: any) {
-      setError(err?.message ?? "Credenciales incorrectas");
-    } finally {
-      setLoading(false);
+async function handleSubmit(e: FormEvent) {
+  e.preventDefault();
+  setError(null);
+  setLoading(true);
+
+  try {
+    const auth = await login(usuario, password);
+
+    if (auth.user.primer_login) {
+      nav("/cambiar-password", { replace: true });
+      return;
     }
+
+    nav(from, { replace: true });
+  } catch (err: any) {
+    setError(err?.message ?? "Credenciales incorrectas");
+  } finally {
+    setLoading(false);
   }
+}
 
   return (
     <div className="min-h-screen grid place-items-center bg-[#F6F6FB] px-4">

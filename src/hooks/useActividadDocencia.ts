@@ -1,105 +1,18 @@
-import {http} from "@/lib/http";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getActividadesDocencia,
+  type ActividadDocencia,
+} from "@/services/actividadDocenciaServices";
 
-export interface ActividadDocencia {
-  id: number;
-  curso: string;
-  institucion: string;
-  fecha_inicio: string;
-  fecha_fin: string;
-  grado_academico: string;
-  rol_actividad: string;
-  investigador_id: number;
-  investigador?: string;
+export function useActividadDocencia(
+  investigadorId?: number,
+  activo: "true" | "false" | "all" = "true"
+) {
+  const { data = [], isLoading, isError } = useQuery<ActividadDocencia[]>({
+    queryKey: ["docencia", investigadorId ?? "all", activo],
+    queryFn: () => getActividadesDocencia(investigadorId, activo),
+    staleTime: 60_000,
+  });
+
+  return { list: data, isLoading, isError };
 }
-
-export interface ActividadDocenciaPayload {
-  curso: string;
-  institucion: string;
-  fecha_inicio: string;
-  fecha_fin: string;
-  grado_academico: string;
-  rol_actividad: string;
-  investigador_id: number;
-}
-
-//
-// 🔹 GET ALL (con filtro opcional por investigador)
-//
-export const getActividadesDocencia = async (
-  investigadorId?: number
-): Promise<ActividadDocencia[]> => {
-
-  const query = investigadorId
-    ? `?investigador_id=${investigadorId}`
-    : "";
-
-  return http<ActividadDocencia[]>(
-    `/actividades-docencia/${query}`,
-    {
-      method: "GET",
-    }
-  );
-};
-
-//
-// 🔹 GET BY ID
-//
-export const getActividadDocenciaById = async (
-  id: number
-): Promise<ActividadDocencia> => {
-
-  return http<ActividadDocencia>(
-    `/actividades-docencia/${id}`,
-    {
-      method: "GET",
-    }
-  );
-};
-
-//
-// 🔹 CREATE
-//
-export const crearActividadDocencia = async (
-  payload: ActividadDocenciaPayload
-): Promise<ActividadDocencia> => {
-
-  return http<ActividadDocencia>(
-    `/actividades-docencia/`,
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }
-  );
-};
-
-//
-// 🔹 UPDATE
-//
-export const actualizarActividadDocencia = async (
-  id: number,
-  payload: Partial<ActividadDocenciaPayload>
-): Promise<ActividadDocencia> => {
-
-  return http<ActividadDocencia>(
-    `/actividades-docencia/${id}`,
-    {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }
-  );
-};
-
-//
-// 🔹 DELETE
-//
-export const eliminarActividadDocencia = async (
-  id: number
-): Promise<{ message: string }> => {
-
-  return http<{ message: string }>(
-    `/actividades-docencia/${id}`,
-    {
-      method: "DELETE",
-    }
-  );
-};

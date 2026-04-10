@@ -8,15 +8,16 @@ export interface Autor {
 export interface Documentacion {
   id: number;
   created_by: number | null;
+  created_by_nombre?: string | null;
   created_at: string | null | undefined;
   deleted_by: number | null;
+  deleted_by_nombre?: string | null;
   deleted_at: string | null | undefined;
   titulo: string;
   editorial: string;
   anio: number;
   grupo_id: string | null;
   autores: Autor[];
-  
 }
 
 export interface DocumentacionPayload {
@@ -27,8 +28,12 @@ export interface DocumentacionPayload {
 }
 
 // GET ALL
-export async function getDocumentacion(): Promise<Documentacion[]> {
-  return http<Documentacion[]>("/documentacion-bibliografica/");
+export async function getDocumentacion(
+  activos: "true" | "false" | "all" = "true"
+): Promise<Documentacion[]> {
+  return http<Documentacion[]>(
+    `/documentacion-bibliografica/?activos=${activos}`
+  );
 }
 
 // GET BY ID
@@ -85,7 +90,6 @@ export async function removeAutorFromDocumento(
     { method: "DELETE" }
   );
 }
-
 
 export const removeAutorFromDocumentacion = async (
   docId: number,

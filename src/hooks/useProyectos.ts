@@ -3,8 +3,16 @@ import {
   getProyectos,
   upsertProyectos,
   deleteProyectos,
-    getProyectoById,
+  getProyectoById,
+  cerrarProyecto,
+  reabrirProyecto,
+  vincularInvestigadores,
+  vincularBecarios,
+  desvincularInvestigadores,
+  desvincularBecarios,
   type Proyecto,
+  type InvestigadorVinculacionPayload,
+  type ProyectosActivosFilter,
 } from "@/services/proyectosServices";
 
 const QUERY_KEY = ["proyectos"];
@@ -12,11 +20,22 @@ const QUERY_KEY = ["proyectos"];
 /* =========================
    GET ALL
 ========================= */
-export function useProyectos() {
+export function useProyectos(activos: ProyectosActivosFilter = "true") {
   return useQuery({
-    queryKey: QUERY_KEY,
-    queryFn: getProyectos,
+    queryKey: [...QUERY_KEY, activos],
+    queryFn: () => getProyectos(activos),
     staleTime: 60_000,
+  });
+}
+
+/* =========================
+   GET BY ID
+========================= */
+export function useProyecto(id?: string) {
+  return useQuery({
+    queryKey: ["proyecto", id],
+    queryFn: () => (id ? getProyectoById(Number(id)) : null),
+    enabled: Boolean(id),
   });
 }
 
@@ -28,8 +47,14 @@ export function useUpsertProyecto() {
 
   return useMutation({
     mutationFn: (payload: Proyecto) => upsertProyectos(payload),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+
+      if (variables.id) {
+        queryClient.invalidateQueries({
+          queryKey: ["proyecto", String(variables.id)],
+        });
+      }
     },
   });
 }
@@ -42,17 +67,154 @@ export function useDeleteProyecto() {
 
   return useMutation({
     mutationFn: (id: string) => deleteProyectos(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: ["proyecto", String(id)],
+      });
     },
   });
 }
 
-export function useProyecto(id?: string) {
-  return useQuery({
-    queryKey: ["proyecto", id],
-    queryFn: () =>
-      id ? getProyectoById(Number(id)) : null,
-    enabled: Boolean(id),
+/* =========================
+   CERRAR PROYECTO
+========================= */
+export function useCerrarProyecto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      fechaFin,
+    }: {
+      id: string;
+      fechaFin: string;
+    }) => cerrarProyecto(id, fechaFin),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: ["proyecto", String(variables.id)],
+      });
+    },
+  });
+}
+
+/* =========================
+   REABRIR PROYECTO
+========================= */
+export function useReabrirProyecto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => reabrirProyecto(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: ["proyecto", String(id)],
+      });
+    },
+  });
+}
+
+/* =========================
+   VINCULAR INVESTIGADORES
+========================= */
+export function useVincularInvestigadores() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      proyectoId,
+      investigadores,
+    }: {
+      proyectoId: number;
+      investigadores: InvestigadorVinculacionPayload[];
+    }) => vincularInvestigadores(proyectoId, investigadores),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: ["proyecto", String(variables.proyectoId)],
+      });
+    },
+  });
+}
+
+/* =========================
+   VINCULAR BECARIOS
+========================= */
+export function useVincularBecarios() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      proyectoId,
+      becariosIds,
+      fechaInicio,
+    }: {
+      proyectoId: number;
+      becariosIds: number[];
+      fechaInicio: string;
+    }) => vincularBecarios(proyectoId, becariosIds, fechaInicio),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: ["proyecto", String(variables.proyectoId)],
+      });
+    },
+  });
+}
+
+/* =========================
+   DESVINCULAR INVESTIGADORES
+========================= */
+export function useDesvincularInvestigadores() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      proyectoId,
+      fechaFin,
+      investigadoresIds,
+    }: {
+      proyectoId: number;
+      fechaFin: string;
+      investigadoresIds: number[];
+    }) =>
+      desvincularInvestigadores(
+        proyectoId,
+        fechaFin,
+        investigadoresIds
+      ),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: ["proyecto", String(variables.proyectoId)],
+      });
+    },
+  });
+}
+
+/* =========================
+   DESVINCULAR BECARIOS
+========================= */
+export function useDesvincularBecarios() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      proyectoId,
+      fechaFin,
+      becariosIds,
+    }: {
+      proyectoId: number;
+      fechaFin: string;
+      becariosIds: number[];
+    }) => desvincularBecarios(proyectoId, fechaFin, becariosIds),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({
+        queryKey: ["proyecto", String(variables.proyectoId)],
+      });
+    },
   });
 }

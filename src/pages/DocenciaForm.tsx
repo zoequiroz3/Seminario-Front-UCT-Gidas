@@ -25,8 +25,7 @@ export default function FormDocenciaInvestigador() {
 
   const { data: initialData, isLoading } = useQuery({
     queryKey: ["docencia", id],
-    queryFn: () =>
-      id ? getActividadDocenciaById(Number(id)) : null,
+    queryFn: () => (id ? getActividadDocenciaById(Number(id)) : null),
     enabled: isEdit,
   });
 
@@ -48,11 +47,13 @@ export default function FormDocenciaInvestigador() {
     setGradoAcademicoId(initialData.grado_academico_id ?? null);
     setRolActividadId(initialData.rol_actividad_id ?? null);
 
-    if (initialData.fecha_inicio)
+    if (initialData.fecha_inicio) {
       setFechaInicio(new Date(initialData.fecha_inicio));
+    }
 
-    if (initialData.fecha_fin)
+    if (initialData.fecha_fin) {
       setFechaFin(new Date(initialData.fecha_fin));
+    }
   }, [initialData]);
 
   const mutation = useMutation({
@@ -60,8 +61,8 @@ export default function FormDocenciaInvestigador() {
       isEdit
         ? actualizarActividadDocencia(Number(id), payload)
         : crearActividadDocencia(payload),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["docencia", "all"] });
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["docencia"] });
 
       navigate("/docenciaInvestigador", {
         state: {
@@ -86,18 +87,21 @@ export default function FormDocenciaInvestigador() {
 
     if (!investigadorId)
       newErrors.investigador = "Debe seleccionar investigador";
-    if (!curso.trim())
-      newErrors.curso = "Debe ingresar curso";
+    if (!curso.trim()) newErrors.curso = "Debe ingresar curso";
     if (!institucion.trim())
       newErrors.institucion = "Debe ingresar institución";
     if (!fechaInicio)
       newErrors.fechaInicio = "Debe seleccionar fecha de inicio";
-    if (!fechaFin)
-      newErrors.fechaFin = "Debe seleccionar fecha de fin";
+    if (!fechaFin) newErrors.fechaFin = "Debe seleccionar fecha de fin";
     if (!gradoAcademicoId)
       newErrors.gradoAcademico = "Debe seleccionar grado académico";
     if (!rolActividadId)
       newErrors.rolActividad = "Debe seleccionar rol";
+
+    if (fechaInicio && fechaFin && fechaFin < fechaInicio) {
+      newErrors.fechaFin =
+        "La fecha de fin no puede ser anterior a la fecha de inicio";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -121,8 +125,7 @@ export default function FormDocenciaInvestigador() {
   if (isEdit && isLoading) return <p>Cargando actividad…</p>;
 
   const inputClass = (field: string) =>
-    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
-    }`;
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`;
 
   return (
     <section className="w-full">
@@ -136,17 +139,15 @@ export default function FormDocenciaInvestigador() {
         onSubmit={submit}
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
-
-        {/* Investigador */}
         <Field label="Investigador">
           <>
             <select
-              className={inputClass("investigador")}
+              className={`${inputClass("investigador")} ${
+                !investigadorId ? "text-slate-400" : "text-slate-900"
+              }`}
               value={investigadorId ?? ""}
               onChange={(e) => {
-                const value = e.target.value
-                  ? Number(e.target.value)
-                  : null;
+                const value = e.target.value ? Number(e.target.value) : null;
                 setInvestigadorId(value);
                 if (value) clearError("investigador");
               }}
@@ -168,35 +169,32 @@ export default function FormDocenciaInvestigador() {
           </>
         </Field>
 
-        {/* Curso */}
         <Field label="Curso">
           <>
             <input
               className={inputClass("curso")}
               value={curso}
+              placeholder="Ej: Diseño de Sistemas"
               onChange={(e) => {
                 setCurso(e.target.value);
                 if (e.target.value.trim()) clearError("curso");
               }}
             />
             {errors.curso && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.curso}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.curso}</p>
             )}
           </>
         </Field>
 
-        {/* Institución */}
         <Field label="Institución">
           <>
             <input
               className={inputClass("institucion")}
               value={institucion}
+              placeholder="Ej: UTN Facultad Regional La Plata"
               onChange={(e) => {
                 setInstitucion(e.target.value);
-                if (e.target.value.trim())
-                  clearError("institucion");
+                if (e.target.value.trim()) clearError("institucion");
               }}
             />
             {errors.institucion && (
@@ -207,7 +205,6 @@ export default function FormDocenciaInvestigador() {
           </>
         </Field>
 
-        {/* Fechas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Field label="Fecha inicio">
             <>
@@ -241,24 +238,21 @@ export default function FormDocenciaInvestigador() {
                 helperText={errors.fechaFin ?? "DD/MM/AAAA"}
               />
               {errors.fechaFin && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.fechaFin}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.fechaFin}</p>
               )}
             </>
           </Field>
         </div>
 
-        {/* Grado académico */}
         <Field label="Grado académico">
           <>
             <select
-              className={inputClass("gradoAcademico")}
+              className={`${inputClass("gradoAcademico")} ${
+                !gradoAcademicoId ? "text-slate-400" : "text-slate-900"
+              }`}
               value={gradoAcademicoId ?? ""}
               onChange={(e) => {
-                const value = e.target.value
-                  ? Number(e.target.value)
-                  : null;
+                const value = e.target.value ? Number(e.target.value) : null;
                 setGradoAcademicoId(value);
                 if (value) clearError("gradoAcademico");
               }}
@@ -280,22 +274,21 @@ export default function FormDocenciaInvestigador() {
           </>
         </Field>
 
-        {/* Rol actividad */}
         <Field label="Rol en la actividad">
           <>
             <select
-              className={inputClass("rolActividad")}
+              className={`${inputClass("rolActividad")} ${
+                !rolActividadId ? "text-slate-400" : "text-slate-900"
+              }`}
               value={rolActividadId ?? ""}
               onChange={(e) => {
-                const value = e.target.value
-                  ? Number(e.target.value)
-                  : null;
+                const value = e.target.value ? Number(e.target.value) : null;
                 setRolActividadId(value);
                 if (value) clearError("rolActividad");
               }}
             >
               <option value="" disabled>
-                Seleccionar rol
+                Seleccionar rol en la actividad
               </option>
               {rolesActividad.map((rol) => (
                 <option key={rol.id} value={rol.id}>
@@ -311,7 +304,6 @@ export default function FormDocenciaInvestigador() {
           </>
         </Field>
 
-        {/* Botones */}
         <div className="flex justify-between pt-6">
           <Button
             type="button"
@@ -322,8 +314,14 @@ export default function FormDocenciaInvestigador() {
             Volver
           </Button>
 
-          <Button type="submit" size="sm">
-            {isEdit ? "Actualizar" : "Guardar"}
+          <Button type="submit" size="sm" disabled={mutation.isPending}>
+            {mutation.isPending
+              ? isEdit
+                ? "Actualizando..."
+                : "Guardando..."
+              : isEdit
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>

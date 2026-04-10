@@ -1,10 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
-import { getTrabajosReunion } from "@/services/trabajosReunionServices";
+import {
+  getTrabajosReunion,
+  type TrabajoReunion,
+} from "@/services/trabajosReunionServices";
 
-export function useTrabajosReunion() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["trabajos-reunion"],
-    queryFn: getTrabajosReunion,
+export function useTrabajosReunion(
+  activos: "true" | "false" | "all" = "true",
+  orden: "asc" | "desc" = "asc"
+) {
+  const { data, isLoading, isError } = useQuery<TrabajoReunion[]>({
+    queryKey: ["trabajos-reunion", activos, orden],
+    queryFn: () =>
+      getTrabajosReunion({
+        activos,
+        orden,
+      }),
+    staleTime: 60_000,
   });
 
   return {

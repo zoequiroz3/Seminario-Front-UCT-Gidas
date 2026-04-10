@@ -124,10 +124,7 @@ export default function ErogacionesForm() {
     return <p className="text-slate-500">Cargando erogación…</p>;
 
   const inputClass = (field: string) =>
-    `input ${errors[field]
-      ? "!border-red-500 !ring-2 !ring-red-500"
-      : ""
-    }`;
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`;
 
   return (
     <section className="w-full">
@@ -139,13 +136,13 @@ export default function ErogacionesForm() {
         onSubmit={submit}
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
-        {/* Número */}
         <Field label="Número de erogación">
           <>
             <input
               type="number"
               className={inputClass("numero")}
               value={data.numeroErogacion}
+              placeholder="Ej: 125"
               onChange={(e) => {
                 setData({ ...data, numeroErogacion: e.target.value });
                 if (e.target.value) clearError("numero");
@@ -159,14 +156,12 @@ export default function ErogacionesForm() {
           </>
         </Field>
 
-        {/* Tipo */}
         <Field label="Tipo de erogación">
           <>
             <select
-              className={`${inputClass("tipo")} ${!data.tipoErogacionId
-                ? "text-slate-400"
-                : "text-slate-900"
-                }`}
+              className={`${inputClass("tipo")} ${
+                !data.tipoErogacionId ? "text-slate-400" : "text-slate-900"
+              }`}
               value={data.tipoErogacionId}
               onChange={(e) => {
                 setData({ ...data, tipoErogacionId: e.target.value });
@@ -174,7 +169,7 @@ export default function ErogacionesForm() {
               }}
             >
               <option value="" disabled>
-                Seleccionar tipo
+                Seleccionar tipo de erogación
               </option>
               {tipos.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -190,13 +185,13 @@ export default function ErogacionesForm() {
           </>
         </Field>
 
-        {/* Ingresos */}
         <Field label="Ingresos">
           <>
             <input
               type="number"
               className={inputClass("ingresos")}
               value={data.ingresos}
+              placeholder="Ej: 150000"
               onChange={(e) => {
                 setData({ ...data, ingresos: e.target.value });
                 clearError("ingresos");
@@ -210,13 +205,13 @@ export default function ErogacionesForm() {
           </>
         </Field>
 
-        {/* Egresos */}
         <Field label="Egresos">
           <>
             <input
               type="number"
               className={inputClass("egresos")}
               value={data.egresos}
+              placeholder="Ej: 98500"
               onChange={(e) => {
                 setData({ ...data, egresos: e.target.value });
                 clearError("egresos");
@@ -230,10 +225,11 @@ export default function ErogacionesForm() {
           </>
         </Field>
 
-        {/* Fuente */}
         <Field label="Fuente de financiamiento">
           <select
-            className="input"
+            className={`input ${
+              !data.fuenteFinanciamientoId ? "text-slate-400" : "text-slate-900"
+            }`}
             value={data.fuenteFinanciamientoId}
             onChange={(e) =>
               setData({
@@ -242,8 +238,8 @@ export default function ErogacionesForm() {
               })
             }
           >
-            <option value="" disabled>
-              Seleccionar fuente
+            <option value="">
+              Seleccionar fuente de financiamiento
             </option>
             {fuentes.map((f) => (
               <option key={f.id} value={f.id}>

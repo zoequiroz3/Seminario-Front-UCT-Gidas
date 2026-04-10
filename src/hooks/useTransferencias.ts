@@ -14,14 +14,14 @@ import { getTiposContrato, type TipoContratoItem } from "@/services/tiposContrat
 
 // ─── Queries ─────────────────────────────────────────────────
 
-export function useTransferencias() {
-    const { data = [], isLoading, isError, refetch } = useQuery<Transferencia[]>({
-        queryKey: ["transferencias"],
-        queryFn: getTransferencias,
-        staleTime: 60_000,
-    });
+export function useTransferencias(activos: "true" | "false" | "all" = "true") {
+  const { data = [], isLoading, isError, refetch } = useQuery<Transferencia[]>({
+    queryKey: ["transferencias", activos],
+    queryFn: () => getTransferencias(activos),
+    staleTime: 60_000,
+  });
 
-    return { list: data, isLoading, isError, refetch };
+  return { list: data, isLoading, isError, refetch };
 }
 
 export function useTransferencia(id: number | undefined) {

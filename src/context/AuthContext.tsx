@@ -14,30 +14,48 @@ import {
   cambiarPassword as cambiarPasswordService,
   type User,
   type Rol,
+  type AuthResponse,
 } from "@/services/authService";
 
 type AuthContextValue = {
   user: User | null;
   token: string | null;
   loading: boolean;
-  login: (usuario: string, password: string) => Promise<void>; 
+
+  login: (usuario: string, password: string) => Promise<AuthResponse>;
   register: (nombre: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   esPrimerUsuario: () => Promise<boolean>;
-  cambiarPassword: (passwordActual: string, passwordNueva: string) => Promise<void>;
+  cambiarPassword: (params: {
+    passwordNueva: string;
+    passwordActual?: string;
+  }) => Promise<void>;
+
   isAdmin: () => boolean;
   isGestor: () => boolean;
+  isLector: () => boolean;
+
   debeCambiarPassword: () => boolean;
+
+  canManageUsers: () => boolean;
+  canCreateRecords: () => boolean;
+  canEditRecords: () => boolean;
+  canDeleteRecords: () => boolean;
+  canReadRecords: () => boolean;
+  canEditOwnProfile: () => boolean;
+
+  updateUserInSession: (partial: Partial<User>) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const AUTH_KEY = "gidas_auth_current_session";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Cargar sesión guardada al iniciar (F5)
   useEffect(() => {
     const stored = getStoredAuth();
     if (stored) {
@@ -47,10 +65,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  async function login(usuario: string, password: string) {
+  function persistUser(updatedUser: User) {
+    setUser(updatedUser);
+
+    const stored = getStoredAuth();
+    if (stored) {
+      localStorage.setItem(
+        AUTH_KEY,
+        JSON.stringify({
+          ...stored,
+          user: updatedUser,
+        })
+      );
+    }
+  }
+
+  function updateUserInSession(partial: Partial<User>) {
+    if (!user) return;
+    const updatedUser = { ...user, ...partial };
+    persistUser(updatedUser);
+  }
+
+  async function login(usuario: string, password: string): Promise<AuthResponse> {
     const auth = await loginService(usuario, password);
     setUser(auth.user);
     setToken(auth.token);
+    return auth;
   }
 
   async function register(nombre: string, email: string, password: string) {
@@ -61,20 +101,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return esPrimerUsuarioService();
   }
 
-  async function cambiarPassword(passwordActual: string, passwordNueva: string) {
-    await cambiarPasswordService(passwordActual, passwordNueva);
-    // Actualizar el estado del usuario para indicar que ya cambió la password
+  async function cambiarPassword({
+    passwordNueva,
+    passwordActual,
+  }: {
+    passwordNueva: string;
+    passwordActual?: string;
+  }) {
+    await cambiarPasswordService({ passwordNueva, passwordActual });
+
     if (user) {
-      const updatedUser = { ...user, primer_login: false };
-      setUser(updatedUser);
-      // Actualizar también en localStorage
-      const stored = getStoredAuth();
-      if (stored) {
-        localStorage.setItem("gidas_auth_current_session", JSON.stringify({
-          ...stored,
-          user: updatedUser,
-        }));
-      }
+      persistUser({ ...user, primer_login: false });
     }
   }
 
@@ -84,7 +121,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
   }
 
-  // Helpers para verificar roles
   function isAdmin(): boolean {
     return user?.rol === "ADMIN";
   }
@@ -93,8 +129,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user?.rol === "GESTOR";
   }
 
+  function isLector(): boolean {
+    return user?.rol === "LECTURA";
+  }
+
   function debeCambiarPassword(): boolean {
     return user?.primer_login === true;
+  }
+
+  function canManageUsers(): boolean {
+    return isAdmin();
+  }
+
+  function canCreateRecords(): boolean {
+    return isAdmin() || isGestor();
+  }
+
+  function canEditRecords(): boolean {
+    return isAdmin() || isGestor();
+  }
+
+  function canDeleteRecords(): boolean {
+    return isAdmin() || isGestor();
+  }
+
+  function canReadRecords(): boolean {
+    return true;
+  }
+
+  function canEditOwnProfile(): boolean {
+    return !!user;
   }
 
   const value: AuthContextValue = {
@@ -106,9 +170,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     esPrimerUsuario,
     cambiarPassword,
+
     isAdmin,
     isGestor,
+    isLector,
+
     debeCambiarPassword,
+
+    canManageUsers,
+    canCreateRecords,
+    canEditRecords,
+    canDeleteRecords,
+    canReadRecords,
+    canEditOwnProfile,
+
+    updateUserInSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

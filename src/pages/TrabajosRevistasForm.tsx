@@ -9,6 +9,8 @@ import Field from "@/components/Field";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import SuccessToast from "@/components/SuccessToast";
 
+import { toTitleCase } from "@/utils/format";
+
 import {
   createTrabajoRevista,
   updateTrabajoRevista,
@@ -64,13 +66,14 @@ export default function TrabajosRevistasForm() {
     setIssn(initialData.issn ?? "");
     setPais(initialData.pais ?? "");
 
-    if (initialData.fecha)
+    if (initialData.fecha) {
       setFecha(new Date(initialData.fecha));
+    }
 
     setTipoId(initialData.tipo_reunion?.id ?? null);
 
     setInvestigadoresIds(
-      initialData.investigadores?.map((i: any) => i.id) ?? []
+      initialData.investigadores?.map((i: { id: number }) => i.id) ?? []
     );
   }, [initialData]);
 
@@ -85,31 +88,35 @@ export default function TrabajosRevistasForm() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!titulo.trim())
-      newErrors.titulo = "Debe ingresar título";
+    if (!titulo.trim()) newErrors.titulo = "Debe ingresar título";
 
-    if (!nombreRevista.trim())
+    if (!nombreRevista.trim()) {
       newErrors.nombreRevista = "Debe ingresar nombre de revista";
+    }
 
-    if (!editorial.trim())
+    if (!editorial.trim()) {
       newErrors.editorial = "Debe ingresar editorial";
+    }
 
-    if (!issn.trim())
+    if (!issn.trim()) {
       newErrors.issn = "Debe ingresar ISSN";
+    }
 
-    if (!pais.trim())
+    if (!pais.trim()) {
       newErrors.pais = "Debe ingresar país";
+    }
 
-    if (!tipoId)
+    if (!tipoId) {
       newErrors.tipoId = "Debe seleccionar tipo";
+    }
 
-    if (!fecha)
+    if (!fecha) {
       newErrors.fecha = "Debe seleccionar fecha";
+    }
 
-    // 🔴 SI QUERÉS QUE SEA OBLIGATORIO AL MENOS UNO:
-    if (investigadoresIds.filter(Boolean).length === 0)
-      newErrors.investigadores =
-        "Debe agregar al menos un investigador";
+    if (investigadoresIds.length === 0) {
+      newErrors.investigadores = "Debe agregar al menos un investigador";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -117,90 +124,72 @@ export default function TrabajosRevistasForm() {
 
   const mutation = useMutation({
     mutationFn: async (payload: any) => {
-      const trabajo: any = isEdit
+      const trabajo = isEdit
         ? await updateTrabajoRevista(Number(id), payload)
         : await createTrabajoRevista(payload);
 
-      const trabajoId = trabajo?.id ?? payload.id;
+      const trabajoId = (trabajo as any)?.id;
 
-      if (investigadoresIds.length > 0) {
-        await vincularInvestigadoresRevista(
-          trabajoId,
-          investigadoresIds
-        );
+      if (trabajoId && investigadoresIds.length > 0) {
+        await vincularInvestigadoresRevista(trabajoId, investigadoresIds);
       }
 
       return trabajo;
     },
-    onSuccess: () => {
+    onSuccess: (saved: any) => {
       qc.invalidateQueries({ queryKey: ["trabajos-revistas"] });
+      qc.invalidateQueries({ queryKey: ["trabajo-revista", id] });
 
-      navigate(
-        isEdit
-          ? `/trabajos-revistas/${id}`
-          : "/trabajos-revistas",
-        {
-          state: {
-            successMessage: isEdit
-              ? "Trabajo actualizado con éxito!"
-              : "Trabajo creado con éxito!",
-          },
-        }
-      );
+      navigate(`/trabajos-revistas/${saved.id}`, {
+        state: {
+          successMessage: isEdit
+            ? "Trabajo actualizado con éxito!"
+            : "Trabajo creado con éxito!",
+        },
+      });
     },
   });
 
   const desvincularMutation = useMutation({
     mutationFn: async (investigadorId: number) =>
-      desvincularInvestigadoresRevista(
-        Number(id),
-        [investigadorId]
-      ),
+      desvincularInvestigadoresRevista(Number(id), [investigadorId]),
     onSuccess: (_, investigadorId) => {
-      setInvestigadoresIds((prev) =>
-        prev.filter((i) => i !== investigadorId)
-      );
-
+      setInvestigadoresIds((prev) => prev.filter((i) => i !== investigadorId));
       setInvestigadorAEliminar(null);
-      setSuccessMessage(
-        "Investigador desvinculado con éxito!"
-      );
+      setSuccessMessage("Investigador desvinculado con éxito!");
       setShowSuccess(true);
     },
   });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!uct) return;
     if (!validate()) return;
 
     mutation.mutate({
-      titulo_trabajo: titulo,
-      nombre_revista: nombreRevista,
-      editorial,
-      issn,
-      pais,
+      titulo_trabajo: toTitleCase(titulo.trim()),
+      nombre_revista: toTitleCase(nombreRevista.trim()),
+      editorial: toTitleCase(editorial.trim()),
+      issn: issn.trim(),
+      pais: toTitleCase(pais.trim()),
       fecha: fecha!.toISOString().split("T")[0],
       tipo_reunion_id: tipoId!,
       grupo_utn_id: uct.id,
     });
   };
 
-  if (isEdit && isLoading)
-    return <p>Cargando…</p>;
+  if (isEdit && isLoading) {
+    return <p className="text-slate-500">Cargando…</p>;
+  }
 
   const inputClass = (field: string) =>
-    `input ${errors[field]
-      ? "!border-red-500 !ring-2 !ring-red-500"
-      : ""
-    }`;
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`;
 
   return (
     <section className="w-full">
       <h2 className="text-2xl md:text-3xl font-semibold">
-        {isEdit
-          ? "Editar trabajo en revista"
-          : "Nuevo trabajo en revista"}
+        {isEdit ? "Editar trabajo en revista" : "Nuevo trabajo en revista"}
       </h2>
 
       <form
@@ -212,15 +201,17 @@ export default function TrabajosRevistasForm() {
             <input
               className={inputClass("titulo")}
               value={titulo}
+              placeholder="Ej: Modelo de optimización aplicado a sistemas distribuidos"
               onChange={(e) => {
                 setTitulo(e.target.value);
-                clearError("titulo");
+                if (e.target.value.trim()) clearError("titulo");
+              }}
+              onBlur={() => {
+                if (titulo.trim()) setTitulo(toTitleCase(titulo));
               }}
             />
             {errors.titulo && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.titulo}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.titulo}</p>
             )}
           </>
         </Field>
@@ -230,9 +221,15 @@ export default function TrabajosRevistasForm() {
             <input
               className={inputClass("nombreRevista")}
               value={nombreRevista}
+              placeholder="Ej: Journal of Computer Science"
               onChange={(e) => {
                 setNombreRevista(e.target.value);
-                clearError("nombreRevista");
+                if (e.target.value.trim()) clearError("nombreRevista");
+              }}
+              onBlur={() => {
+                if (nombreRevista.trim()) {
+                  setNombreRevista(toTitleCase(nombreRevista));
+                }
               }}
             />
             {errors.nombreRevista && (
@@ -248,15 +245,17 @@ export default function TrabajosRevistasForm() {
             <input
               className={inputClass("editorial")}
               value={editorial}
+              placeholder="Ej: Elsevier"
               onChange={(e) => {
                 setEditorial(e.target.value);
-                clearError("editorial");
+                if (e.target.value.trim()) clearError("editorial");
+              }}
+              onBlur={() => {
+                if (editorial.trim()) setEditorial(toTitleCase(editorial));
               }}
             />
             {errors.editorial && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.editorial}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.editorial}</p>
             )}
           </>
         </Field>
@@ -266,16 +265,14 @@ export default function TrabajosRevistasForm() {
             <input
               className={inputClass("issn")}
               value={issn}
+              placeholder="Ej: 1234-5678"
               onChange={(e) => {
                 setIssn(e.target.value);
-                clearError("issn");
+                if (e.target.value.trim()) clearError("issn");
               }}
-              placeholder="1234-567X"
             />
             {errors.issn && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.issn}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.issn}</p>
             )}
           </>
         </Field>
@@ -285,15 +282,17 @@ export default function TrabajosRevistasForm() {
             <input
               className={inputClass("pais")}
               value={pais}
+              placeholder="Ej: Argentina"
               onChange={(e) => {
                 setPais(e.target.value);
-                clearError("pais");
+                if (e.target.value.trim()) clearError("pais");
+              }}
+              onBlur={() => {
+                if (pais.trim()) setPais(toTitleCase(pais));
               }}
             />
             {errors.pais && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.pais}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.pais}</p>
             )}
           </>
         </Field>
@@ -301,14 +300,14 @@ export default function TrabajosRevistasForm() {
         <Field label="Tipo">
           <>
             <select
-              className={inputClass("tipoId")}
+              className={`${inputClass("tipoId")} ${
+                !tipoId ? "text-slate-400" : "text-slate-900"
+              }`}
               value={tipoId ?? ""}
               onChange={(e) => {
-                const value = e.target.value
-                  ? Number(e.target.value)
-                  : null;
+                const value = e.target.value ? Number(e.target.value) : null;
                 setTipoId(value);
-                clearError("tipoId");
+                if (value) clearError("tipoId");
               }}
             >
               <option value="" disabled>
@@ -321,25 +320,23 @@ export default function TrabajosRevistasForm() {
               ))}
             </select>
             {errors.tipoId && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.tipoId}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.tipoId}</p>
             )}
           </>
         </Field>
 
-        {/* 🔥 INVESTIGADORES IGUAL A CONGRESOS */}
         <Field label="Investigadores">
           <>
             <PersonalProyectoField
               value={investigadoresIds}
               options={investigadores}
-              onChange={setInvestigadoresIds}
+              onChange={(ids) => {
+                setInvestigadoresIds(ids);
+                if (ids.length > 0) clearError("investigadores");
+              }}
               isEdit={isEdit}
               onRemoveConfirm={(personaId) => {
-                const inv = investigadores.find(
-                  (i) => i.id === personaId
-                );
+                const inv = investigadores.find((i) => i.id === personaId);
                 if (inv) {
                   setInvestigadorAEliminar({
                     id: inv.id,
@@ -357,17 +354,15 @@ export default function TrabajosRevistasForm() {
         </Field>
 
         <Field label="Fecha">
-          <>
-            <Calendar
-              value={fecha}
-              onChange={(date) => {
-                setFecha(date);
-                clearError("fecha");
-              }}
-              className={inputClass("fecha")}
-              helperText={errors.fecha ?? "DD/MM/AAAA"}
-            />
-          </>
+          <Calendar
+            value={fecha}
+            onChange={(date) => {
+              setFecha(date);
+              if (date) clearError("fecha");
+            }}
+            className={inputClass("fecha")}
+            helperText={errors.fecha ?? "DD/MM/AAAA"}
+          />
         </Field>
 
         <div className="flex justify-between pt-6">
@@ -380,11 +375,7 @@ export default function TrabajosRevistasForm() {
             Volver
           </Button>
 
-          <Button
-            type="submit"
-            size="sm"
-            disabled={mutation.isPending}
-          >
+          <Button type="submit" size="sm" disabled={mutation.isPending}>
             {mutation.isPending
               ? "Guardando…"
               : isEdit
@@ -399,23 +390,18 @@ export default function TrabajosRevistasForm() {
         title="Desvincular investigador"
         message={`¿Desea desvincular a ${investigadorAEliminar?.nombre}?`}
         items={[]}
-        onCancel={() =>
-          setInvestigadorAEliminar(null)
-        }
+        onCancel={() => setInvestigadorAEliminar(null)}
         onConfirm={() =>
-          desvincularMutation.mutate(
-            investigadorAEliminar!.id
-          )
+          desvincularMutation.mutate(investigadorAEliminar!.id)
         }
       />
 
       <SuccessToast
         open={showSuccess}
         message={successMessage}
-        onClose={() =>
-          setShowSuccess(false)
-        }
+        onClose={() => setShowSuccess(false)}
       />
+
       {uctGuard}
     </section>
   );

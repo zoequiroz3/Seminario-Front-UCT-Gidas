@@ -4,16 +4,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Button from "@/components/Button";
 import Calendar from "@/components/Calendar";
 import Field from "@/components/Field";
+import { HttpError } from "@/lib/http";
 import {
   crearVisitante,
   getVisitanteById,
   actualizarVisitante,
-  getGruposUtn,
   getTiposVisita,
+  type TipoVisitaOption,
 } from "@/services/visitantesServices";
-
-type GrupoUtn = { id: number; nombre: string };
-type TipoVisita = { id: number; nombre: string };
+import { useUctGuard } from "@/hooks/useUctGuard";
 
 export default function VisitantesForm() {
   const { id } = useParams<{ id: string }>();
@@ -21,15 +20,12 @@ export default function VisitantesForm() {
   const qc = useQueryClient();
 
   const isEdit = Boolean(id);
-
-  const { data: gruposUtn = [] } = useQuery({
-    queryKey: ["grupos-utn"],
-    queryFn: getGruposUtn,
-  });
+  const { uct, uctGuard } = useUctGuard();
 
   const { data: tiposVisita = [] } = useQuery({
     queryKey: ["tipos-visita"],
     queryFn: getTiposVisita,
+    staleTime: 60_000,
   });
 
   const { data: initialData, isLoading } = useQuery({
@@ -40,9 +36,8 @@ export default function VisitantesForm() {
 
   const [razon, setRazon] = useState("");
   const [fecha, setFecha] = useState<Date | null>(null);
-  const [procedencia, setProcedencia] = useState<string>("");
+  const [procedencia, setProcedencia] = useState("");
   const [tipoVisitaId, setTipoVisitaId] = useState<number | null>(null);
-  const [grupoUtnId, setGrupoUtnId] = useState<number | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -53,7 +48,6 @@ export default function VisitantesForm() {
     if (initialData.fecha) setFecha(new Date(initialData.fecha));
     setProcedencia(initialData.procedencia ?? "");
     setTipoVisitaId(initialData.tipo_visita_id ?? null);
-    setGrupoUtnId(initialData.grupo_utn_id ?? null);
   }, [initialData]);
 
   const mutation = useMutation({
@@ -62,8 +56,7 @@ export default function VisitantesForm() {
         ? actualizarVisitante(Number(id), payload)
         : crearVisitante(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["visitantes", "all"] });
-      navigate(-1);
+      qc.invalidateQueries({ queryKey: ["visitantes"] });
     },
   });
 
@@ -78,30 +71,89 @@ export default function VisitantesForm() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!razon.trim()) newErrors.razon = "Debe ingresar razón de la visita";
-    if (!fecha) newErrors.fecha = "Debe seleccionar fecha";
-    if (!procedencia.trim()) newErrors.procedencia = "Debe ingresar procedencia";
-    if (!tipoVisitaId) newErrors.tipoVisita = "Debe seleccionar tipo de visita";
-    if (!grupoUtnId) newErrors.grupoUtn = "Debe seleccionar grupo UTN";
+    if (!razon.trim()) {
+      newErrors.razon = "Debe ingresar razón de la visita";
+    }
+
+    if (!fecha) {
+      newErrors.fecha = "Debe seleccionar fecha";
+    }
+
+    if (!procedencia.trim()) {
+      newErrors.procedencia = "Debe ingresar procedencia";
+    } else if (!/[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(procedencia)) {
+      newErrors.procedencia = "La procedencia no puede ser numérica.";
+    }
+
+    if (!tipoVisitaId) {
+      newErrors.tipoVisita = "Debe seleccionar tipo de visita";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!uct) return;
     if (!validate()) return;
 
-    mutation.mutate({
+    const payload = {
       razon,
       fecha: fecha!.toISOString().split("T")[0],
-      procedencia: procedencia,
+      procedencia,
       tipo_visita_id: tipoVisitaId!,
-      grupo_utn_id: grupoUtnId!,
-    });
+      grupo_utn_id: uct.id,
+    };
+
+    try {
+      await mutation.mutateAsync(payload);
+
+      if (isEdit) {
+        navigate(`/visitantes/${id}`, {
+          state: {
+            successMessage: "Visitante actualizado con éxito!",
+          },
+        });
+      } else {
+        navigate("/visitantes", {
+          state: {
+            successMessage: "Visitante creado con éxito!",
+          },
+        });
+      }
+    } catch (error) {
+      if (error instanceof HttpError) {
+        const body = error.body as
+          | { message?: string; error?: string; detalle?: string }
+          | undefined;
+
+        const backendMessage =
+          body?.error || body?.message || body?.detalle || "";
+
+        if (
+          backendMessage
+            .toLowerCase()
+            .includes("procedencia")
+        ) {
+          setErrors((prev) => ({
+            ...prev,
+            procedencia: backendMessage,
+          }));
+          return;
+        }
+      }
+
+      setErrors((prev) => ({
+        ...prev,
+        general: "No se pudo guardar la visita.",
+      }));
+    }
   };
 
-  if (isEdit && isLoading) return <p>Cargando visitante…</p>;
+  if (isEdit && isLoading) {
+    return <p className="text-slate-500">Cargando visitante…</p>;
+  }
 
   const inputClass = (field: string) =>
     `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`;
@@ -117,15 +169,19 @@ export default function VisitantesForm() {
         className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 space-y-6"
       >
         <Field label="Razón de la visita">
-          <textarea
-            className={`input min-h-[80px] ${inputClass("razon")}`}
-            value={razon}
-            onChange={(e) => {
-              setRazon(e.target.value);
-              if (e.target.value.trim()) clearError("razon");
-            }}
-          />
-          {errors.razon && <p className="text-red-500 text-sm mt-1">{errors.razon}</p>}
+          <>
+            <textarea
+              className={`${inputClass("razon")} min-h-[80px]`}
+              value={razon}
+              onChange={(e) => {
+                setRazon(e.target.value);
+                if (e.target.value.trim()) clearError("razon");
+              }}
+            />
+            {errors.razon && (
+              <p className="text-red-500 text-sm mt-1">{errors.razon}</p>
+            )}
+          </>
         </Field>
 
         <Field label="Fecha">
@@ -141,68 +197,80 @@ export default function VisitantesForm() {
         </Field>
 
         <Field label="Procedencia">
-          <input
-            type="text"
-            className={inputClass("procedencia")}
-            value={procedencia}
-            onChange={(e) => {
-              setProcedencia(e.target.value);
-              if (e.target.value.trim()) clearError("procedencia");
-            }}
-            placeholder="Ej: Universidad Nacional de Córdoba"
-          />
-          {errors.procedencia && <p className="text-red-500 text-sm mt-1">{errors.procedencia}</p>}
+          <>
+            <input
+              type="text"
+              className={inputClass("procedencia")}
+              value={procedencia}
+              onChange={(e) => {
+                setProcedencia(e.target.value);
+                if (e.target.value.trim()) clearError("procedencia");
+              }}
+              placeholder="Ej: Universidad Nacional de Córdoba"
+            />
+            {errors.procedencia && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.procedencia}
+              </p>
+            )}
+          </>
         </Field>
 
         <Field label="Tipo de visita">
-          <select
-            className={inputClass("tipoVisita")}
-            value={tipoVisitaId ?? ""}
-            onChange={(e) => {
-              const value = e.target.value ? Number(e.target.value) : null;
-              setTipoVisitaId(value);
-              if (value) clearError("tipoVisita");
-            }}
-          >
-            <option value="" disabled>Seleccionar tipo de visita</option>
-            {tiposVisita.map((t: TipoVisita) => (
-              <option key={t.id} value={t.id}>
-                {t.nombre}
+          <>
+            <select
+              className={`${inputClass("tipoVisita")} ${
+                !tipoVisitaId ? "text-slate-400" : "text-slate-900"
+              }`}
+              value={tipoVisitaId ?? ""}
+              onChange={(e) => {
+                const value = e.target.value ? Number(e.target.value) : null;
+                setTipoVisitaId(value);
+                if (value) clearError("tipoVisita");
+              }}
+            >
+              <option value="" disabled>
+                Seleccionar tipo de visita
               </option>
-            ))}
-          </select>
-          {errors.tipoVisita && <p className="text-red-500 text-sm mt-1">{errors.tipoVisita}</p>}
+              {tiposVisita.map((t: TipoVisitaOption) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
+                </option>
+              ))}
+            </select>
+            {errors.tipoVisita && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.tipoVisita}
+              </p>
+            )}
+          </>
         </Field>
 
-        <Field label="Grupo UTN">
-          <select
-            className={inputClass("grupoUtn")}
-            value={grupoUtnId ?? ""}
-            onChange={(e) => {
-              const value = e.target.value ? Number(e.target.value) : null;
-              setGrupoUtnId(value);
-              if (value) clearError("grupoUtn");
-            }}
-          >
-            <option value="" disabled>Seleccionar grupo UTN</option>
-            {gruposUtn.map((g: GrupoUtn) => (
-              <option key={g.id} value={g.id}>
-                {g.nombre}
-              </option>
-            ))}
-          </select>
-          {errors.grupoUtn && <p className="text-red-500 text-sm mt-1">{errors.grupoUtn}</p>}
-        </Field>
+        {errors.general && (
+          <p className="text-red-500 text-sm">{errors.general}</p>
+        )}
 
         <div className="flex justify-between pt-6">
-          <Button type="button" variant="secondary" size="sm" onClick={() => navigate(-1)}>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate(-1)}
+          >
             Volver
           </Button>
-          <Button type="submit" size="sm" disabled={mutation.isPending}>
-            {mutation.isPending ? "Guardando…" : isEdit ? "Actualizar" : "Guardar"}
+
+          <Button type="submit" size="sm" disabled={mutation.isPending || !uct}>
+            {mutation.isPending
+              ? "Guardando…"
+              : isEdit
+                ? "Actualizar"
+                : "Guardar"}
           </Button>
         </div>
       </form>
+
+      {uctGuard}
     </section>
   );
 }

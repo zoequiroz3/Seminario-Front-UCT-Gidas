@@ -1,173 +1,204 @@
-import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import Button from "@/components/Button";
-import ConfirmDialog from "@/components/ConfirmDialog";
-import MockIndicator from "@/components/MockIndicator";
 import SuccessToast from "@/components/SuccessToast";
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
 import {
-    useTransferencia,
-    useDeleteTransferencia,
-} from "@/hooks/useTransferencias";
+  getTransferenciaById,
+  type Transferencia,
+} from "@/services/transferenciasServices";
+import { useAuditoria } from "@/hooks/useAuditoria";
+import { useAuth } from "@/context/AuthContext";
 
-/** Convierte claves snake/camel a un label legible. */
-const formatearLabel = (key: string) =>
-    key
-        .replace(/([A-Z])/g, " $1")   // camelCase â†’ espacios
-        .replace(/_/g, " ")           // snake_case â†’ espacios
-        .replace(/\b\w/g, (l) => l.toUpperCase());
+const formatFecha = (fecha?: string | null) => {
+  if (!fecha) return "—";
 
-/** Renderiza un valor de forma legible. */
-const renderValue = (value: unknown): string => {
-    if (value === null || value === undefined) return "â€”";
+  const [y, m, d] = fecha.split("-");
+  if (!y || !m || !d) return fecha;
 
-    if (Array.isArray(value)) {
-        if (value.length === 0) return "â€”";
-        return value
-            .map((v) =>
-                typeof v === "object" && v !== null
-                    ? (v as Record<string, unknown>).nombre ??
-                    (v as Record<string, unknown>).nombre_apellido ??
-                    JSON.stringify(v)
-                    : String(v)
-            )
-            .join(", ");
-    }
-
-    if (typeof value === "object") {
-        const obj = value as Record<string, unknown>;
-        return String(obj.nombre ?? obj.descripcion ?? JSON.stringify(obj));
-    }
-
-    if (typeof value === "number") {
-        return value.toLocaleString("es-AR");
-    }
-
-    return String(value);
+  return `${d}/${m}/${y}`;
 };
 
-/** Claves que no se muestran en la grilla de detalle. */
-const HIDDEN_KEYS = new Set([
-    "id",
-    "grupoUtnId",
-    "tipoContratoId",
-]);
+const formatMonto = (monto?: number | null) =>
+  typeof monto === "number"
+    ? monto.toLocaleString("es-AR", {
+        style: "currency",
+        currency: "ARS",
+      })
+    : "—";
 
 export default function TransferenciasDetalle() {
-    const navigate = useNavigate();
-    const qc = useQueryClient();
-    const { id: idParam } = useParams<{ id: string }>();
-    const numericId = idParam ? Number(idParam) : undefined;
-    const { data: t, isLoading, isError } = useTransferencia(numericId);
-    const deleteMut = useDeleteTransferencia();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { canEditRecords } = useAuth();
 
-    const [showConfirm, setShowConfirm] = useState(false);
+  const puedeEditar = canEditRecords();
 
-    const location = useLocation();
-    const [showSuccess, setShowSuccess] = useState(false);
-    const [successMessage, setSuccessMessage] = useState("");
+  const { data, isLoading, isError } = useQuery<Transferencia | null>({
+    queryKey: ["transferencias", id],
+    queryFn: () => getTransferenciaById(Number(id)),
+    enabled: !!id,
+  });
 
-    useEffect(() => {
-        if (location.state?.successMessage) {
-            setSuccessMessage(location.state.successMessage);
-            setShowSuccess(true);
-            window.history.replaceState({}, document.title);
-        }
-    }, [location.state]);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-    const doDelete = async () => {
-        if (!numericId) return;
-        await deleteMut.mutateAsync(numericId);
-        // Remove active item query so it doesn't fetch on unmount/invalidate
-        qc.removeQueries({ queryKey: ["transferencias", numericId] });
-        qc.invalidateQueries({ queryKey: ["transferencias"] });
-        navigate("/transferencias", { state: { successMessage: "Transferencia eliminada." } });
-    };
+  const auditoria = useAuditoria(data);
 
-    if (isLoading) return <p className="text-slate-500 p-4">Cargandoâ€¦</p>;
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      setShowSuccess(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
-    if (isError || !t)
-        return (
-            <div className="p-4">
-                <p className="text-red-600 mb-4">No se encontrÃ³ la transferencia.</p>
-                <Button variant="secondary" size="sm" onClick={() => navigate(-1)}>
-                    Volver
-                </Button>
-            </div>
-        );
+  const formatFechaHora = (fecha?: string | null) => {
+    if (!fecha) return "—";
+    return new Date(fecha).toLocaleString("es-AR");
+  };
 
-    const displayName = t.denominacion || t.descripcionActividad;
+  if (isLoading) {
+    return <p className="text-slate-500">Cargando…</p>;
+  }
 
-    return (
-        <section className="flex flex-col gap-6">
-            <MockIndicator />
+  if (isError || !data) {
+    return <p className="text-slate-500">No se encontró la transferencia.</p>;
+  }
 
-            <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-                {displayName}
-            </h2>
+  const isDeleted = data.activo === false || !!data.deletedAt;
+  const titulo = data.denominacion || data.descripcionActividad || "—";
 
-            <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-                <div className="space-y-2 text-sm md:text-base text-slate-500">
-                    {Object.entries(t)
-                        .filter(([key]) => !HIDDEN_KEYS.has(key))
-                        .map(([key, value]) => (
-                            <p key={key}>
-                                <span className="font-medium text-slate-700">
-                                    {formatearLabel(key)}:
-                                </span>{" "}
-                                {renderValue(value)}
-                            </p>
-                        ))}
-                </div>
+  return (
+    <>
+      <section className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+            {titulo}
+          </h2>
 
-                {/* Acciones */}
-                <div className="mt-8 flex items-center justify-between">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        className="px-3 py-1 text-xs"
-                        onClick={() => navigate(-1)}
-                    >
-                        Volver
-                    </Button>
+          {puedeEditar && !isDeleted && (
+            <Button
+              size="sm"
+              onClick={() => navigate(`/transferencias/${data.id}/editar`)}
+            >
+              Editar
+            </Button>
+          )}
+        </div>
 
-                    <div className="flex gap-2">
-                        <Button
-                            size="sm"
-                            className="px-3 py-1 text-xs"
-                            onClick={() => navigate(`/transferencias/${numericId}/editar`)}
-                        >
-                            Editar
-                        </Button>
+        <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
+          <div className="space-y-2 text-sm md:text-base text-slate-500">
+            <p>
+              <span className="font-medium text-slate-700">
+                Número de transferencia:
+              </span>{" "}
+              {data.numeroTransferencia || "—"}
+            </p>
 
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            className="px-3 py-1 text-xs"
-                            onClick={() => setShowConfirm(true)}
-                        >
-                            Eliminar
-                        </Button>
-                    </div>
-                </div>
-            </article>
+            <p>
+              <span className="font-medium text-slate-700">Denominación:</span>{" "}
+              {data.denominacion || "—"}
+            </p>
 
-            {/* Confirm dialog */}
-            <ConfirmDialog
-                open={showConfirm}
-                title="Eliminar transferencia"
-                message={`Â¿EstÃ¡s seguro de eliminar "${displayName}"?`}
-                onCancel={() => setShowConfirm(false)}
-                onConfirm={doDelete}
-            />
+            <p>
+              <span className="font-medium text-slate-700">Demandante:</span>{" "}
+              {data.demandante || "—"}
+            </p>
 
-            <SuccessToast
-                open={showSuccess}
-                message={successMessage || "OperaciÃ³n exitosa"}
-                onClose={() => setShowSuccess(false)}
-            />
-        </section>
-    );
+            <p>
+              <span className="font-medium text-slate-700">
+                Descripción de la actividad:
+              </span>{" "}
+              {data.descripcionActividad || "—"}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">Monto:</span>{" "}
+              {formatMonto(data.monto)}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">Fecha de inicio:</span>{" "}
+              {formatFecha(data.fechaInicio)}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">Fecha de fin:</span>{" "}
+              {formatFecha(data.fechaFin)}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">
+                Tipo de contrato:
+              </span>{" "}
+              {data.tipoContrato || "—"}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">Grupo UTN:</span>{" "}
+              {data.grupo || "—"}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">Adoptantes:</span>{" "}
+              {data.adoptantes.length > 0
+                ? data.adoptantes.map((a) => a.nombre).join(", ")
+                : "—"}
+            </p>
+          </div>
+        </article>
+
+        <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-700">Auditoría</h3>
+            <p className="text-xs text-slate-500 mt-1">{titulo}</p>
+          </div>
+
+          <div className="space-y-2 text-sm md:text-base text-slate-500">
+            <p>
+              <span className="font-medium text-slate-700">Creado por:</span>{" "}
+              {data.created_by_nombre || auditoria.nombreCreador}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">
+                Fecha de creación:
+              </span>{" "}
+              {formatFechaHora(data.created_at)}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">Eliminado por:</span>{" "}
+              {data.deleted_by_nombre || auditoria.nombreEliminador}
+            </p>
+
+            <p>
+              <span className="font-medium text-slate-700">
+                Fecha de eliminación:
+              </span>{" "}
+              {formatFechaHora(data.deletedAt)}
+            </p>
+          </div>
+        </article>
+
+        <div className="flex justify-start pt-4">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate("/transferencias")}
+          >
+            Volver
+          </Button>
+        </div>
+      </section>
+
+      <SuccessToast
+        open={showSuccess}
+        message={successMessage}
+        onClose={() => setShowSuccess(false)}
+      />
+    </>
+  );
 }

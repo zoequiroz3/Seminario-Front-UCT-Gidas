@@ -1,4 +1,3 @@
-// pages/DocumentacionDetalle.tsx
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -6,11 +5,15 @@ import Button from "@/components/Button";
 import SuccessToast from "@/components/SuccessToast";
 import { getDocumentacionById } from "@/services/documentacionServices";
 import { useAuditoria } from "@/hooks/useAuditoria";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DocumentacionDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { canEditRecords } = useAuth();
+
+  const puedeEditar = canEditRecords();
 
   const { data, isLoading } = useQuery({
     queryKey: ["documentacion", id],
@@ -42,24 +45,30 @@ export default function DocumentacionDetalle() {
     return new Date(fecha).toLocaleString("es-AR");
   };
 
+  const isDeleted = !!data.deleted_at;
+
   return (
     <>
       <section className="flex flex-col gap-6">
-        {/* 🔵 HEADER CON EDITAR ARRIBA */}
         <div className="flex items-center justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-            {data.titulo}
+            {data.titulo
+              .toLowerCase()
+              .split(" ")
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(" ")}
           </h2>
 
-          <Button
-            size="sm"
-            onClick={() => navigate(`/documentacion/${id}/editar`)}
-          >
-            Editar
-          </Button>
+          {puedeEditar && !isDeleted && (
+            <Button
+              size="sm"
+              onClick={() => navigate(`/documentacion/${id}/editar`)}
+            >
+              Editar
+            </Button>
+          )}
         </div>
 
-        {/* ================= TARJETA PRINCIPAL ================= */}
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
           <div className="space-y-2 text-sm md:text-base text-slate-500">
             <p>
@@ -79,7 +88,6 @@ export default function DocumentacionDetalle() {
           </div>
         </article>
 
-        {/* ================= TARJETA AUDITORÍA ================= */}
         <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-slate-700">
@@ -113,7 +121,6 @@ export default function DocumentacionDetalle() {
           </div>
         </article>
 
-        {/* 🔵 VOLVER ABAJO DE TODO */}
         <div className="flex justify-start pt-4">
           <Button
             variant="secondary"

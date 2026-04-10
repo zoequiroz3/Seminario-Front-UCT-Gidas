@@ -1,14 +1,21 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
-import { crearUsuario } from "@/services/usuariosService";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { crearUsuario, rolToRolId } from "@/services/usuariosService";
 import { HttpError } from "@/lib/http";
 import type { Rol } from "@/services/authService";
 import Button from "@/components/Button";
 import Field from "@/components/Field";
-import { UserPlus, Eye, EyeOff, CheckCircle, Copy, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  UserPlus,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  Copy,
+  Loader2,
+  BookOpen,
+} from "lucide-react";
 
-// Función para obtener mensaje de error del backend
 function getErrorMessage(error: unknown): string {
   if (error instanceof HttpError) {
     const body = error.body as any;
@@ -22,106 +29,121 @@ function getErrorMessage(error: unknown): string {
   return "Error desconocido";
 }
 
-// Validar email
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Validar nombre de usuario (sin espacios)
 function isValidUsername(username: string): boolean {
   return /^[a-zA-Z0-9._-]+$/.test(username);
 }
 
 export default function UsuariosForm() {
   const nav = useNavigate();
-  
+  const queryClient = useQueryClient();
+
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rol, setRol] = useState<Rol>("GESTOR");
   const [showPassword, setShowPassword] = useState(false);
   const [copiado, setCopiado] = useState(false);
-  
+
   const [creado, setCreado] = useState(false);
-  const [usuarioCreado, setUsuarioCreado] = useState<{ nombre: string; password: string } | null>(null);
-  
+  const [usuarioCreado, setUsuarioCreado] = useState<{
+    nombre: string;
+    password: string;
+    rol: Rol;
+  } | null>(null);
+
   const [errors, setErrors] = useState<{
     nombre?: string;
     email?: string;
     password?: string;
+    rol?: string;
   }>({});
 
   const crearMutation = useMutation({
     mutationFn: crearUsuario,
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["usuarios"] });
       setCreado(true);
-      setUsuarioCreado({ nombre, password });
+      setUsuarioCreado({ nombre, password, rol });
     },
     onError: () => {
-      setErrors({});
-    }
+      setErrors((prev) => ({ ...prev }));
+    },
   });
 
   function validateForm(): boolean {
     const newErrors: typeof errors = {};
-    
+
     if (!nombre.trim()) {
       newErrors.nombre = "El nombre de usuario es obligatorio";
     } else if (nombre.length < 3) {
       newErrors.nombre = "El nombre debe tener al menos 3 caracteres";
     } else if (!isValidUsername(nombre)) {
-      newErrors.nombre = "Solo letras, números, puntos, guiones y guiones bajos";
+      newErrors.nombre =
+        "Solo letras, números, puntos, guiones y guiones bajos";
     }
-    
+
     if (!email.trim()) {
       newErrors.email = "El email es obligatorio";
     } else if (!isValidEmail(email)) {
       newErrors.email = "Ingresa un email válido";
     }
-    
+
     if (!password) {
       newErrors.password = "La contraseña es obligatoria";
     } else if (password.length < 6) {
       newErrors.password = "La contraseña debe tener al menos 6 caracteres";
     }
-    
+
+    if (rol !== "GESTOR" && rol !== "LECTURA") {
+      newErrors.rol = "Debes seleccionar un rol válido";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+
+    if (!validateForm()) return;
 
     crearMutation.mutate({
       nombre_usuario: nombre,
       mail: email,
       password,
-      rol,
+      rol_id: rolToRolId(rol),
     });
   }
-  
+
   function handleNombreChange(value: string) {
     setNombre(value);
     if (errors.nombre) {
-      setErrors(prev => ({ ...prev, nombre: undefined }));
+      setErrors((prev) => ({ ...prev, nombre: undefined }));
     }
   }
-  
+
   function handleEmailChange(value: string) {
     setEmail(value);
     if (errors.email) {
-      setErrors(prev => ({ ...prev, email: undefined }));
+      setErrors((prev) => ({ ...prev, email: undefined }));
     }
   }
-  
+
   function handlePasswordChange(value: string) {
     setPassword(value);
     if (errors.password) {
-      setErrors(prev => ({ ...prev, password: undefined }));
+      setErrors((prev) => ({ ...prev, password: undefined }));
+    }
+  }
+
+  function handleRolChange(value: Rol) {
+    setRol(value);
+    if (errors.rol) {
+      setErrors((prev) => ({ ...prev, rol: undefined }));
     }
   }
 
@@ -134,15 +156,22 @@ export default function UsuariosForm() {
   }
 
   function generarPassword() {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
     let result = "";
     for (let i = 0; i < 12; i++) {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setPassword(result);
     if (errors.password) {
-      setErrors(prev => ({ ...prev, password: undefined }));
+      setErrors((prev) => ({ ...prev, password: undefined }));
     }
+  }
+
+  function getRolLabel(rol: Rol) {
+    if (rol === "GESTOR") return "Gestor";
+    if (rol === "LECTURA") return "Lector";
+    return rol;
   }
 
   if (creado && usuarioCreado) {
@@ -152,11 +181,14 @@ export default function UsuariosForm() {
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-slate-900" />
           </div>
-          
-          <h2 className="text-2xl font-semibold mb-2">¡Usuario Creado Exitosamente!</h2>
-          
+
+          <h2 className="text-2xl font-semibold mb-2">
+            ¡Usuario Creado Exitosamente!
+          </h2>
+
           <p className="text-slate-600 mb-6">
-            El usuario <strong>{usuarioCreado.nombre}</strong> ha sido creado con éxito.
+            El usuario <strong>{usuarioCreado.nombre}</strong> ha sido creado con
+            éxito con rol <strong>{getRolLabel(usuarioCreado.rol)}</strong>.
           </p>
 
           <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-6 mb-6">
@@ -177,8 +209,8 @@ export default function UsuariosForm() {
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 mb-6 text-left">
             <p className="text-sm text-slate-600">
-              <strong>Importante:</strong> Compartí esta contraseña de forma segura con el usuario. 
-              Deberá cambiarla en su primer inicio de sesión.
+              <strong>Importante:</strong> Compartí esta contraseña de forma segura
+              con el usuario. Deberá cambiarla en su primer inicio de sesión.
             </p>
           </div>
 
@@ -190,6 +222,7 @@ export default function UsuariosForm() {
             >
               Volver al Listado
             </Button>
+
             <Button
               variant="primary"
               onClick={() => {
@@ -258,7 +291,11 @@ export default function UsuariosForm() {
                   className="absolute right-20 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   disabled={crearMutation.isPending}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
                 <button
                   type="button"
@@ -269,28 +306,76 @@ export default function UsuariosForm() {
                   Generar
                 </button>
               </div>
+
               <p className="text-xs text-slate-500">
                 El usuario deberá cambiar esta contraseña en su primer inicio de sesión.
               </p>
             </div>
           </Field>
 
-          <Field label="Rol" required>
-            <div className="mt-2 p-4 rounded-xl border border-slate-200 bg-slate-50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                  <UserPlus className="w-5 h-5 text-slate-700" />
+          <Field label="Rol" required error={errors.rol}>
+            <div className="grid gap-3 md:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => handleRolChange("GESTOR")}
+                disabled={crearMutation.isPending}
+                className={`text-left rounded-xl border p-4 transition ${
+                  rol === "GESTOR"
+                    ? "border-slate-900 bg-slate-50 ring-2 ring-slate-200"
+                    : "border-slate-200 bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      rol === "GESTOR" ? "bg-slate-200" : "bg-slate-100"
+                    }`}
+                  >
+                    <UserPlus className="w-5 h-5 text-slate-700" />
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-slate-900">Gestor</p>
+                    <p className="text-sm text-slate-600">
+                      Acceso estándar al sistema
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium text-slate-900">Gestor</p>
-                  <p className="text-sm text-slate-600">Acceso estándar al sistema</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleRolChange("LECTURA")}
+                disabled={crearMutation.isPending}
+                className={`text-left rounded-xl border p-4 transition ${
+                  rol === "LECTURA"
+                    ? "border-slate-900 bg-slate-50 ring-2 ring-slate-200"
+                    : "border-slate-200 bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      rol === "LECTURA" ? "bg-slate-200" : "bg-slate-100"
+                    }`}
+                  >
+                    <BookOpen className="w-5 h-5 text-slate-700" />
+                  </div>
+
+                  <div>
+                    <p className="font-medium text-slate-900">Lector</p>
+                    <p className="text-sm text-slate-600">
+                      Solo lectura de la información
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <p className="text-xs text-slate-500 mt-3">
-                Por el momento solo se pueden crear usuarios con rol Gestor. 
-                Los administradores deben ser creados manualmente por el equipo de desarrollo.
-              </p>
+              </button>
             </div>
+
+            <p className="text-xs text-slate-500 mt-3">
+              El administrador del sistema ya está creado. Desde aquí solo podés crear
+              usuarios con rol Gestor o Lector.
+            </p>
           </Field>
 
           {crearMutation.isError && (
@@ -309,6 +394,7 @@ export default function UsuariosForm() {
             >
               Cancelar
             </Button>
+
             <Button
               type="submit"
               variant="primary"

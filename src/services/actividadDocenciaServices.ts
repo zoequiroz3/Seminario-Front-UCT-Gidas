@@ -1,12 +1,12 @@
-import {http} from "@/lib/http";
+import { http } from "@/lib/http";
 
 export interface ActividadDocencia {
   created_by: number | null;
   created_at: string | null | undefined;
   deleted_by: number | null;
   deleted_at: string | null | undefined;
-  rol_actividad_id: null;
-  grado_academico_id: null;
+  rol_actividad_id: number | null;
+  grado_academico_id: number | null;
   id: number;
   curso: string;
   institucion: string;
@@ -28,84 +28,59 @@ export interface ActividadDocenciaPayload {
   investigador_id: number;
 }
 
-//
-// 🔹 GET ALL (con filtro opcional por investigador)
-//
 export const getActividadesDocencia = async (
-  investigadorId?: number
+  investigadorId?: number,
+  activo: "true" | "false" | "all" = "true"
 ): Promise<ActividadDocencia[]> => {
+  const params = new URLSearchParams();
 
-  const query = investigadorId
-    ? `?investigador_id=${investigadorId}`
-    : "";
+  if (investigadorId) {
+    params.append("investigador_id", String(investigadorId));
+  }
+
+  params.append("activos", activo);
+
+  const query = params.toString();
 
   return http<ActividadDocencia[]>(
-    `/actividades-docencia/${query}`,
+    `/actividades-docencia${query ? `?${query}` : ""}`,
     {
       method: "GET",
     }
   );
 };
 
-//
-// 🔹 GET BY ID
-//
 export const getActividadDocenciaById = async (
   id: number
 ): Promise<ActividadDocencia> => {
-
-  return http<ActividadDocencia>(
-    `/actividades-docencia/${id}`,
-    {
-      method: "GET",
-    }
-  );
+  return http<ActividadDocencia>(`/actividades-docencia/${id}`, {
+    method: "GET",
+  });
 };
 
-//
-// 🔹 CREATE
-//
 export const crearActividadDocencia = async (
   payload: ActividadDocenciaPayload
 ): Promise<ActividadDocencia> => {
-
-  return http<ActividadDocencia>(
-    `/actividades-docencia/`,
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }
-  );
+  return http<ActividadDocencia>(`/actividades-docencia/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 };
 
-//
-// 🔹 UPDATE
-//
 export const actualizarActividadDocencia = async (
   id: number,
   payload: Partial<ActividadDocenciaPayload>
 ): Promise<ActividadDocencia> => {
-
-  return http<ActividadDocencia>(
-    `/actividades-docencia/${id}`,
-    {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }
-  );
+  return http<ActividadDocencia>(`/actividades-docencia/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
 };
 
-//
-// 🔹 DELETE
-//
 export const eliminarActividadDocencia = async (
   id: number
 ): Promise<{ message: string }> => {
-
-  return http<{ message: string }>(
-    `/actividades-docencia/${id}`,
-    {
-      method: "DELETE",
-    }
-  );
+  return http<{ message: string }>(`/actividades-docencia/${id}`, {
+    method: "DELETE",
+  });
 };

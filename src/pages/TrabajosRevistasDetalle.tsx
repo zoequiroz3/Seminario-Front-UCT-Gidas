@@ -1,28 +1,34 @@
-// pages/TrabajoRevistaDetalle.tsx
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import Button from "@/components/Button";
 import SuccessToast from "@/components/SuccessToast";
 import { formatFecha } from "@/utils/formatFecha";
+import { toTitleCase } from "@/utils/format";
 import { useAuditoria } from "@/hooks/useAuditoria";
 import {
   getTrabajoRevistaById,
   type TrabajoRevista,
 } from "@/services/trabajosRevistasServices";
+import { useAuth } from "@/context/AuthContext";
 
 export default function TrabajoRevistaDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { canEditRecords } = useAuth();
+
+  const puedeEditar = canEditRecords();
+
+  const trabajoId = id ? Number(id) : undefined;
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
   const { data, isLoading, isError } = useQuery<TrabajoRevista>({
-    queryKey: ["trabajo-revista", id],
-    queryFn: () => getTrabajoRevistaById(Number(id)),
-    enabled: !!id,
+    queryKey: ["trabajo-revista", trabajoId],
+    queryFn: () => getTrabajoRevistaById(trabajoId as number),
+    enabled: !!trabajoId,
   });
 
   const auditoria = useAuditoria(data);
@@ -36,7 +42,8 @@ export default function TrabajoRevistaDetalle() {
   }, [location.state]);
 
   if (isLoading) return <p className="text-slate-500">Cargando…</p>;
-  if (isError || !data) return <p className="text-slate-500">Trabajo en revista no encontrado.</p>;
+  if (isError || !data)
+    return <p className="text-slate-500">Trabajo en revista no encontrado.</p>;
 
   const formatFechaHora = (fecha?: string | null) => {
     if (!fecha) return "—";
@@ -50,31 +57,33 @@ export default function TrabajoRevistaDetalle() {
   return (
     <>
       <section className="flex flex-col gap-6">
-        {/* 🔵 HEADER CON EDITAR ARRIBA */}
         <div className="flex items-center justify-between">
           <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-            {data.titulo_trabajo}
+            {toTitleCase(data.titulo_trabajo) || "—"}
           </h2>
 
-          <Button
-            size="sm"
-            onClick={() => navigate(`/trabajos-revistas/${data.id}/editar`)}
-          >
-            Editar
-          </Button>
+          {puedeEditar && !data.deleted_at && (
+            <Button
+              size="sm"
+              onClick={() =>
+                navigate(`/trabajos-revistas/${data.id}/editar`)
+              }
+            >
+              Editar
+            </Button>
+          )}
         </div>
 
-        {/* ================= TARJETA PRINCIPAL ================= */}
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
           <div className="space-y-3 text-sm md:text-base text-slate-500">
             <p>
               <span className="font-medium text-slate-700">Revista:</span>{" "}
-              {data.nombre_revista || "—"}
+              {toTitleCase(data.nombre_revista) || "—"}
             </p>
 
             <p>
               <span className="font-medium text-slate-700">Editorial:</span>{" "}
-              {data.editorial || "—"}
+              {toTitleCase(data.editorial) || "—"}
             </p>
 
             <p>
@@ -84,7 +93,7 @@ export default function TrabajoRevistaDetalle() {
 
             <p>
               <span className="font-medium text-slate-700">País:</span>{" "}
-              {data.pais || "—"}
+              {toTitleCase(data.pais) || "—"}
             </p>
 
             <p>
@@ -98,18 +107,21 @@ export default function TrabajoRevistaDetalle() {
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Investigadores:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Investigadores:
+              </span>{" "}
               {investigadores}
             </p>
           </div>
         </article>
 
-        {/* ================= TARJETA AUDITORÍA ================= */}
         <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-slate-700">Auditoría</h3>
+            <h3 className="text-lg font-semibold text-slate-700">
+              Auditoría
+            </h3>
             <p className="text-xs text-slate-500 mt-1">
-              {data.titulo_trabajo}
+              {toTitleCase(data.titulo_trabajo) || "—"}
             </p>
           </div>
 
@@ -120,23 +132,28 @@ export default function TrabajoRevistaDetalle() {
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Fecha de creación:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Fecha de creación:
+              </span>{" "}
               {formatFechaHora(data.created_at)}
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Eliminado por:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Eliminado por:
+              </span>{" "}
               {auditoria.nombreEliminador}
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Fecha de eliminación:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Fecha de eliminación:
+              </span>{" "}
               {formatFechaHora(data.deleted_at)}
             </p>
           </div>
         </article>
 
-        {/* 🔵 VOLVER ABAJO DE TODO */}
         <div className="flex justify-start pt-4">
           <Button
             variant="secondary"

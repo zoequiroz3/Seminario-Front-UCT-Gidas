@@ -1,19 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
-import { getArticulosDivulgacion } from "@/services/articulosDivulgacionServices";
+import {
+  getArticulosDivulgacion,
+  deleteArticulo,
+  type ArticuloDivulgacion,
+} from "@/services/articulosDivulgacionServices";
 import { useUct } from "@/hooks/useUct";
 
-export const useArticulosDivulgacion = () => {
+export function useArticulosDivulgacion(
+  activos: "true" | "false" | "all" = "true"
+) {
   const { uct } = useUct();
 
-  const query = useQuery({
-    queryKey: ["articulos-divulgacion"],
-    queryFn: () => getArticulosDivulgacion(uct?.id),
+  const { data = [], isLoading, isError } = useQuery<ArticuloDivulgacion[]>({
+    queryKey: ["articulos-divulgacion", activos],
+    queryFn: () =>
+      getArticulosDivulgacion({
+        grupo_utn_id: uct?.id,
+        activos,
+      }),
     enabled: !!uct,
+    staleTime: 60_000,
   });
 
-  return {
-    list: query.data ?? [],
-    isLoading: query.isLoading,
-    isError: query.isError,
+  const remove = async (id: number) => {
+    return deleteArticulo(id);
   };
-};
+
+  return {
+    list: data,
+    isLoading,
+    isError,
+    remove,
+  };
+}

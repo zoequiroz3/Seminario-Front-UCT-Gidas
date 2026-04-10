@@ -50,11 +50,13 @@ export default function PlanificacionGrupoForm() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!data.descripcion.trim())
+    if (!data.descripcion.trim()) {
       newErrors.descripcion = "Debe ingresar descripción";
+    }
 
-    if (!data.anio || data.anio.length !== 4)
+    if (!data.anio || data.anio.length !== 4) {
       newErrors.anio = "El año debe tener 4 dígitos";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -72,6 +74,7 @@ export default function PlanificacionGrupoForm() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!uct) return;
     if (!validate()) return;
 
@@ -97,11 +100,11 @@ export default function PlanificacionGrupoForm() {
   };
 
   const inputClass = (field: string) =>
-    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""
-    }`;
+    `input ${errors[field] ? "!border-red-500 !ring-2 !ring-red-500" : ""}`;
 
-  if (isEdit && isLoading)
+  if (isEdit && isLoading) {
     return <p className="text-slate-500">Cargando planificación…</p>;
+  }
 
   return (
     <section className="w-full">
@@ -119,6 +122,7 @@ export default function PlanificacionGrupoForm() {
               type="number"
               className={inputClass("anio")}
               value={data.anio}
+              placeholder="Ej: 2026"
               onChange={(e) => {
                 if (e.target.value.length <= 4) {
                   setData({ ...data, anio: e.target.value });
@@ -140,6 +144,7 @@ export default function PlanificacionGrupoForm() {
               rows={8}
               className={inputClass("descripcion")}
               value={data.descripcion}
+              placeholder="Ej: Planificación anual del grupo con objetivos, actividades previstas, líneas de trabajo, cronograma y metas para el período."
               onChange={(e) => {
                 setData({ ...data, descripcion: e.target.value });
                 clearError("descripcion");
@@ -158,7 +163,13 @@ export default function PlanificacionGrupoForm() {
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (isEdit) {
+                navigate(`/planificaciones/${id}`);
+              } else {
+                navigate(-1);
+              }
+            }}
           >
             Volver
           </Button>
@@ -172,6 +183,7 @@ export default function PlanificacionGrupoForm() {
           </Button>
         </div>
       </form>
+
       {uctGuard}
     </section>
   );

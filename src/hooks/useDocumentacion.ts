@@ -4,15 +4,17 @@ import {
   type Documentacion,
 } from "@/services/documentacionServices";
 
-export function useDocumentacion() {
+export function useDocumentacion(
+  activos: "true" | "false" | "all" = "true"
+) {
   const {
     data,
     isLoading,
     isError,
     refetch,
   } = useQuery<Documentacion[]>({
-    queryKey: ["documentacion"],
-    queryFn: getDocumentacion,
+    queryKey: ["documentacion", activos],
+    queryFn: () => getDocumentacion(activos),
     staleTime: 60_000,
   });
 

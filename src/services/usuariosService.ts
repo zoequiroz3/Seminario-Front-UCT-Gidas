@@ -9,8 +9,6 @@ export type Usuario = {
   activo: boolean;
   primer_login: boolean;
   fecha_creacion?: string;
-
-  // 🔵 CAMPOS QUE YA ENVÍA EL BACK (pero no estaban tipados)
   nombre?: string;
   persona?: {
     id: number;
@@ -22,30 +20,40 @@ export type CrearUsuarioPayload = {
   nombre_usuario: string;
   mail: string;
   password: string;
-  rol: Rol;
+  rol_id: number;
 };
 
 export type ActualizarUsuarioPayload = {
+  nombre_usuario?: string;
   mail?: string;
-  rol?: Rol;
+  rol_id?: number;
   activo?: boolean;
 };
+export function rolToRolId(rol: Rol): number {
+  switch (rol) {
+    case "ADMIN":
+      return 1;
+    case "GESTOR":
+      return 2;
+    case "LECTURA":
+      return 3;
+    default:
+      return 2;
+  }
+}
 
-// Listar todos los usuarios (solo ADMIN)
 export async function getUsuarios(): Promise<Usuario[]> {
   return http<Usuario[]>("/auth/usuarios", {
     method: "GET",
   });
 }
 
-// Obtener un usuario por ID (solo ADMIN)
 export async function getUsuarioId(id: number): Promise<Usuario> {
   return http<Usuario>(`/auth/usuarios/${id}`, {
     method: "GET",
   });
 }
 
-// Crear nuevo usuario (solo ADMIN)
 export async function crearUsuario(payload: CrearUsuarioPayload): Promise<Usuario> {
   return http<Usuario>("/auth/usuarios", {
     method: "POST",
@@ -53,9 +61,8 @@ export async function crearUsuario(payload: CrearUsuarioPayload): Promise<Usuari
   });
 }
 
-// Actualizar usuario (solo ADMIN)
 export async function actualizarUsuario(
-  id: number, 
+  id: number,
   payload: ActualizarUsuarioPayload
 ): Promise<Usuario> {
   return http<Usuario>(`/auth/usuarios/${id}`, {
@@ -64,7 +71,6 @@ export async function actualizarUsuario(
   });
 }
 
-// Eliminar usuario (solo ADMIN)
 export async function eliminarUsuario(id: number): Promise<void> {
   await http(`/auth/usuarios/${id}`, {
     method: "DELETE",
