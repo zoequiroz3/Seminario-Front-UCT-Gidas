@@ -9,15 +9,15 @@ export default function Button({
   variant = "primary",
   size = "md",
   className = "",
-  type = "button", // 👈 CLAVE
+  type = "button",
   ...rest
 }: Props) {
   const sizeClasses =
     size === "sm"
       ? "text-sm px-3 py-1.5"
       : size === "lg"
-      ? "text-lg px-6 py-3"
-      : "text-base px-4 py-2";
+        ? "text-lg px-6 py-3"
+        : "text-base px-4 py-2";
 
   const variantClasses =
     variant === "primary"
@@ -26,7 +26,7 @@ export default function Button({
 
   return (
     <button
-      type={type} // 👈 CLAVE
+      type={type}
       className={`rounded-lg font-medium transition disabled:opacity-50 ${sizeClasses} ${variantClasses} ${className}`}
       {...rest}
     />

@@ -1,3 +1,4 @@
+//src/utils/format.ts
 export const toTitleCase = (text?: string | null) => {
   if (!text) return "";
 
