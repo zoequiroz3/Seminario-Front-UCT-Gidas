@@ -130,353 +130,409 @@ export default function Home() {
   ];
 
   return (
-    <section className="space-y-8">
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-            Unidad Científico Tecnológica
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Configuración institucional y métricas generales
-          </p>
-        </div>
-
-        {uct && (
-          <div className="flex gap-2">
-            {canExportExcel && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() =>
-                  exportarExcel(undefined, {
-                    onSuccess: () => {
-                      setSuccessMessage("Excel generado correctamente.");
-                      setShowSuccess(true);
-                    },
-                    onError: () => {
-                      setSuccessMessage("Error al generar el Excel.");
-                      setShowSuccess(true);
-                    },
-                  })
-                }
-                disabled={isPending}
-              >
-                {isPending ? "Generando..." : "Exportar Excel"}
-              </Button>
-            )}
-
-            {canEditUct && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => navigate("/uct/nueva")}
-              >
-                Editar
-              </Button>
-            )}
-
-            {canDeleteUct && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowConfirm(true)}
-              >
-                Eliminar
-              </Button>
-            )}
+    <>
+      <section className="space-y-8">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+              Unidad Científico Tecnológica
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              Configuración institucional y métricas generales
+            </p>
           </div>
-        )}
-      </div>
 
-      {uct ? (
-        <>
-          {faltanDirectivos && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="font-medium text-amber-900">
-                  La UCT ya fue creada, pero todavía no tiene equipo directivo registrado.
-                </p>
-                <p className="text-sm text-amber-800 mt-1">
-                  Completá esta información desde la edición de la configuración.
-                </p>
-              </div>
+          {uct && (
+            <div className="flex gap-2">
+              {canExportExcel && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    exportarExcel(undefined, {
+                      onSuccess: (result) => {
+                        setSuccessMessage(
+                          `Excel generado correctamente: ${result.filename}`
+                        );
+                        setShowSuccess(true);
+                      },
+                      onError: (error: any) => {
+                        setSuccessMessage(
+                          error?.message || "No se pudo exportar el archivo Excel."
+                        );
+                        setShowSuccess(true);
+                      },
+                    })
+                  }
+                  disabled={isPending}
+                >
+                  {isPending ? "Generando..." : "Exportar Excel"}
+                </Button>
+              )}
+              
+              {canEditUct && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => navigate("/uct/nueva")}
+                >
+                  Editar
+                </Button>
+              )}
 
-              <Button size="sm" onClick={() => navigate("/uct/nueva")}>
-                Cargar directivos
-              </Button>
+              {canDeleteUct && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowConfirm(true)}
+                >
+                  Eliminar
+                </Button>
+              )}
             </div>
           )}
-
-          <article className="rounded-3xl border border-slate-200 bg-white shadow-sm p-8">
-            <dl className="grid md:grid-cols-2 gap-y-8 gap-x-12 text-sm">
-              <Field label="Facultad Regional" value={uct.facultadRegional} />
-              <Field label="Nombre y Sigla" value={uct.nombreSigla} />
-              <Field
-                label="Director/a"
-                value={director ? director.nombre_apellido : "—"}
-              />
-              <Field
-                label="Vicedirector/a"
-                value={vicedirector ? vicedirector.nombre_apellido : "—"}
-              />
-              <Field label="Correo electrónico" value={uct.correo} />
-              <Field
-                label="Objetivos y desarrollo"
-                value={uct.objetivos}
-                className="md:col-span-2"
-              />
-            </dl>
-          </article>
-
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold text-slate-900">
-                Dashboard general
-              </h2>
-              <p className="text-sm text-slate-500 mt-1">
-                Resumen visual del estado actual del sistema.
-              </p>
-            </div>
-
-            {dashboardLoading && (
-              <div className="rounded-3xl border border-slate-200 bg-white p-8 text-slate-500 shadow-sm">
-                Cargando métricas…
-              </div>
-            )}
-
-            {dashboardError && (
-              <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-red-700 shadow-sm">
-                No se pudieron cargar las métricas del dashboard.
-              </div>
-            )}
-
-            {dashboard && (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-                  <KpiCard
-                    title="Total proyectos"
-                    value={dashboard.resumen.total_proyectos}
-                    subtitle="Proyectos del período"
-                    accent="blue"
-                  />
-                  <KpiCard
-                    title="Proyectos activos"
-                    value={dashboard.resumen.proyectos_activos}
-                    subtitle="Activos en el período"
-                    accent="violet"
-                  />
-                  <KpiCard
-                    title="Investigadores"
-                    value={dashboard.resumen.total_investigadores}
-                    subtitle="Total registrados"
-                    accent="emerald"
-                  />
-                  <KpiCard
-                    title="Becarios"
-                    value={dashboard.resumen.total_becarios}
-                    subtitle="Total registrados"
-                    accent="amber"
-                  />
-                  <KpiCard
-                    title="Personal"
-                    value={dashboard.resumen.total_personal}
-                    subtitle="Total registrado"
-                    accent="rose"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <ChartCard
-                    title="Personal general"
-                    subtitle="Investigadores, becarios y personal"
-                  >
-                    <ResponsiveContainer width="100%" height={320}>
-                      <BarChart
-                        data={personalGeneral}
-                        margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
-                      >
-                        <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
-                        <XAxis
-                          dataKey="label"
-                          tick={{ fill: "#64748b", fontSize: 13 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          allowDecimals={false}
-                          tick={{ fill: "#64748b", fontSize: 13 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={46}>
-                          {personalGeneral.map((_, index) => (
-                            <Cell
-                              key={index}
-                              fill={CHART_COLORS[index % CHART_COLORS.length]}
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-
-                  <ChartCard
-                    title="Proyectos por estado"
-                    subtitle="Activos y finalizados"
-                  >
-                    <ResponsiveContainer width="100%" height={320}>
-                      <PieChart>
-                        <Pie
-                          data={proyectosPorEstado}
-                          dataKey="value"
-                          nameKey="label"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={55}
-                          outerRadius={95}
-                          paddingAngle={4}
-                          labelLine={false}
-                          isAnimationActive
-                        >
-                          {proyectosPorEstado.map((_, index) => (
-                            <Cell
-                              key={index}
-                              fill={index === 0 ? "#10b981" : "#ef4444"}
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend
-                          verticalAlign="bottom"
-                          iconType="circle"
-                          wrapperStyle={{
-                            fontSize: "13px",
-                            color: "#475569",
-                            paddingTop: 12,
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-
-                  <ChartCard
-                    title="Proyectos por tipo"
-                    subtitle="Distribución por clasificación"
-                  >
-                    <ResponsiveContainer width="100%" height={320}>
-                      <PieChart>
-                        <Pie
-                          data={proyectosPorTipo}
-                          dataKey="value"
-                          nameKey="label"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={52}
-                          outerRadius={92}
-                          paddingAngle={3}
-                          labelLine={false}
-                          isAnimationActive
-                        >
-                          {proyectosPorTipo.map((_, index) => (
-                            <Cell
-                              key={index}
-                              fill={CHART_COLORS[index % CHART_COLORS.length]}
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend
-                          verticalAlign="bottom"
-                          iconType="circle"
-                          wrapperStyle={{
-                            fontSize: "13px",
-                            color: "#475569",
-                            paddingTop: 12,
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-
-                  <ChartCard
-                    title="Becarios por tipo de formación"
-                    subtitle="Distribución actual"
-                  >
-                    <ResponsiveContainer width="100%" height={330}>
-                      <BarChart
-                        data={becariosPorTipoFormacion}
-                        margin={{ top: 10, right: 20, left: -10, bottom: 0 }}
-                      >
-                        <CartesianGrid
-                          stroke="#e2e8f0"
-                          strokeDasharray="3 3"
-                          vertical={false}
-                        />
-                        <XAxis
-                          dataKey="label"
-                          tick={{ fill: "#64748b", fontSize: 13 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          allowDecimals={false}
-                          tick={{ fill: "#64748b", fontSize: 13 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Bar
-                          dataKey="value"
-                          radius={[8, 8, 0, 0]}
-                          barSize={40}
-                        >
-                          {becariosPorTipoFormacion.map((_, index) => (
-                            <Cell
-                              key={index}
-                              fill={CHART_COLORS[index % CHART_COLORS.length]}
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-                </div>
-              </>
-            )}
-          </section>
-        </>
-      ) : (
-        <div className="rounded-3xl border-2 border-dashed border-slate-300 bg-white/60 p-12 text-center space-y-4">
-          <p className="text-slate-600">
-            No hay una UCT configurada en el sistema.
-          </p>
-          <Button onClick={() => navigate("/uct/nueva")}>
-            Crear configuración inicial
-          </Button>
         </div>
-      )}
 
-      <ConfirmDialog
-        open={showConfirm}
-        title="Eliminar Unidad Científico Tecnológica"
-        message="¿Estás seguro de eliminar la UCT configurada?"
-        items={uct ? [`${uct.nombreSigla} — ${uct.facultadRegional}`] : []}
-        onCancel={() => setShowConfirm(false)}
-        onConfirm={async () => {
-          await remove();
-          setShowConfirm(false);
-          setSuccessMessage("Eliminado con éxito!");
-          setShowSuccess(true);
-        }}
-      />
+        {uct ? (
+          <>
+            {faltanDirectivos && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-4 flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium text-amber-900">
+                    La UCT ya fue creada, pero todavía no tiene equipo directivo
+                    registrado.
+                  </p>
+                  <p className="text-sm text-amber-800 mt-1">
+                    Completá esta información desde la edición de la
+                    configuración.
+                  </p>
+                </div>
 
-      <SuccessToast
-        open={showSuccess}
-        message={successMessage}
-        onClose={() => setShowSuccess(false)}
-      />
-    </section>
+                <Button size="sm" onClick={() => navigate("/uct/nueva")}>
+                  Cargar directivos
+                </Button>
+              </div>
+            )}
+
+            <article className="rounded-3xl border border-slate-200 bg-white shadow-sm p-8">
+              <dl className="grid md:grid-cols-2 gap-y-8 gap-x-12 text-sm">
+                <Field label="Facultad Regional" value={uct.facultadRegional} />
+                <Field label="Nombre y Sigla" value={uct.nombreSigla} />
+                <Field
+                  label="Director/a"
+                  value={director ? director.nombre_apellido : "—"}
+                />
+                <Field
+                  label="Vicedirector/a"
+                  value={vicedirector ? vicedirector.nombre_apellido : "—"}
+                />
+                <Field label="Correo electrónico" value={uct.correo} />
+                <Field
+                  label="Objetivos y desarrollo"
+                  value={uct.objetivos}
+                  className="md:col-span-2"
+                />
+              </dl>
+            </article>
+
+            <section className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-semibold text-slate-900">
+                  Dashboard general
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Resumen visual del estado actual del sistema.
+                </p>
+              </div>
+
+              {dashboardLoading && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-8 text-slate-500 shadow-sm">
+                  Cargando métricas…
+                </div>
+              )}
+
+              {dashboardError && (
+                <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-red-700 shadow-sm">
+                  No se pudieron cargar las métricas del dashboard.
+                </div>
+              )}
+
+              {dashboard && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+                    <KpiCard
+                      title="Total proyectos"
+                      value={dashboard.resumen.total_proyectos}
+                      subtitle="Proyectos del período"
+                      accent="blue"
+                    />
+                    <KpiCard
+                      title="Proyectos activos"
+                      value={dashboard.resumen.proyectos_activos}
+                      subtitle="Activos en el período"
+                      accent="violet"
+                    />
+                    <KpiCard
+                      title="Investigadores"
+                      value={dashboard.resumen.total_investigadores}
+                      subtitle="Total registrados"
+                      accent="emerald"
+                    />
+                    <KpiCard
+                      title="Becarios"
+                      value={dashboard.resumen.total_becarios}
+                      subtitle="Total registrados"
+                      accent="amber"
+                    />
+                    <KpiCard
+                      title="Personal"
+                      value={dashboard.resumen.total_personal}
+                      subtitle="Total registrado"
+                      accent="rose"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <ChartCard
+                      title="Personal general"
+                      subtitle="Investigadores, becarios y personal"
+                    >
+                      <ResponsiveContainer width="100%" height={320}>
+                        <BarChart
+                          data={personalGeneral}
+                          margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
+                        >
+                          <CartesianGrid
+                            stroke="#e2e8f0"
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="label"
+                            tick={{ fill: "#64748b", fontSize: 13 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            allowDecimals={false}
+                            tick={{ fill: "#64748b", fontSize: 13 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={46}>
+                            {personalGeneral.map((_, index) => (
+                              <Cell
+                                key={index}
+                                fill={CHART_COLORS[index % CHART_COLORS.length]}
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
+
+                    <ChartCard
+                      title="Proyectos por estado"
+                      subtitle="Activos y finalizados"
+                    >
+                      <ResponsiveContainer width="100%" height={320}>
+                        <PieChart>
+                          <Pie
+                            data={proyectosPorEstado}
+                            dataKey="value"
+                            nameKey="label"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={95}
+                            paddingAngle={4}
+                            labelLine={false}
+                            isAnimationActive
+                          >
+                            {proyectosPorEstado.map((_, index) => (
+                              <Cell
+                                key={index}
+                                fill={index === 0 ? "#10b981" : "#ef4444"}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend
+                            verticalAlign="bottom"
+                            iconType="circle"
+                            wrapperStyle={{
+                              fontSize: "13px",
+                              color: "#475569",
+                              paddingTop: 12,
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
+
+                    <ChartCard
+                      title="Proyectos por tipo"
+                      subtitle="Distribución por clasificación"
+                    >
+                      <ResponsiveContainer width="100%" height={320}>
+                        <PieChart>
+                          <Pie
+                            data={proyectosPorTipo}
+                            dataKey="value"
+                            nameKey="label"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={52}
+                            outerRadius={92}
+                            paddingAngle={3}
+                            labelLine={false}
+                            isAnimationActive
+                          >
+                            {proyectosPorTipo.map((_, index) => (
+                              <Cell
+                                key={index}
+                                fill={CHART_COLORS[index % CHART_COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend
+                            verticalAlign="bottom"
+                            iconType="circle"
+                            wrapperStyle={{
+                              fontSize: "13px",
+                              color: "#475569",
+                              paddingTop: 12,
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
+
+                    <ChartCard
+                      title="Becarios por tipo de formación"
+                      subtitle="Distribución actual"
+                    >
+                      <ResponsiveContainer width="100%" height={330}>
+                        <BarChart
+                          data={becariosPorTipoFormacion}
+                          margin={{ top: 10, right: 20, left: -10, bottom: 0 }}
+                        >
+                          <CartesianGrid
+                            stroke="#e2e8f0"
+                            strokeDasharray="3 3"
+                            vertical={false}
+                          />
+                          <XAxis
+                            dataKey="label"
+                            tick={{ fill: "#64748b", fontSize: 13 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            allowDecimals={false}
+                            tick={{ fill: "#64748b", fontSize: 13 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Bar
+                            dataKey="value"
+                            radius={[8, 8, 0, 0]}
+                            barSize={40}
+                          >
+                            {becariosPorTipoFormacion.map((_, index) => (
+                              <Cell
+                                key={index}
+                                fill={CHART_COLORS[index % CHART_COLORS.length]}
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartCard>
+                  </div>
+                </>
+              )}
+            </section>
+
+            <section
+              id="quienes-somos"
+              className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white shadow-sm p-8"
+            >
+              <div className="max-w-4xl space-y-5">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                    About Us
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-slate-900">
+                    ¿Quiénes Somos?
+                  </h2>
+                </div>
+
+                <p className="text-base leading-8 text-slate-700">
+                  El GIDAS es el grupo de I&amp;D aplicado a sistemas
+                  informáticos, de la UTN FRLP. Con el objetivo de realizar
+                  aportes al mejoramiento de la informática para sus
+                  aplicaciones en el medio socio productivo actual y futuro,
+                  manteniendo una participación activa en actividades
+                  científicas-tecnológicas, compartiendo conocimientos de
+                  actualidad y aportando innovaciones metodológicas y soluciones
+                  digitales.
+                </p>
+
+                <div className="grid gap-4 sm:grid-cols-3 pt-2">
+                  <InfoBadge
+                    title="Investigación aplicada"
+                    description="Desarrollo de soluciones y aportes concretos en sistemas informáticos."
+                  />
+                  <InfoBadge
+                    title="Vinculación"
+                    description="Trabajo orientado al medio socio productivo actual y futuro."
+                  />
+                  <InfoBadge
+                    title="Innovación"
+                    description="Metodologías, conocimiento actualizado y soluciones digitales."
+                  />
+                </div>
+              </div>
+            </section>
+          </>
+        ) : (
+          <div className="rounded-3xl border-2 border-dashed border-slate-300 bg-white/60 p-12 text-center space-y-4">
+            <p className="text-slate-600">
+              No hay una UCT configurada en el sistema.
+            </p>
+            <Button onClick={() => navigate("/uct/nueva")}>
+              Crear configuración inicial
+            </Button>
+          </div>
+        )}
+
+        <ConfirmDialog
+          open={showConfirm}
+          title="Eliminar Unidad Científico Tecnológica"
+          message="¿Estás seguro de eliminar la UCT configurada?"
+          items={uct ? [`${uct.nombreSigla} — ${uct.facultadRegional}`] : []}
+          onCancel={() => setShowConfirm(false)}
+          onConfirm={async () => {
+            await remove();
+            setShowConfirm(false);
+            setSuccessMessage("Eliminado con éxito!");
+            setShowSuccess(true);
+          }}
+        />
+
+        <SuccessToast
+          open={showSuccess}
+          message={successMessage}
+          onClose={() => setShowSuccess(false)}
+        />
+      </section>
+
+      <FooterGidas />
+    </>
   );
 }
 
@@ -572,8 +628,170 @@ function CustomTooltip({
         {label || payload[0]?.payload?.label}
       </p>
       <p className="text-sm text-slate-600 mt-1">
-        Valor: <span className="font-semibold text-slate-900">{payload[0].value}</span>
+        Valor:{" "}
+        <span className="font-semibold text-slate-900">
+          {payload[0].value}
+        </span>
       </p>
     </div>
+  );
+}
+
+function InfoBadge({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+    </article>
+  );
+}
+
+function FooterGidas() {
+  return (
+    <footer className="mt-10 border-t border-slate-200 bg-slate-950 text-slate-200">
+      <div className="mx-auto max-w-7xl px-6 py-12">
+        <div className="grid gap-10 md:grid-cols-2">
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-white">
+              Contacto
+            </h3>
+            <div className="mt-5 h-px w-full bg-white/10" />
+
+            <div className="mt-6 space-y-4 text-sm leading-7 text-slate-300">
+              <p className="text-base font-medium text-white">
+                Grupo GIDAS - UTN FRLP
+              </p>
+              <p>
+                Grupo de I&amp;D aplicado a sistemas informáticos de la
+                Universidad Tecnológica Nacional, Facultad Regional La Plata.
+              </p>
+              <p>
+                La Plata, Buenos Aires, Argentina
+              </p>
+              <p>
+                <a
+                  href="mailto:gidas@frlp.utn.edu.ar"
+                  className="transition hover:text-white"
+                >
+                  gidas@frlp.utn.edu.ar
+                </a>
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-white">
+              Seguinos en
+            </h3>
+            <div className="mt-5 h-px w-full bg-white/10" />
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <SocialLink
+                href="https://www.linkedin.com"
+                label="LinkedIn"
+                icon={<LinkedinIcon />}
+              />
+              <SocialLink
+                href="https://www.instagram.com"
+                label="Instagram"
+                icon={<InstagramIcon />}
+              />
+              <SocialLink
+                href="https://www.facebook.com"
+                label="Facebook"
+                icon={<FacebookIcon />}
+              />
+              <SocialLink
+                href="https://www.youtube.com"
+                label="YouTube"
+                icon={<YoutubeIcon />}
+              />
+            </div>
+
+            <p className="mt-8 text-sm text-slate-400">
+              © {new Date().getFullYear()} GIDAS - UTN FRLP. Todos los derechos
+              reservados.
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function SocialLink({
+  href,
+  label,
+  icon,
+}: {
+  href: string;
+  label: string;
+  icon: ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      title={label}
+      className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white transition hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/10"
+    >
+      {icon}
+    </a>
+  );
+}
+
+function LinkedinIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-current"
+      aria-hidden="true"
+    >
+      <path d="M6.94 8.5H3.56V20h3.38V8.5ZM5.25 3A1.97 1.97 0 0 0 3.25 5c0 1.08.88 1.94 1.96 1.94h.02A1.96 1.96 0 1 0 5.25 3ZM20.75 12.87c0-3.48-1.86-5.1-4.34-5.1-2 0-2.89 1.1-3.39 1.87V8.5H9.65c.04.76 0 11.5 0 11.5h3.37v-6.42c0-.34.03-.68.13-.92.27-.67.9-1.37 1.96-1.37 1.39 0 1.94 1.03 1.94 2.54V20H20.4v-6.8c0-.11 0-.22-.01-.33h.36Z" />
+    </svg>
+  );
+}
+
+function InstagramIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-current"
+      aria-hidden="true"
+    >
+      <path d="M7.75 2h8.5A5.76 5.76 0 0 1 22 7.75v8.5A5.76 5.76 0 0 1 16.25 22h-8.5A5.76 5.76 0 0 1 2 16.25v-8.5A5.76 5.76 0 0 1 7.75 2Zm0 1.8A3.96 3.96 0 0 0 3.8 7.75v8.5a3.96 3.96 0 0 0 3.95 3.95h8.5a3.96 3.96 0 0 0 3.95-3.95v-8.5a3.96 3.96 0 0 0-3.95-3.95h-8.5Zm8.9 1.35a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 1.8A3.2 3.2 0 1 0 12 15.2 3.2 3.2 0 0 0 12 8.8Z" />
+    </svg>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-current"
+      aria-hidden="true"
+    >
+      <path d="M13.5 21v-7.2H16l.38-2.8h-2.88V9.2c0-.81.24-1.35 1.4-1.35h1.6V5.33c-.28-.04-1.22-.11-2.32-.11-2.29 0-3.86 1.34-3.86 3.93v1.85H8v2.8h2.52V21h2.98Z" />
+    </svg>
+  );
+}
+
+function YoutubeIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-current"
+      aria-hidden="true"
+    >
+      <path d="M21.58 7.19a2.76 2.76 0 0 0-1.94-1.95C17.96 4.8 12 4.8 12 4.8s-5.96 0-7.64.44A2.76 2.76 0 0 0 2.42 7.2 28.5 28.5 0 0 0 2 12a28.5 28.5 0 0 0 .42 4.8 2.76 2.76 0 0 0 1.94 1.95c1.68.44 7.64.44 7.64.44s5.96 0 7.64-.44a2.76 2.76 0 0 0 1.94-1.95A28.5 28.5 0 0 0 22 12a28.5 28.5 0 0 0-.42-4.81ZM10 15.5v-7l6 3.5-6 3.5Z" />
+    </svg>
   );
 }

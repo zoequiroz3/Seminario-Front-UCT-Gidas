@@ -47,24 +47,35 @@ export type SearchResult = {
    ─────────────────────────────────────────── */
 const URL_MAP: [RegExp, string][] = [
   [/^\/personal\/(\d+)$/, "/personal/personal/$1"],
+  [/^\/investigadores\/(\d+)$/, "/investigadores/$1"],
+  [/^\/becarios\/(\d+)$/, "/becarios/$1"],
   [/^\/actividades-docencia\/(\d+)$/, "/docenciaInvestigador/$1"],
   [/^\/documentacion-bibliografica\/(\d+)$/, "/documentacion/$1"],
   [/^\/participaciones-relevantes\/(\d+)$/, "/participaciones/$1"],
   [/^\/articulos-divulgacion\/(\d+)$/, "/articulos-divulgacion/$1"],
+  [/^\/visitas-academicas\/(\d+)$/, "/visitantes/$1"],
+  [/^\/proyectos\/(\d+)$/, "/proyectos/$1"],
+  [/^\/transferencias\/(\d+)$/, "/transferencias/$1"],
+  [/^\/distinciones\/(\d+)$/, "/distinciones/$1"],
+  [/^\/equipamiento\/(\d+)$/, "/equipamiento/$1"],
+  [/^\/erogaciones\/(\d+)$/, "/erogaciones/$1"],
+  [/^\/registros-propiedad\/(\d+)$/, "/registros-propiedad/$1"],
+  [/^\/trabajos-reunion-cientifica\/(\d+)$/, "/trabajos-reunion/$1"],
+  [/^\/trabajos-revistas\/(\d+)$/, "/trabajos-revistas/$1"],
+  [/^\/planificaciones\/(\d+)$/, "/planificaciones/$1"],
 
   [/^\/tipos-proyecto\/.+$/, "/proyectos"],
   [/^\/tipos-erogacion\/.+$/, "/erogaciones"],
   [/^\/tipos-registro\/.+$/, "/registros-propiedad"],
   [/^\/tipos-contrato\/.+$/, "/transferencias"],
   [/^\/tipos-personal\/.+$/, "/personal"],
+  [/^\/fuente-financiamiento\/.+$/, "/proyectos"],
   [/^\/fuentes-financiamiento\/.+$/, "/proyectos"],
   [/^\/autores\/.+$/, "/documentacion"],
   [/^\/directivos\/.+$/, "/personal"],
-
-  [/^\/visitas-academicas\/(\d+)$/, "/visitantes/$1"],
 ];
 
-function mapUrl(backendUrl: string): string {
+export function resolveFrontendUrl(backendUrl: string): string {
   for (const [re, replacement] of URL_MAP) {
     if (re.test(backendUrl)) {
       return backendUrl.replace(re, replacement);
@@ -106,7 +117,7 @@ export async function searchAll(
     titulo: r.titulo,
     subtitulo: r.subtitulo ?? "",
     fecha: r.fecha ? String(r.fecha) : null,
-    href: mapUrl(r.url),
+    href: resolveFrontendUrl(r.url),
     extra: r.extra,
     activo: typeof r.activo === "boolean" ? r.activo : null,
   }));

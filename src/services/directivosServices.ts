@@ -7,24 +7,30 @@ export type Directivo = {
 };
 
 export type DirectivoActual = {
+  id: number;
   id_directivo: number;
   nombre_apellido: string;
   cargo: string;
   fecha_inicio: string;
+  fecha_fin?: string | null;
 };
 
-// ------------------------------
-// Obtener todos los directivos
-// ------------------------------
+export type UpdateDirectivoPayload = {
+  nombre_apellido: string;
+};
+
+export type FinalizarDirectivoPayload = {
+  id_grupo_utn: number;
+  id_directivo: number;
+  fecha_fin: string;
+};
+
 export function getDirectivos() {
   return http<Directivo[]>("/directivos", {
     method: "GET",
   });
 }
 
-// ------------------------------
-// Crear directivo
-// ------------------------------
 export function createDirectivo(payload: {
   nombre_apellido: string;
 }) {
@@ -34,9 +40,6 @@ export function createDirectivo(payload: {
   });
 }
 
-// ------------------------------
-// Asignar directivo a grupo
-// ------------------------------
 export function asignarDirectivo(payload: {
   id_directivo: number;
   id_grupo_utn: number;
@@ -49,30 +52,25 @@ export function asignarDirectivo(payload: {
   });
 }
 
-// ------------------------------
-// Obtener actuales por grupo
-// ------------------------------
 export function getDirectivosActuales(grupoId: number) {
-  return http<DirectivoActual[]>(
-    `/directivos/grupo/${grupoId}/actuales`,
-    {
-      method: "GET",
-    }
-  );
+  return http<DirectivoActual[]>(`/directivos/grupo/${grupoId}/actuales`, {
+    method: "GET",
+  });
 }
 
-// En tu archivo de servicios de directivos
-export async function finalizarDirectivo(id_directivo: number, fecha_fin: string) {
-  const response = await fetch("/api/directivos/finalizar", { // Ajusta la URL a tu API
+export function updateDirectivo(
+  directivoId: number,
+  payload: UpdateDirectivoPayload
+) {
+  return http<{ message: string }>(`/directivos/${directivoId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id_directivo, fecha_fin }),
+    body: JSON.stringify(payload),
   });
+}
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Error al finalizar cargo");
-  }
-
-  return response.json();
+export function finalizarDirectivo(payload: FinalizarDirectivoPayload) {
+  return http<{ message: string }>("/directivos/finalizar", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
 }

@@ -7,7 +7,7 @@ import { useState, useMemo } from "react";
 import Button from "@/components/Button";
 import Calendar from "@/components/Calendar";
 import Field from "@/components/Field";
-import type { SearchResult } from "@/services/searchService";
+import { resolveFrontendUrl, type SearchResult } from "@/services/searchService";
 
 // Configuración de colores e iconos por tipo de entidad
 const TYPE_CONFIG: Record<string, { color: string; bgColor: string; icon: React.ElementType }> = {
@@ -213,37 +213,6 @@ export default function SearchPage() {
       texto: `${label}: ${items.join(", ")}`,
       count: items.length
     };
-  };
-
-  // Función para navegar a la URL mapeada del frontend
-  const navigateToItem = (backendUrl: string) => {
-    const urlMap: [RegExp, string][] = [
-      [/^\/personal\/(\d+)$/, "/personal/personal/$1"],
-      [/^\/actividades-docencia\/(\d+)$/, "/docenciaInvestigador/$1"],
-      [/^\/documentacion-bibliografica\/(\d+)$/, "/documentacion/$1"],
-      [/^\/participaciones-relevantes\/(\d+)$/, "/participaciones/$1"],
-      [/^\/articulos-divulgacion\/(\d+)$/, "/articulos-divulgacion/$1"],
-      [/^\/visitas-academicas\/(\d+)$/, "/visitantes/$1"],
-      [/^\/proyectos\/(\d+)$/, "/proyectos/$1"],
-      [/^\/tipos-proyecto\/.+$/, "/proyectos"],
-      [/^\/tipos-erogacion\/.+$/, "/erogaciones"],
-      [/^\/tipos-registro\/.+$/, "/registros-propiedad"],
-      [/^\/tipos-contrato\/.+$/, "/transferencias"],
-      [/^\/tipos-personal\/.+$/, "/personal"],
-      [/^\/fuentes-financiamiento\/.+$/, "/proyectos"],
-      [/^\/autores\/.+$/, "/documentacion"],
-      [/^\/directivos\/.+$/, "/personal"],
-    ];
-
-    for (const [pattern, replacement] of urlMap) {
-      if (pattern.test(backendUrl)) {
-        const frontendUrl = backendUrl.replace(pattern, replacement);
-        nav(frontendUrl);
-        return;
-      }
-    }
-
-    nav(backendUrl);
   };
 
   // Tipo para items expandidos
@@ -569,7 +538,13 @@ export default function SearchPage() {
                         <li
                           key={item.id}
                           className="group py-4 px-2 -mx-2 cursor-pointer hover:bg-slate-50 rounded-lg transition-all"
-                          onClick={() => item.relatedItem ? navigateToItem(item.relatedItem.url) : nav(item.origin.href)}
+                          onClick={() =>
+                            nav(
+                              item.relatedItem
+                                ? resolveFrontendUrl(item.relatedItem.url)
+                                : item.origin.href
+                            )
+                          }
                         >
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                             <div className="space-y-1.5 flex-1">
@@ -607,8 +582,7 @@ export default function SearchPage() {
                                               key={proy.id}
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                console.log('Navegando a:', proyectoUrl);
-                                                navigateToItem(proyectoUrl);
+                                                nav(resolveFrontendUrl(proyectoUrl));
                                               }}
                                               className="inline-flex items-center px-2 py-0.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 transition-colors"
                                             >

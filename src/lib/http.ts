@@ -1,7 +1,6 @@
 const BASE = import.meta.env.VITE_API_URL ?? "";
 const AUTH_KEY = "gidas_auth_current_session";
 
-// Función local para leer el token sin depender de otros archivos
 function getLocalAuth() {
   const raw = localStorage.getItem(AUTH_KEY);
   return raw ? JSON.parse(raw) : null;
@@ -23,6 +22,7 @@ export function logout() {
 export class HttpError extends Error {
   status: number;
   body?: unknown;
+
   constructor(status: number, message: string, body?: unknown) {
     super(message);
     this.status = status;
@@ -33,7 +33,6 @@ export class HttpError extends Error {
 let refreshPromise: Promise<string | null> | null = null;
 
 async function tryRefreshToken(): Promise<string | null> {
-  // Si ya hay un refresh en curso, esperar ese mismo
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
@@ -54,6 +53,7 @@ async function tryRefreshToken(): Promise<string | null> {
         updateStoredToken(data.access_token);
         return data.access_token as string;
       }
+
       return null;
     } catch {
       return null;
@@ -65,6 +65,36 @@ async function tryRefreshToken(): Promise<string | null> {
   return refreshPromise;
 }
 
+function buildHeaders(init?: RequestInit) {
+  const auth = getLocalAuth();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((init?.headers as Record<string, string>) || {}),
+  };
+
+  if (auth?.token) {
+    headers["Authorization"] = `Bearer ${auth.token}`;
+  }
+
+  return headers;
+}
+
+async function parseErrorResponse(res: Response): Promise<unknown> {
+  try {
+    const contentType = res.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      return await res.json();
+    }
+
+    const text = await res.text();
+    return text || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function http<T>(
   path: string,
   init: RequestInit = {},
@@ -72,18 +102,7 @@ export async function http<T>(
 ): Promise<T> {
   const url = `${BASE}${path}`;
 
-  // 1. Leemos el token aquí mismo
-  const auth = getLocalAuth();
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(init.headers as Record<string, string> || {}),
-  };
-
-  // 2. Si existe token, lo pegamos en la cabecera
-  if (auth?.token) {
-    headers["Authorization"] = `Bearer ${auth.token}`;
-  }
+  const headers = buildHeaders(init);
 
   const res = await fetch(url, {
     ...init,
@@ -93,14 +112,12 @@ export async function http<T>(
   if (res.status === 204) return undefined as T;
   if (res.status === 404) return null as T;
 
-  // Si el token venció (401), intentar refresh antes de deslogear
   if (res.status === 401 && !_isRetry) {
     const newToken = await tryRefreshToken();
     if (newToken) {
-      // Reintentar la petición original con el nuevo token
       return http<T>(path, init, true);
     }
-    // Si el refresh falló, ahora sí deslogeamos
+
     if (!window.location.pathname.includes("/login")) {
       logout();
     }
@@ -119,4 +136,49 @@ export async function http<T>(
   }
 
   return data as T;
+}
+
+export async function httpDownload(
+  path: string,
+  init: RequestInit = {},
+  _isRetry = false
+): Promise<Response> {
+  const url = `${BASE}${path}`;
+
+  const headers = buildHeaders({
+    ...init,
+    headers: {
+      Accept:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/octet-stream",
+      ...((init.headers as Record<string, string>) || {}),
+    },
+  });
+
+  if (headers["Content-Type"] && (!init.body || init.method === "GET")) {
+    delete headers["Content-Type"];
+  }
+
+  const res = await fetch(url, {
+    ...init,
+    headers,
+  });
+
+  if (res.status === 401 && !_isRetry) {
+    const newToken = await tryRefreshToken();
+    if (newToken) {
+      return httpDownload(path, init, true);
+    }
+
+    if (!window.location.pathname.includes("/login")) {
+      logout();
+    }
+  }
+
+  if (!res.ok) {
+    const data = await parseErrorResponse(res);
+    console.error("ERROR BACKEND:", data);
+    throw new HttpError(res.status, res.statusText, data);
+  }
+
+  return res;
 }

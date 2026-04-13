@@ -9,6 +9,7 @@ export default function Button({
   variant = "primary",
   size = "md",
   className = "",
+  type = "button", // 👈 CLAVE
   ...rest
 }: Props) {
   const sizeClasses =
@@ -25,6 +26,7 @@ export default function Button({
 
   return (
     <button
+      type={type} // 👈 CLAVE
       className={`rounded-lg font-medium transition disabled:opacity-50 ${sizeClasses} ${variantClasses} ${className}`}
       {...rest}
     />
