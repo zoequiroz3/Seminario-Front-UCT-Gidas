@@ -80,15 +80,29 @@ export default function ArticulosDivulgacionDetalle() {
     );
   }
 
+  const isDeleted = !!data.deleted_at;
+
   return (
     <>
       <section className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-            {data.titulo || "—"}
-          </h2>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+              {data.titulo || "—"}
+            </h2>
 
-          {puedeEditar && !data.deleted_at && (
+            <span
+              className={`w-fit px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wider border ${
+                isDeleted
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+              }`}
+            >
+              {isDeleted ? "INACTIVO" : "ACTIVO"}
+            </span>
+          </div>
+
+          {puedeEditar && !isDeleted && (
             <Button
               size="sm"
               onClick={() =>

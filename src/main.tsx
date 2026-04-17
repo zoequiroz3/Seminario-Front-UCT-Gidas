@@ -150,11 +150,6 @@ const router = createBrowserRouter([
       { path: "registros-propiedad/:id", element: <RegistrosPropiedadDetalle /> },
       { path: "registros-propiedad/:id/editar", element: <RegistrosPropiedadForm /> },
 
-      // Planificaciones de grupo
-      { path: "planificaciones", element: <PlanificacionGrupoLanding /> },
-      { path: "planificaciones/nuevo", element: <PlanificacionesGrupoForm /> },
-      { path: "planificaciones/:id", element: <PlanificacionGrupoDetalle /> },
-      { path: "planificaciones/:id/editar", element: <PlanificacionesGrupoForm /> },
 
       //Trabajos en reuniones científicas
       { path: "trabajos-reunion", element: <TrabajosReunionHome /> },

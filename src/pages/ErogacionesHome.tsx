@@ -25,15 +25,24 @@ export default function ErogacionesLanding() {
   const puedeCrear = canCreateRecords();
   const puedeEliminar = canDeleteRecords();
 
-  const [filtroActivos, setFiltroActivos] = useState<
-    "true" | "false" | "all"
-  >("true");
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const [showFilters, setShowFilters] = useState(false);
+  const [filtroActivos, setFiltroActivos] = useState<"true" | "false" | "all">(
+    "true"
+  );
 
   const { list = [], isLoading, isError } = useErogaciones(filtroActivos);
   const { tipos } = useTiposErogacion();
   const { fuentes } = useFuentesFinanciamiento();
-
-  const [showFilters, setShowFilters] = useState(false);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -58,25 +67,25 @@ export default function ErogacionesLanding() {
 
   const erogacionesFiltradas = useMemo(() => {
     return list.filter((e) => {
+      const search = filters.search.toLowerCase().trim();
+
       const matchSearch =
-        !filters.search ||
-        String(e.numero_erogacion).includes(filters.search);
+        !search ||
+        String(e.numero_erogacion ?? "").includes(search) ||
+        String(e.tipo_erogacion?.nombre ?? "").toLowerCase().includes(search) ||
+        String(e.fuente?.nombre ?? "").toLowerCase().includes(search);
 
       const matchTipo =
-        !filters.tipoId ||
-        e.tipo_erogacion?.id?.toString() === filters.tipoId;
+        !filters.tipoId || e.tipo_erogacion?.id?.toString() === filters.tipoId;
 
       const matchFuente =
-        !filters.fuenteId ||
-        e.fuente?.id?.toString() === filters.fuenteId;
+        !filters.fuenteId || e.fuente?.id?.toString() === filters.fuenteId;
 
       const matchIngresos =
-        !filters.ingresosMin ||
-        e.ingresos >= Number(filters.ingresosMin);
+        !filters.ingresosMin || e.ingresos >= Number(filters.ingresosMin);
 
       const matchEgresos =
-        !filters.egresosMin ||
-        e.egresos >= Number(filters.egresosMin);
+        !filters.egresosMin || e.egresos >= Number(filters.egresosMin);
 
       const matchAnio =
         !filters.anio ||
@@ -95,9 +104,7 @@ export default function ErogacionesLanding() {
 
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.ceil(
-    erogacionesFiltradas.length / ITEMS_PER_PAGE
-  );
+  const totalPages = Math.ceil(erogacionesFiltradas.length / ITEMS_PER_PAGE);
 
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -108,15 +115,13 @@ export default function ErogacionesLanding() {
     setCurrentPage(1);
   }, [filters, filtroActivos]);
 
-  const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-
-  const [showError, setShowError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      setShowSuccess(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const toggleSelect = (id: number, checked: boolean) => {
     if (!puedeEliminar) return;
@@ -197,26 +202,16 @@ export default function ErogacionesLanding() {
     }
   };
 
-  useEffect(() => {
-    if (location.state?.successMessage) {
-      setSuccessMessage(location.state.successMessage);
-      setShowSuccess(true);
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
-
   return (
-    <section className="w-full min-h-[calc(100vh-120px)] px-4 py-4 flex flex-col">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+    <section className="w-full min-h-[calc(100vh-80px)] px-4 md:px-6 py-4 flex flex-col text-sm">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl md:text-3xl font-semibold">
+          <h2 className="text-2xl md:text-3xl font-semibold leading-none text-slate-800">
             Resumen de Ingresos y Egresos
           </h2>
-          {!isLoading && (
-            <p className="text-sm text-slate-500 mt-1">
-              Mostrando {erogacionesFiltradas.length} de {list.length} resultados
-            </p>
-          )}
+          <p className="text-xs text-slate-500 mt-2">
+            {erogacionesFiltradas.length} de {list.length} resultados
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2 items-center justify-end">
@@ -244,6 +239,49 @@ export default function ErogacionesLanding() {
             >
               Todas
             </button>
+
+            <button
+              type="button"
+              onClick={() => setFiltroActivos("false")}
+              className={`px-3 py-1.5 text-xs border-l border-slate-200 transition-colors ${
+                filtroActivos === "false"
+                  ? "bg-slate-800 text-white"
+                  : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              Inactivas
+            </button>
+          </div>
+
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              placeholder="Buscar por número, tipo o fuente..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-10 py-1.5 focus:bg-white focus:ring-2 focus:ring-slate-200 outline-none transition-all text-xs"
+              value={filters.search}
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  search: e.target.value,
+                }))
+              }
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </div>
           </div>
 
           {!selectMode ? (
@@ -258,7 +296,7 @@ export default function ErogacionesLanding() {
               >
                 Filtros
                 {filtrosActivos > 0 && (
-                  <span className="ml-2 text-xs bg-slate-800 text-white rounded-full px-2 py-0.5">
+                  <span className="ml-1.5 bg-slate-800 text-white text-[10px] rounded-full px-1.5 py-0.5">
                     {filtrosActivos}
                   </span>
                 )}
@@ -276,10 +314,11 @@ export default function ErogacionesLanding() {
 
               {puedeCrear && (
                 <Button
+                  variant="primary"
                   size="sm"
                   onClick={() => navigate("/erogaciones/nuevo")}
                 >
-                  Agregar nuevo
+                  Nuevo
                 </Button>
               )}
             </>
@@ -304,10 +343,15 @@ export default function ErogacionesLanding() {
       </div>
 
       <div className="flex-1 flex flex-col">
-        {isLoading && <p>Cargando…</p>}
-        {isError && <p>Error al cargar.</p>}
-
-        <div className="flex-1">
+        {isLoading ? (
+          <p className="text-slate-500 text-center py-10">Cargando…</p>
+        ) : isError ? (
+          <p className="text-slate-500 text-center py-10">Error al cargar.</p>
+        ) : erogacionesFiltradas.length === 0 ? (
+          <p className="text-slate-500 text-center py-10">
+            No hay erogaciones registradas.
+          </p>
+        ) : (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {paginatedItems.map((e) => (
               <Tarjeta
@@ -317,28 +361,16 @@ export default function ErogacionesLanding() {
                   `Erogación N° ${String(x.numero_erogacion).padStart(6, "0")}`
                 }
                 subtitle={(x) => x.tipo_erogacion?.nombre || "—"}
-                badge={(x) => (
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-                      x.deleted_at
-                        ? "bg-red-100 text-red-700"
-                        : "bg-emerald-100 text-emerald-700"
-                    }`}
-                  >
-                    {x.deleted_at ? "ELIMINADA" : "ACTIVA"}
-                  </span>
-                )}
+                badge={(x) => (x.deleted_at ? "INACTIVA" : "ACTIVA")}
                 selectable={puedeEliminar && selectMode}
                 selectDisabled={!!e.deleted_at}
                 selected={selectedIds.includes(e.id)}
                 onSelectChange={(checked) => toggleSelect(e.id, checked)}
-                onClick={() =>
-                  !selectMode && navigate(`/erogaciones/${e.id}`)
-                }
+                onClick={() => !selectMode && navigate(`/erogaciones/${e.id}`)}
               />
             ))}
           </div>
-        </div>
+        )}
 
         {totalPages > 1 && (
           <div className="mt-auto pt-8">
@@ -385,18 +417,20 @@ export default function ErogacionesLanding() {
       {showFilters && (
         <>
           <div
-            className="fixed inset-0 bg-black/30 z-40"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
             onClick={() => setShowFilters(false)}
           />
 
-          <div className="fixed top-0 right-0 h-full w-[380px] bg-white z-50 shadow-2xl p-6 flex flex-col">
-            <h3 className="text-xl font-semibold mb-6">Filtros</h3>
+          <div className="fixed top-0 right-0 h-full w-[380px] bg-white z-50 shadow-2xl p-6 flex flex-col overflow-y-auto">
+            <h3 className="text-xl font-semibold mb-6">Filtros Avanzados</h3>
 
-            <div className="space-y-4 flex-1">
+            <div className="space-y-5 flex-1 text-[11px]">
               <div>
-                <label className="text-xs text-slate-500">Año</label>
+                <label className="text-slate-400 font-bold mb-1 block uppercase tracking-wider">
+                  Año
+                </label>
                 <select
-                  className="input mt-1"
+                  className="w-full border border-slate-200 p-2 rounded outline-none focus:border-slate-400"
                   value={tempFilters.anio}
                   onChange={(e) =>
                     setTempFilters({
@@ -415,11 +449,11 @@ export default function ErogacionesLanding() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-500">
+                <label className="text-slate-400 font-bold mb-1 block uppercase tracking-wider">
                   Número de erogación
                 </label>
                 <input
-                  className="input mt-1"
+                  className="w-full border border-slate-200 p-2 rounded outline-none focus:border-slate-400"
                   value={tempFilters.search}
                   onChange={(e) =>
                     setTempFilters({
@@ -431,9 +465,11 @@ export default function ErogacionesLanding() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-500">Tipo</label>
+                <label className="text-slate-400 font-bold mb-1 block uppercase tracking-wider">
+                  Tipo
+                </label>
                 <select
-                  className="input mt-1"
+                  className="w-full border border-slate-200 p-2 rounded outline-none focus:border-slate-400"
                   value={tempFilters.tipoId}
                   onChange={(e) =>
                     setTempFilters({
@@ -452,9 +488,11 @@ export default function ErogacionesLanding() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-500">Fuente</label>
+                <label className="text-slate-400 font-bold mb-1 block uppercase tracking-wider">
+                  Fuente
+                </label>
                 <select
-                  className="input mt-1"
+                  className="w-full border border-slate-200 p-2 rounded outline-none focus:border-slate-400"
                   value={tempFilters.fuenteId}
                   onChange={(e) =>
                     setTempFilters({
@@ -473,12 +511,12 @@ export default function ErogacionesLanding() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-500">
+                <label className="text-slate-400 font-bold mb-1 block uppercase tracking-wider">
                   Ingresos mínimos
                 </label>
                 <input
                   type="number"
-                  className="input mt-1"
+                  className="w-full border border-slate-200 p-2 rounded outline-none focus:border-slate-400"
                   value={tempFilters.ingresosMin}
                   onChange={(e) =>
                     setTempFilters({
@@ -490,12 +528,12 @@ export default function ErogacionesLanding() {
               </div>
 
               <div>
-                <label className="text-xs text-slate-500">
+                <label className="text-slate-400 font-bold mb-1 block uppercase tracking-wider">
                   Egresos mínimos
                 </label>
                 <input
                   type="number"
-                  className="input mt-1"
+                  className="w-full border border-slate-200 p-2 rounded outline-none focus:border-slate-400"
                   value={tempFilters.egresosMin}
                   onChange={(e) =>
                     setTempFilters({
@@ -507,9 +545,10 @@ export default function ErogacionesLanding() {
               </div>
             </div>
 
-            <div className="flex justify-between gap-2 pt-6 border-t">
+            <div className="flex justify-between gap-2 pt-6 border-t mt-4">
               <Button
                 variant="secondary"
+                className="flex-1"
                 size="sm"
                 onClick={() =>
                   setTempFilters({
@@ -526,6 +565,7 @@ export default function ErogacionesLanding() {
               </Button>
 
               <Button
+                className="flex-1"
                 size="sm"
                 onClick={() => {
                   setFilters(tempFilters);
@@ -544,8 +584,7 @@ export default function ErogacionesLanding() {
         title="Eliminar erogaciones"
         message="¿Eliminar las siguientes erogaciones?"
         items={selectedActiveItems.map(
-          (e) =>
-            `Erogación N° ${String(e.numero_erogacion).padStart(6, "0")}`
+          (e) => `Erogación N° ${String(e.numero_erogacion).padStart(6, "0")}`
         )}
         onCancel={cancelSelection}
         onConfirm={confirmDelete}

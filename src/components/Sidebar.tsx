@@ -44,8 +44,6 @@ const baseItems: Item[] = [
   {
     label: "Documentación y Biblioteca", to: "/documentacion" },
   {
-    label: "Programa de Actividades", to: "/planificaciones" },
-  {
     label: "Vinculación Socio-Productiva",
     children: [
       { label: "Transferencias", to: "/transferencias" },

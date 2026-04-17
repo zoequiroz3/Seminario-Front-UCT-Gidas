@@ -11,7 +11,7 @@ import { useAuditoria } from "@/hooks/useAuditoria";
 import { useAuth } from "@/context/AuthContext";
 
 const formatFecha = (fecha?: string | null) => {
-  if (!fecha) return "—";
+  if (!fecha) return "â€”";
 
   const [y, m, d] = fecha.split("-");
   if (!y || !m || !d) return fecha;
@@ -25,7 +25,7 @@ const formatMonto = (monto?: number | null) =>
         style: "currency",
         currency: "ARS",
       })
-    : "—";
+    : "â€”";
 
 export default function TransferenciasDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -55,28 +55,40 @@ export default function TransferenciasDetalle() {
   }, [location.state]);
 
   const formatFechaHora = (fecha?: string | null) => {
-    if (!fecha) return "—";
+    if (!fecha) return "â€”";
     return new Date(fecha).toLocaleString("es-AR");
   };
 
   if (isLoading) {
-    return <p className="text-slate-500">Cargando…</p>;
+    return <p className="text-slate-500">Cargandoâ€¦</p>;
   }
 
   if (isError || !data) {
-    return <p className="text-slate-500">No se encontró la transferencia.</p>;
+    return <p className="text-slate-500">No se encontrÃ³ la transferencia.</p>;
   }
 
   const isDeleted = data.activo === false || !!data.deletedAt;
-  const titulo = data.denominacion || data.descripcionActividad || "—";
+  const titulo = data.denominacion || data.descripcionActividad || "â€”";
 
   return (
     <>
       <section className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-            {titulo}
-          </h2>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+              {titulo}
+            </h2>
+
+            <span
+              className={`w-fit px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wider border ${
+                isDeleted
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+              }`}
+            >
+              {isDeleted ? "INACTIVA" : "ACTIVA"}
+            </span>
+          </div>
 
           {puedeEditar && !isDeleted && (
             <Button
@@ -89,29 +101,29 @@ export default function TransferenciasDetalle() {
         </div>
 
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <div className="space-y-2 text-sm md:text-base text-slate-500">
+          <div className="space-y-3 text-sm md:text-base text-slate-500">
             <p>
               <span className="font-medium text-slate-700">
-                Número de transferencia:
+                NÃºmero de transferencia:
               </span>{" "}
-              {data.numeroTransferencia || "—"}
+              {data.numeroTransferencia || "â€”"}
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Denominación:</span>{" "}
-              {data.denominacion || "—"}
+              <span className="font-medium text-slate-700">DenominaciÃ³n:</span>{" "}
+              {data.denominacion || "â€”"}
             </p>
 
             <p>
               <span className="font-medium text-slate-700">Demandante:</span>{" "}
-              {data.demandante || "—"}
+              {data.demandante || "â€”"}
             </p>
 
             <p>
               <span className="font-medium text-slate-700">
-                Descripción de la actividad:
+                DescripciÃ³n de la actividad:
               </span>{" "}
-              {data.descripcionActividad || "—"}
+              {data.descripcionActividad || "â€”"}
             </p>
 
             <p>
@@ -133,26 +145,26 @@ export default function TransferenciasDetalle() {
               <span className="font-medium text-slate-700">
                 Tipo de contrato:
               </span>{" "}
-              {data.tipoContrato || "—"}
+              {data.tipoContrato || "â€”"}
             </p>
 
             <p>
               <span className="font-medium text-slate-700">Grupo UTN:</span>{" "}
-              {data.grupo || "—"}
+              {data.grupo || "â€”"}
             </p>
 
             <p>
               <span className="font-medium text-slate-700">Adoptantes:</span>{" "}
               {data.adoptantes.length > 0
                 ? data.adoptantes.map((a) => a.nombre).join(", ")
-                : "—"}
+                : "â€”"}
             </p>
           </div>
         </article>
 
         <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-slate-700">Auditoría</h3>
+            <h3 className="text-lg font-semibold text-slate-700">AuditorÃ­a</h3>
             <p className="text-xs text-slate-500 mt-1">{titulo}</p>
           </div>
 
@@ -164,7 +176,7 @@ export default function TransferenciasDetalle() {
 
             <p>
               <span className="font-medium text-slate-700">
-                Fecha de creación:
+                Fecha de creaciÃ³n:
               </span>{" "}
               {formatFechaHora(data.created_at)}
             </p>
@@ -176,7 +188,7 @@ export default function TransferenciasDetalle() {
 
             <p>
               <span className="font-medium text-slate-700">
-                Fecha de eliminación:
+                Fecha de eliminaciÃ³n:
               </span>{" "}
               {formatFechaHora(data.deletedAt)}
             </p>

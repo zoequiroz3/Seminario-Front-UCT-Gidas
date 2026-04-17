@@ -7,6 +7,15 @@ import { getDocumentacionById } from "@/services/documentacionServices";
 import { useAuditoria } from "@/hooks/useAuditoria";
 import { useAuth } from "@/context/AuthContext";
 
+const formatTitulo = (titulo?: string | null) =>
+  titulo
+    ? titulo
+        .toLowerCase()
+        .split(" ")
+        .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : ""))
+        .join(" ")
+    : "—";
+
 export default function DocumentacionDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -15,7 +24,7 @@ export default function DocumentacionDetalle() {
 
   const puedeEditar = canEditRecords();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["documentacion", id],
     queryFn: () => getDocumentacionById(Number(id)),
     enabled: !!id,
@@ -34,7 +43,9 @@ export default function DocumentacionDetalle() {
   }, [location.state]);
 
   if (isLoading) return <p className="text-slate-500">Cargando…</p>;
-  if (!data) return <p className="text-slate-500">No se encontró el documento.</p>;
+  if (isError || !data) {
+    return <p className="text-slate-500">No se encontró el documento.</p>;
+  }
 
   const autores = data.autores?.length
     ? data.autores.map((a) => a.nombre_apellido).join(", ")
@@ -45,19 +56,28 @@ export default function DocumentacionDetalle() {
     return new Date(fecha).toLocaleString("es-AR");
   };
 
+  const tituloFormateado = formatTitulo(data.titulo);
   const isDeleted = !!data.deleted_at;
 
   return (
     <>
       <section className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-            {data.titulo
-              .toLowerCase()
-              .split(" ")
-              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(" ")}
-          </h2>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+              {tituloFormateado}
+            </h2>
+
+            <span
+              className={`w-fit px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wider border ${
+                isDeleted
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+              }`}
+            >
+              {isDeleted ? "INACTIVA" : "ACTIVA"}
+            </span>
+          </div>
 
           {puedeEditar && !isDeleted && (
             <Button
@@ -70,7 +90,7 @@ export default function DocumentacionDetalle() {
         </div>
 
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
-          <div className="space-y-2 text-sm md:text-base text-slate-500">
+          <div className="space-y-3 text-sm md:text-base text-slate-500">
             <p>
               <span className="font-medium text-slate-700">Autores:</span>{" "}
               {autores}
@@ -90,32 +110,34 @@ export default function DocumentacionDetalle() {
 
         <article className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-slate-700">
-              Auditoría
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              {data.titulo}
-            </p>
+            <h3 className="text-lg font-semibold text-slate-700">Auditoría</h3>
+            <p className="text-xs text-slate-500 mt-1">{tituloFormateado}</p>
           </div>
 
           <div className="space-y-2 text-sm md:text-base text-slate-500">
             <p>
               <span className="font-medium text-slate-700">Creado por:</span>{" "}
-              {auditoria.nombreCreador}
+              {data.created_by_nombre || auditoria.nombreCreador}
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Fecha de creación:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Fecha de creación:
+              </span>{" "}
               {formatFechaHora(data.created_at)}
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Eliminado por:</span>{" "}
-              {auditoria.nombreEliminador}
+              <span className="font-medium text-slate-700">
+                Eliminado por:
+              </span>{" "}
+              {data.deleted_by_nombre || auditoria.nombreEliminador}
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Fecha de eliminación:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Fecha de eliminación:
+              </span>{" "}
               {formatFechaHora(data.deleted_at)}
             </p>
           </div>

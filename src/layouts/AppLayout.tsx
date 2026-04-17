@@ -1,6 +1,7 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
+import Footer from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
 import { User, Shield, ChevronDown, LogOut, Lock } from "lucide-react";
 
@@ -30,18 +31,16 @@ export default function AppLayout() {
   const rolLabel = isAdmin()
     ? "Administrador"
     : user?.rol === "LECTURA"
-    ? "Lector"
-    : "Gestor";
+      ? "Lector"
+      : "Gestor";
 
   return (
     <div className="min-h-screen bg-[#F6F6FB] text-slate-800 flex flex-col">
-      {/* HEADER */}
-      <header className="w-full flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-white h-[48px]">
+      <header className="w-full flex items-center justify-between px-4 py-2 border-b border-slate-200 bg-white h-[56px]">
         <Sidebar />
 
         <h1 className="font-semibold text-sm tracking-tight"></h1>
 
-        {/* USER MENU */}
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setOpen((prev) => !prev)}
@@ -57,7 +56,6 @@ export default function AppLayout() {
 
           {open && (
             <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50">
-              {/* Info del usuario */}
               <div className="px-4 py-3 border-b border-slate-100">
                 <p className="font-medium text-slate-900">
                   {user?.nombre_usuario}
@@ -76,7 +74,6 @@ export default function AppLayout() {
                 </span>
               </div>
 
-              {/* Opciones */}
               <button
                 onClick={() => {
                   setOpen(false);
@@ -114,12 +111,13 @@ export default function AppLayout() {
         </div>
       </header>
 
-      {/* CONTENIDO */}
-      <main className="flex-1">
-        <div className="w-full px-6 lg:px-10 py-8">
-          <Outlet />
-        </div>
-      </main>
+    <main className="flex-1">
+      <div className="w-full max-w-7xl mx-auto px-6 lg:px-10 py-4">
+        <Outlet />
+      </div>
+    </main>
+
+    <Footer />
     </div>
   );
 }

@@ -36,16 +36,17 @@ export default function Tarjeta<T>({
   const badgeText =
     typeof badgeValue === "string" ? badgeValue.toLowerCase().trim() : "";
 
-  const badgeClassName =
-    badgeText === "cerrado"
-      ? "bg-amber-100 text-amber-700"
-      : badgeText === "activo" || badgeText === "activa"
-        ? "bg-emerald-100 text-emerald-700"
-        : badgeText === "eliminado" || badgeText === "eliminada"
-          ? "bg-rose-100 text-rose-700"
-          : badgeText === "inactivo" || badgeText === "inactiva"
-            ? "bg-slate-200 text-slate-700"
-            : "bg-slate-100 text-slate-700";
+const badgeClassName =
+  badgeText === "cerrado"
+    ? "bg-amber-100 text-amber-700"
+    : badgeText === "activo" || badgeText === "activa"
+      ? "bg-emerald-100 text-emerald-700"
+      : badgeText === "eliminado" ||
+        badgeText === "eliminada" ||
+        badgeText === "inactivo" ||
+        badgeText === "inactiva"
+        ? "bg-rose-100 text-rose-700"
+        : "bg-slate-100 text-slate-700";
 
   return (
     <div

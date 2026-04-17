@@ -10,6 +10,7 @@ import {
   type TrabajoReunion,
 } from "@/services/trabajosReunionServices";
 import { useAuth } from "@/context/AuthContext";
+import { toTitleCase } from "@/utils/format";
 
 export default function TrabajoReunionDetalle() {
   const { id } = useParams<{ id: string }>();
@@ -47,6 +48,8 @@ export default function TrabajoReunionDetalle() {
     );
   }
 
+  const isDeleted = !!data.deleted_at;
+
   const formatFechaHora = (fecha?: string | null) => {
     if (!fecha) return "—";
     return new Date(fecha).toLocaleString("es-AR");
@@ -61,11 +64,23 @@ export default function TrabajoReunionDetalle() {
     <>
       <section className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-            {data.titulo_trabajo || "—"}
-          </h2>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+              {data.titulo_trabajo || "—"}
+            </h2>
 
-          {puedeEditar && !data.deleted_at && (
+            <span
+              className={`w-fit px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wider border ${
+                isDeleted
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+              }`}
+            >
+              {isDeleted ? "INACTIVO" : "ACTIVO"}
+            </span>
+          </div>
+
+          {puedeEditar && !isDeleted && (
             <Button
               size="sm"
               onClick={() =>
@@ -81,17 +96,19 @@ export default function TrabajoReunionDetalle() {
           <div className="space-y-2 text-sm md:text-base text-slate-500 break-words">
             <p>
               <span className="font-medium text-slate-700">Reunión:</span>{" "}
-              {data.nombre_reunion || "—"}
+              {toTitleCase(data.nombre_reunion) || "—"}
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Tipo de Reunión:</span>{" "}
-              {data.tipo_reunion?.nombre || "—"}
+              <span className="font-medium text-slate-700">
+                Tipo de reunión:
+              </span>{" "}
+              {toTitleCase(data.tipo_reunion?.nombre) || "—"}
             </p>
 
             <p>
               <span className="font-medium text-slate-700">Procedencia:</span>{" "}
-              {data.procedencia || "—"}
+              {toTitleCase(data.procedencia) || "—"}
             </p>
 
             <p>

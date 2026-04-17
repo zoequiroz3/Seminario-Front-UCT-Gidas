@@ -62,9 +62,21 @@ export default function ErogacionesDetalle() {
     <>
       <section className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-semibold leading-none">
-            {nroErogacionFmt}
-          </h2>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl md:text-3xl font-semibold leading-none">
+              {nroErogacionFmt}
+            </h2>
+
+            <span
+              className={`w-fit px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wider border ${
+                isDeleted
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+              }`}
+            >
+              {isDeleted ? "INACTIVA" : "ACTIVA"}
+            </span>
+          </div>
 
           {puedeEditar && !isDeleted && (
             <Button
@@ -79,7 +91,9 @@ export default function ErogacionesDetalle() {
         <article className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm">
           <div className="space-y-3 text-sm md:text-base text-slate-500">
             <p>
-              <span className="font-medium text-slate-700">Tipo de erogación:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Tipo de erogación:
+              </span>{" "}
               {data.tipo_erogacion?.nombre || "—"}
             </p>
 
@@ -94,7 +108,9 @@ export default function ErogacionesDetalle() {
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Fuente de financiamiento:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Fuente de financiamiento:
+              </span>{" "}
               {data.fuente?.nombre || "—"}
             </p>
           </div>
@@ -105,9 +121,7 @@ export default function ErogacionesDetalle() {
             <h3 className="text-lg font-semibold text-slate-700">
               Auditoría
             </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              {nroErogacionFmt}
-            </p>
+            <p className="text-xs text-slate-500 mt-1">{nroErogacionFmt}</p>
           </div>
 
           <div className="space-y-2 text-sm md:text-base text-slate-500">
@@ -117,17 +131,23 @@ export default function ErogacionesDetalle() {
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Fecha de creación:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Fecha de creación:
+              </span>{" "}
               {formatFechaHora(data.created_at)}
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Eliminado por:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Eliminado por:
+              </span>{" "}
               {data.deleted_by_nombre || auditoria.nombreEliminador}
             </p>
 
             <p>
-              <span className="font-medium text-slate-700">Fecha de eliminación:</span>{" "}
+              <span className="font-medium text-slate-700">
+                Fecha de eliminación:
+              </span>{" "}
               {formatFechaHora(data.deleted_at)}
             </p>
           </div>
